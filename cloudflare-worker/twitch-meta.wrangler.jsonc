@@ -1,0 +1,10 @@
+// Wrangler config para o Worker twitch-meta (Live Nexus).
+// Deploy: `wrangler deploy` neste diretório (ou via repo BRTAZ-OFC/twitch-meta-worker).
+// Secrets NÃO ficam aqui — cadastre manualmente no Cloudflare:
+//   wrangler secret put TWITCH_CLIENT_ID
+//   wrangler secret put TWITCH_CLIENT_SECRET
+{
+  "name": "twitch-meta",
+  "main": "twitch-meta.js",
+  "compatibility_date": "2026-09-04"
+}

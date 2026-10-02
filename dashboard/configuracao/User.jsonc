@@ -1,0 +1,59 @@
+{
+  "properties": {
+    "role": {
+      "type": "string",
+      "description": "The role of the user in the app",
+      "enum": [
+        "admin",
+        "user"
+      ]
+    },
+    "channels": {
+      "type": "object",
+      "description": "Canais vinculados por plataforma. A AUTORIDADE \u00e9 a verificationProof assinada pelo Worker channel-verify \u2014 estes campos s\u00e3o apenas cache de exibi\u00e7\u00e3o e N\u00c3O provam posse.",
+      "properties": {
+        "Twitch": {
+          "$ref": "#/$defs/linkedChannel"
+        },
+        "Kick": {
+          "$ref": "#/$defs/linkedChannel"
+        },
+        "YouTube": {
+          "$ref": "#/$defs/linkedChannel"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "linkedChannel": {
+      "type": "object",
+      "properties": {
+        "channelName": {
+          "type": "string"
+        },
+        "channelIdentifier": {
+          "type": "string"
+        },
+        "channelUrl": {
+          "type": "string"
+        },
+        "verifiedAt": {
+          "type": "number"
+        },
+        "verificationProof": {
+          "type": "string"
+        },
+        "challengeKey": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "role"
+  ],
+  "name": "User",
+  "type": "object"
+}

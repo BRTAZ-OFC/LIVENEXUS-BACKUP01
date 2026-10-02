@@ -1,0 +1,22 @@
+# Cloudflare Pages — D1 binding for livenexus-app-poc authentication
+#
+# MANUAL STEPS REQUIRED (see report section M):
+# 1. Create the D1 database:
+#    npx wrangler d1 create livenexus-poc
+# 2. Copy the database_id from the command output and replace
+#    REPLACE_WITH_REAL_DATABASE_ID below
+# 3. Run the migration:
+#    npx wrangler d1 execute livenexus-poc --file=migrations/0001_init.sql
+# 4. In Cloudflare Pages dashboard → livenexus-app-poc → Settings →
+#    Functions → D1 database bindings, add binding "DB" → "livenexus-poc"
+
+name = "livenexus-app-poc"
+compatibility_date = "2024-09-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "livenexus-poc"
+database_id = "fd7c8e76-9e16-4801-b63a-d1725b6933c2"
+preview_database_id = "fd7c8e76-9e16-4801-b63a-d1725b6933c2"

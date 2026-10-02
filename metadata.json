@@ -1,0 +1,6 @@
+{
+  "name": "Live Nexus",
+  "description": "Multi-platform live streaming companion with TTS, multi-chat, and audio player for Twitch, Kick, and YouTube.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

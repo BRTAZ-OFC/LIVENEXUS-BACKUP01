@@ -1,0 +1,64 @@
+{
+  "name": "Contact",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "maxLength": 80
+    },
+    "email": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Sugest\u00e3o",
+        "D\u00favida",
+        "Bug",
+        "Parceria",
+        "Outro"
+      ],
+      "default": "Sugest\u00e3o"
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "novo",
+        "lido",
+        "respondido"
+      ],
+      "default": "novo"
+    }
+  },
+  "required": [
+    "name",
+    "email",
+    "category",
+    "message"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

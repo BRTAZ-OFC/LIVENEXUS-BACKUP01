@@ -1,0 +1,46 @@
+export interface WidgetConfig {
+  fontSize?: string;
+  textColor?: string;
+  fontFamily?: string;
+  backgroundColor?: string;
+  borderRadius?: string;
+  showBorder?: boolean;
+  borderColor?: string;
+  startValue?: number;
+  effBgActiveType?: string;
+  effBgColor?: string;
+  effBgOpacity?: number;
+  effOpacity?: number;
+  isTransparent?: boolean;
+  bgMode?: string;
+  effBgType?: string;
+  effGradientActiveType?: string;
+  effGradientStart?: string;
+  effGradientMiddle?: string;
+  effGradientEnd?: string;
+  effGradientAngle?: number;
+  effGradientType?: string;
+  effGlassActiveType?: string;
+  effBackdropBlur?: number;
+  effGlassIntensity?: number;
+  effGlassOpacity?: number;
+  effGlassColor?: string;
+  effGlass?: boolean;
+  effGlowActiveType?: string;
+  effShadowColor?: string;
+  effShadowColor2?: string;
+  effShadowIntensity?: number;
+  effShadowType?: string;
+  effShadowActiveType?: string;
+  effBorderActiveType?: string;
+  effBorderGlow?: number;
+  effAnimBgActiveType?: string;
+  effGlowPulsing?: boolean;
+  commands?: any[];
+  rules?: any[];
+  schedule?: any[];
+  news?: boolean;
+  newsText?: string;
+  text?: string;
+  [key: string]: any; // Allow other properties for robustness
+}
