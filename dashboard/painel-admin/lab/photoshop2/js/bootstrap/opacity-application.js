@@ -1,0 +1,100 @@
+// Bind the legacy/browser application service to document, history and display ports.
+(function (root) {
+  'use strict';
+  var domain = NemoOpacityDomain;
+  function newId() { return root.crypto.randomUUID(); }
+  function ensureIds() { root.state.layers.forEach(function (layer) { root.SMMotion.ensureLayerUid(layer); }); }
+  function read(layer, frame) { return root.SMMotion.valueAtFrame(layer, 'opacity', frame); }
+  function refresh(layer) {
+    var index = root.state.layers.indexOf(layer);
+    if (index >= 0 && root.state.appMode === 'motion') root.SM.setActiveLayer(index, true);
+    if (root.renderLayerList) root.renderLayerList();
+    if (root.renderTimeline) root.renderTimeline();
+    if (root.updateUI) root.updateUI();
+    if (root.SMEngineBridge) root.SMEngineBridge.renderNow();
+  }
+  function write(operation, layer, payload) {
+    var frame = root.state.currentFrame;
+    if (operation === 'property.set') return domain.setValue(layer, [payload.value], frame);
+    if (operation === 'property.key.set') return domain.setKeyAtFrame(layer, payload.frame, [payload.value], payload.curvePoints);
+    if (operation === 'property.key.remove') return domain.removeKeyAtFrame(layer, payload.frame);
+    if (operation === 'property.animation.set') return domain.setAnimated(layer, payload.animated, frame, read(layer, frame));
+    throw new Error('Unsupported opacity mutation');
+  }
+  function history(action) {
+    var stack = root.state[action === 'undo' ? 'undoStack' : 'redoStack'];
+    var count = stack.length;
+    root[action]();
+    return stack.length < count;
+  }
+  var registry = root.NemoCapabilities || (root.NemoCapabilities = NemoCapabilityRegistry.create());
+  var app = NemoOpacityApplicationCore.create({
+    newId: newId, state: function () { return root.state; }, valueAtFrame: read, write: write,
+    context: function () { return JSON.stringify([root.state.activeSymbolId || null, root.state.activeMontageViewId || null]); },
+    canMutate: function () { return !root._scrubLiveActive; },
+    snapshot: function () { return { layers: root.state.layers.map(function (layer) {
+      return { id: layer.layerUid, name: layer.name || '', opacity: read(layer, root.state.currentFrame)[0] };
+    }), frame: root.state.currentFrame, totalFrames: root.state.totalFrames }; },
+    history: { checkpoint: function () { root.pushUndo(); },
+      undo: function () { return history('undo'); }, redo: function () { return history('redo'); } },
+    afterMutation: refresh,
+    capabilities: function () { return registry.list(); }
+  });
+  ensureIds();
+  // P06: registry lookup is resolved for every request so no stale handler survives.
+  NemoOpacityCapability.register(registry, app.handle);
+  var exportCapability = NemoExportSvgSequence.capability({
+    session: function () { return (root.SMExport && root.SMExport.svgSequenceJob) ? root.SMExport.svgSequenceJob() : null; },
+    meta: app.meta,
+  });
+  registry.register(exportCapability.descriptor, exportCapability.handler);
+  function capabilityFor(operation) {
+    var found = null;
+    registry.list().forEach(function (entry) {
+      if (entry.id === NemoOpacityCapability.DESCRIPTOR.id) return;
+      var lifecycle = (entry.descriptor.effects && entry.descriptor.effects.lifecycle) || [];
+      if (lifecycle.indexOf(operation) < 0) return;
+      if (found) throw new Error('Capabilities "' + found + '" and "' + entry.id + '" both claim the operation "' + operation + '".');
+      found = entry.id;
+    });
+    return found || NemoOpacityCapability.DESCRIPTOR.id;
+  }
+  root.NemoApplication = {
+    handle: function (request) { return registry.handlerFor(capabilityFor(request && request.operation))(request); },
+    setInstanceId: app.setInstanceId,
+    capabilities: function () { return registry.list(); },
+  };
+  root.NemoOpacityApplication = {
+    meta: app.meta,
+    historyChanged: app.historyChanged,
+    documentChanged: function () {
+      root.state.undoStack = []; root.state.undoLabels = [];
+      root.state.redoStack = []; root.state.redoLabels = [];
+      ensureIds(); app.documentChanged();
+      if (root.renderHistoryPanelIfOpen) root.renderHistoryPanelIfOpen();
+    },
+    legacy: function (kind, holder, values, frame, curvePoints) {
+      var result;
+      if (kind === 'set') result = domain.setValue(holder, values, root.state.currentFrame);
+      else if (kind === 'key-current') result = domain.setKeyAtFrame(holder, root.state.currentFrame, values);
+      else if (kind === 'key-frame') result = domain.setKeyAtFrame(holder, frame, values, curvePoints);
+      else if (kind === 'remove') result = domain.removeKeyAtFrame(holder, frame);
+      else if (kind === 'animated') result = domain.setAnimated(holder, values, root.state.currentFrame, read(holder, root.state.currentFrame));
+      else throw new Error('Unsupported opacity edit');
+      app.changed();
+      return result;
+    }
+  };
+  [['pushUndoLayers', 'undoStack'], ['pushUndoActiveFrame', 'undoStack'],
+    ['undo', 'undoStack'], ['redo', 'redoStack']].forEach(function (entry) {
+    var original = root[entry[0]];
+    if (typeof original !== 'function') return;
+    root[entry[0]] = function () {
+      var stack = root.state[entry[1]], length = stack.length, last = stack[length - 1];
+      var result = original.apply(this, arguments);
+      stack = root.state[entry[1]];
+      if (stack.length !== length || stack[stack.length - 1] !== last) app.historyChanged();
+      return result;
+    };
+  });
+})(window);

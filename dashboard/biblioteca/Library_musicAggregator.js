@@ -130,3 +130,45 @@ export async function aggregateSearch(term) {
 
   return groups;
 }
+
+// Mescla resultados progressivos do InnerTube nos grupos existentes da galeria,
+// preservando ordem, deduplicação por ID real, categorias, fontes e resultados já exibidos.
+export function mergeProgressiveGroups(prevGroups, innerTubeResults) {
+  if (!prevGroups || !Array.isArray(innerTubeResults)) return prevGroups || {};
+  const next = { ...prevGroups };
+  const seenKeys = new Map();
+
+  for (const [cat, list] of Object.entries(next)) {
+    const set = new Set();
+    for (const it of (list || [])) {
+      const k = it.videoId ? `v:${it.videoId}` : (it.playlistId ? `p:${it.playlistId}` : normalizeKey(it.title, it.artist));
+      if (k) set.add(k);
+    }
+    seenKeys.set(cat, set);
+  }
+
+  for (const it of innerTubeResults) {
+    if (!it) continue;
+    let targetCat;
+    if (it.source === 'YouTube') {
+      if (it.type === 'community_playlist' || it.type === 'playlist') {
+        targetCat = it.type;
+      } else {
+        targetCat = 'youtube';
+      }
+    } else {
+      targetCat = it.type || 'song';
+    }
+
+    if (!next[targetCat]) next[targetCat] = [];
+    if (!seenKeys.has(targetCat)) seenKeys.set(targetCat, new Set());
+
+    const key = it.videoId ? `v:${it.videoId}` : (it.playlistId ? `p:${it.playlistId}` : normalizeKey(it.title, it.artist));
+    if (key && !seenKeys.get(targetCat).has(key)) {
+      seenKeys.get(targetCat).add(key);
+      next[targetCat].push(it);
+    }
+  }
+
+  return next;
+}

@@ -21,9 +21,19 @@ const YT_HEADERS = {
 // Parâmetros estruturados dos chips nativos do YouTube Music
 const CATEGORY_PARAMS = {
   songs: 'EgWKAQIIAWoSEAUQCRAKEAMQDhAEEBAQFRAR',
+  videos: 'EgWKAQIQAWoSEAUQCRAKEAMQDhAEEBAQFRAR',
   artists: 'EgWKAQIgAWoSEAUQCRAKEAMQDhAEEBAQFRAR',
   albums: 'EgWKAQIYAWoSEAUQCRAKEAMQDhAEEBAQFRAR',
   playlists: 'EgeKAQQoAEABahIQBRAJEAoQAxAOEAQQEBAVEBE%3D',
+};
+
+const YT_WEB_CONTEXT = {
+  client: {
+    clientName: 'WEB',
+    clientVersion: '2.20240101.01.00',
+    hl: 'pt',
+    gl: 'BR',
+  },
 };
 
 function corsHeaders() {
@@ -42,102 +52,534 @@ export function jsonResponse(data, status = 200) {
   });
 }
 
-// 1. Busca estruturada para UMA categoria específica no YouTube Music
-async function fetchCategory(query, type) {
-  const params = CATEGORY_PARAMS[type];
-  if (!params) return [];
+// Parser modular reutilizável para itens do YouTube Music (suporta responsiveListItem e twoRowItem)
+function parseMusicItemRenderer(it, type) {
+  if (!it) return null;
 
-  const res = await fetch('https://music.youtube.com/youtubei/v1/search', {
-    method: 'POST',
-    headers: YT_HEADERS,
-    body: JSON.stringify({
-      context: YT_CONTEXT,
-      query,
-      params,
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`InnerTube search failed with status ${res.status}`);
-  }
-
-  const data = await res.json();
-  const shelf =
-    data.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content
-      ?.sectionListRenderer?.contents?.[0]?.musicShelfRenderer;
-
-  const items = [];
-  for (const it of shelf?.contents || []) {
-    const r = it.musicResponsiveListItemRenderer;
-    if (!r) continue;
-
-    const flex0 = r.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
-    const flex1 = r.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
-    const flex2 = r.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
-
-    const title = flex0.map((x) => x.text).join('').trim();
-    const line1 = flex1.map((x) => x.text).join('').trim();
-    const line2 = flex2.map((x) => x.text).join('').trim();
-
+  // Suporte a musicTwoRowItemRenderer (carrosséis/grades)
+  if (it.musicTwoRowItemRenderer) {
+    const r = it.musicTwoRowItemRenderer;
+    const title = r.title?.runs?.map((x) => x.text).join('') || '';
+    const subtitle = r.subtitle?.runs?.map((x) => x.text).join('') || '';
     const videoId =
-      r.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer
-        ?.playNavigationEndpoint?.watchEndpoint?.videoId ||
-      r.playlistItemData?.videoId;
-
-    const browseId = r.navigationEndpoint?.browseEndpoint?.browseId;
+      r.navigationEndpoint?.watchEndpoint?.videoId ||
+      r.onTap?.watchEndpoint?.videoId;
+    const browseId =
+      r.navigationEndpoint?.browseEndpoint?.browseId ||
+      r.title?.runs?.[0]?.navigationEndpoint?.browseEndpoint?.browseId;
     const thumb =
-      r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)?.[0]?.url ||
+      r.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)?.[0]?.url ||
       (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : '');
 
-    if (type === 'songs') {
-      if (!videoId) continue;
-      const durMatch = `${line1} ${line2}`.match(/\b\d{1,2}:\d{2}(?::\d{2})?\b/);
-      items.push({
+    if (type === 'songs' || type === 'videos') {
+      if (!videoId) return null;
+      const durMatch = subtitle.match(/\b\d{1,2}:\d{2}(?::\d{2})?\b/);
+      return {
         type: 'song',
         videoId,
-        title,
-        artist: line1.split('•')[0]?.trim() || 'Artista',
-        album: line1.includes('•') ? line1.split('•')[1]?.trim() : '',
+        title: title || 'Música',
+        artist: subtitle.split('•')[0]?.trim() || (type === 'videos' ? 'YouTube' : 'Artista'),
+        album: subtitle.includes('•') ? subtitle.split('•')[1]?.trim() : '',
         durationStr: durMatch ? durMatch[0] : '',
         thumbnail: thumb,
-      });
+        source: type === 'videos' ? 'YouTube' : 'YouTube Music',
+        channelTitle: subtitle.split('•')[0]?.trim() || (type === 'videos' ? 'YouTube' : 'Artista'),
+      };
     } else if (type === 'artists') {
-      items.push({
+      return {
         type: 'artist',
         browseId: browseId || '',
-        name: title,
-        subtitle: line1,
+        name: title || subtitle,
+        title: title || subtitle,
+        subtitle,
         thumbnail: thumb,
-      });
+        source: 'YouTube Music',
+      };
     } else if (type === 'albums') {
-      items.push({
+      return {
         type: 'album',
         browseId: browseId || '',
         title,
-        artist: line1.replace(/Álbum\s*•\s*/i, '').split('•')[0]?.trim() || '',
-        year: (line1.match(/\b(19\d{2}|20\d{2})\b/) || [])[0] || '',
+        artist: subtitle.replace(/Álbum\s*•\s*/i, '').split('•')[0]?.trim() || '',
+        year: (subtitle.match(/\b(19\d{2}|20\d{2})\b/) || [])[0] || '',
         thumbnail: thumb,
-      });
+        source: 'YouTube Music',
+      };
     } else if (type === 'playlists') {
       const plId = browseId?.replace(/^VL/, '') || '';
-      items.push({
-        type: 'playlist',
+      const isMix = plId.startsWith('RD');
+      const isCommunity = plId.startsWith('PL');
+      return {
+        type: isMix ? 'mix' : isCommunity ? 'community_playlist' : 'playlist',
         browseId: browseId || '',
         playlistId: plId,
         title,
-        author: line1.split('•')[0]?.trim() || '',
-        itemCountStr: line1.split('•')[1]?.trim() || '',
+        author: subtitle.split('•')[0]?.trim() || '',
+        itemCountStr: subtitle.split('•')[1]?.trim() || '',
         thumbnail: thumb,
-      });
+        source: 'YouTube Music',
+      };
     }
+    return null;
+  }
+
+  // Suporte a musicResponsiveListItemRenderer (listas verticais)
+  const r = it.musicResponsiveListItemRenderer;
+  if (!r) return null;
+
+  const flex0 = r.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+  const flex1 = r.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+  const flex2 = r.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+
+  const title = flex0.map((x) => x.text).join('').trim();
+  const line1 = flex1.map((x) => x.text).join('').trim();
+  const line2 = flex2.map((x) => x.text).join('').trim();
+
+  const videoId =
+    r.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer
+      ?.playNavigationEndpoint?.watchEndpoint?.videoId ||
+    r.playlistItemData?.videoId ||
+    r.navigationEndpoint?.watchEndpoint?.videoId;
+
+  const browseId =
+    r.navigationEndpoint?.browseEndpoint?.browseId ||
+    flex0[0]?.navigationEndpoint?.browseEndpoint?.browseId ||
+    r.thumbnail?.musicThumbnailRenderer?.thumbnail?.navigationEndpoint?.browseEndpoint?.browseId ||
+    '';
+
+  const navPlaylistId =
+    r.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer
+      ?.playNavigationEndpoint?.watchEndpoint?.playlistId ||
+    r.navigationEndpoint?.watchEndpoint?.playlistId ||
+    '';
+
+  const thumb =
+    r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)?.[0]?.url ||
+    (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : '');
+
+  if (type === 'songs' || type === 'videos') {
+    if (!videoId) return null;
+    const durMatch = `${line1} ${line2}`.match(/\b\d{1,2}:\d{2}(?::\d{2})?\b/);
+    return {
+      type: 'song',
+      videoId,
+      title: title || 'Música',
+      artist: line1.split('•')[0]?.trim() || (type === 'videos' ? 'YouTube' : 'Artista'),
+      album: line1.includes('•') ? line1.split('•')[1]?.trim() : '',
+      durationStr: durMatch ? durMatch[0] : '',
+      thumbnail: thumb,
+      source: type === 'videos' ? 'YouTube' : 'YouTube Music',
+      channelTitle: line1.split('•')[0]?.trim() || (type === 'videos' ? 'YouTube' : 'Artista'),
+    };
+  } else if (type === 'artists') {
+    return {
+      type: 'artist',
+      browseId: browseId || '',
+      name: title || line1,
+      title: title || line1,
+      subtitle: line1,
+      thumbnail: thumb,
+      source: 'YouTube Music',
+    };
+  } else if (type === 'albums') {
+    return {
+      type: 'album',
+      browseId: browseId || '',
+      title,
+      artist: line1.replace(/Álbum\s*•\s*/i, '').split('•')[0]?.trim() || '',
+      year: (line1.match(/\b(19\d{2}|20\d{2})\b/) || [])[0] || '',
+      thumbnail: thumb,
+      source: 'YouTube Music',
+    };
+  } else if (type === 'playlists') {
+    const rawPlId = navPlaylistId || browseId?.replace(/^VL/, '') || '';
+    const plId = rawPlId;
+    const isMix = plId.startsWith('RD');
+    const isCommunity = plId.startsWith('PL');
+    return {
+      type: isMix ? 'mix' : isCommunity ? 'community_playlist' : 'playlist',
+      browseId: browseId || (plId ? `VL${plId}` : ''),
+      playlistId: plId,
+      title: title || 'Playlist',
+      author: line1.split('•')[0]?.trim() || '',
+      itemCountStr: line1.split('•')[1]?.trim() || '',
+      thumbnail: thumb,
+      source: 'YouTube Music',
+    };
+  }
+  return null;
+}
+
+// Extrai o token de continuação seguro de um array continuations
+function extractContinuationToken(continuations) {
+  if (!Array.isArray(continuations)) return null;
+  for (const c of continuations) {
+    if (c?.nextContinuationData?.continuation) {
+      return c.nextContinuationData.continuation;
+    }
+  }
+  return null;
+}
+
+// Localiza musicShelfRenderer na resposta inicial do InnerTube
+function findMusicShelf(data) {
+  if (!data) return null;
+  const tabs = data.contents?.tabbedSearchResultsRenderer?.tabs;
+  if (Array.isArray(tabs)) {
+    for (const tab of tabs) {
+      const secContents = tab?.tabRenderer?.content?.sectionListRenderer?.contents;
+      if (Array.isArray(secContents)) {
+        for (const sec of secContents) {
+          if (sec?.musicShelfRenderer) return sec.musicShelfRenderer;
+        }
+      }
+    }
+  }
+  const secContents = data.contents?.sectionListRenderer?.contents;
+  if (Array.isArray(secContents)) {
+    for (const sec of secContents) {
+      if (sec?.musicShelfRenderer) return sec.musicShelfRenderer;
+    }
+  }
+  if (data.contents?.musicShelfRenderer) return data.contents.musicShelfRenderer;
+  return null;
+}
+
+// Localiza musicShelfContinuation na resposta de continuação do InnerTube
+function findMusicShelfContinuation(contData) {
+  if (!contData) return null;
+  if (contData.continuationContents?.musicShelfContinuation) {
+    return contData.continuationContents.musicShelfContinuation;
+  }
+  const secContents = contData.continuationContents?.sectionListContinuation?.contents;
+  if (Array.isArray(secContents)) {
+    for (const c of secContents) {
+      if (c?.musicShelfContinuation) return c.musicShelfContinuation;
+    }
+  }
+  return null;
+}
+
+// 1. Passo individual de continuação do InnerTube (devolve itens e o token seguinte)
+export async function fetchCategoryStep(query, type, continuationToken = null) {
+  const params = CATEGORY_PARAMS[type];
+  const items = [];
+  let nextContinuation = null;
+
+  try {
+    if (continuationToken) {
+      // 2. Enquanto existir continuation, faça nova requisição ao endpoint InnerTube /search enviando o token como:
+      // continuation=TOKEN
+      // ctoken=TOKEN
+      const contUrl = `https://music.youtube.com/youtubei/v1/search?continuation=${encodeURIComponent(continuationToken)}&ctoken=${encodeURIComponent(continuationToken)}`;
+      const res = await fetch(contUrl, {
+        method: 'POST',
+        headers: YT_HEADERS,
+        body: JSON.stringify({
+          context: YT_CONTEXT,
+          continuation: continuationToken,
+        }),
+      });
+
+      if (res.ok) {
+        const contData = await res.json();
+        // 3. Nas respostas seguintes, leia:
+        // continuationContents → musicShelfContinuation → contents
+        const shelfCont = findMusicShelfContinuation(contData);
+
+        const contItems = shelfCont?.contents || [];
+        for (const it of contItems) {
+          const parsed = parseMusicItemRenderer(it, type);
+          if (parsed) items.push(parsed);
+        }
+
+        // 4. Extraia o próximo token em:
+        // musicShelfContinuation → continuations → nextContinuationData.continuation
+        nextContinuation = extractContinuationToken(shelfCont?.continuations);
+      }
+    } else {
+      // 1. Na busca inicial, preserve os resultados e extraia:
+      // musicShelfRenderer.continuations → nextContinuationData.continuation
+      if (!params) return { items: [], continuation: null };
+      const res = await fetch('https://music.youtube.com/youtubei/v1/search', {
+        method: 'POST',
+        headers: YT_HEADERS,
+        body: JSON.stringify({
+          context: YT_CONTEXT,
+          query,
+          params,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const shelf = findMusicShelf(data);
+
+        for (const it of shelf?.contents || []) {
+          const parsed = parseMusicItemRenderer(it, type);
+          if (parsed) items.push(parsed);
+        }
+
+        nextContinuation = extractContinuationToken(shelf?.continuations);
+      }
+    }
+  } catch (err) {
+    console.warn(`[Connection_music-bridge] fetchCategoryStep (${type}) falhou:`, err?.message || err);
+  }
+
+  return { items, continuation: nextContinuation };
+}
+
+// 2. Busca com paginação completa no YouTube Music (percorre toda a cadeia sem limite artificial)
+export async function fetchCategory(query, type) {
+  const allItems = [];
+  const seenIds = new Set();
+  const seenTokens = new Set();
+
+  function addItem(item) {
+    if (!item) return;
+    const id = item.videoId || item.playlistId || item.browseId || item.id;
+    if (!id || seenIds.has(id)) return;
+    seenIds.add(id);
+    allItems.push(item);
+  }
+
+  // 1. Na busca inicial, preserve os resultados e extraia continuation
+  let step = await fetchCategoryStep(query, type, null);
+  for (const it of step.items || []) addItem(it);
+
+  // 2. Enquanto existir continuation, faça nova requisição ao endpoint InnerTube /search enviando o token
+  // 5. Continue até o InnerTube não fornecer mais continuation.
+  let currentToken = step.continuation;
+  let emptyStepCount = 0;
+
+  while (currentToken && !seenTokens.has(currentToken)) {
+    seenTokens.add(currentToken);
+    const nextStep = await fetchCategoryStep(query, type, currentToken);
+    const stepItems = nextStep.items || [];
+
+    if (stepItems.length > 0) {
+      emptyStepCount = 0;
+      for (const it of stepItems) addItem(it);
+    } else {
+      emptyStepCount += 1;
+      if (emptyStepCount >= 3) break;
+    }
+
+    // 4. Extraia o próximo token em: musicShelfContinuation → continuations → nextContinuationData.continuation
+    currentToken = nextStep.continuation;
+  }
+
+  // 6. Acumule os resultados preservando a ordem e eliminando duplicados pelo ID real do item.
+  return allItems;
+}
+
+// 1.1 Passo individual de busca nativa do YouTube via InnerTube (youtubei/v1/search)
+export async function fetchYouTubeInnerTubeStep(query, continuationToken = null) {
+  if (!query || !query.trim()) return { items: [], continuation: null };
+  const q = query.trim();
+  const items = [];
+  const seen = new Set();
+
+  function addItem(item) {
+    if (!item) return;
+    const id = item.videoId || item.playlistId || item.id;
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    items.push(item);
+  }
+
+  let nextContinuation = null;
+
+  try {
+    if (continuationToken) {
+      const contRes = await fetch(
+        `https://www.youtube.com/youtubei/v1/search?continuation=${encodeURIComponent(continuationToken)}&ctoken=${encodeURIComponent(continuationToken)}`,
+        {
+          method: 'POST',
+          headers: YT_HEADERS,
+          body: JSON.stringify({
+            context: YT_WEB_CONTEXT,
+            continuation: continuationToken,
+          }),
+        }
+      );
+
+      if (contRes.ok) {
+        const contData = await contRes.json();
+        const actions = contData.onResponseReceivedCommands || [];
+
+        for (const act of actions) {
+          const contItems = act.appendContinuationItemsAction?.continuationItems || [];
+          for (const it of contItems) {
+            if (it.videoRenderer) {
+              const vr = it.videoRenderer;
+              const videoId = vr.videoId;
+              if (!videoId) continue;
+              const title = vr.title?.runs?.map((x) => x.text).join('') || vr.title?.simpleText || '';
+              const artist = vr.ownerText?.runs?.map((x) => x.text).join('') || vr.shortBylineText?.runs?.map((x) => x.text).join('') || 'YouTube';
+              const durStr = vr.lengthText?.simpleText || vr.lengthText?.runs?.map((x) => x.text).join('') || '';
+              const thumb = vr.thumbnail?.thumbnails?.slice(-1)[0]?.url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+              if (title) {
+                addItem({
+                  videoId,
+                  title,
+                  artist,
+                  album: '',
+                  durationStr: durStr,
+                  thumbnail: thumb,
+                  type: 'song',
+                  source: 'YouTube',
+                  channelTitle: artist,
+                });
+              }
+            } else if (it.playlistRenderer) {
+              const pr = it.playlistRenderer;
+              const playlistId = pr.playlistId;
+              if (!playlistId) continue;
+              const title = pr.title?.simpleText || pr.title?.runs?.map((x) => x.text).join('') || '';
+              const artist = pr.shortBylineText?.runs?.map((x) => x.text).join('') || 'Comunidade YouTube';
+              const thumb = pr.thumbnails?.[0]?.thumbnails?.slice(-1)[0]?.url || '';
+              if (title) {
+                addItem({
+                  playlistId,
+                  title,
+                  artist,
+                  type: playlistId.startsWith('PL') ? 'community_playlist' : 'playlist',
+                  source: 'YouTube',
+                  thumbnail: thumb,
+                });
+              }
+            } else if (it.continuationItemRenderer) {
+              nextContinuation =
+                it.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token || null;
+            }
+          }
+        }
+      }
+    } else {
+      const res = await fetch('https://www.youtube.com/youtubei/v1/search', {
+        method: 'POST',
+        headers: YT_HEADERS,
+        body: JSON.stringify({
+          context: YT_WEB_CONTEXT,
+          query: q,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const twoCol = data.contents?.twoColumnSearchResultsRenderer;
+        const sections = twoCol?.primaryContents?.sectionListRenderer?.contents || [];
+
+        for (const sec of sections) {
+          const itemSec = sec.itemSectionRenderer?.contents || [];
+          for (const it of itemSec) {
+            if (it.videoRenderer) {
+              const vr = it.videoRenderer;
+              const videoId = vr.videoId;
+              if (!videoId) continue;
+              const title = vr.title?.runs?.map((x) => x.text).join('') || vr.title?.simpleText || '';
+              const artist = vr.ownerText?.runs?.map((x) => x.text).join('') || vr.shortBylineText?.runs?.map((x) => x.text).join('') || 'YouTube';
+              const durStr = vr.lengthText?.simpleText || vr.lengthText?.runs?.map((x) => x.text).join('') || '';
+              const thumb = vr.thumbnail?.thumbnails?.slice(-1)[0]?.url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+              if (title) {
+                addItem({
+                  videoId,
+                  title,
+                  artist,
+                  album: '',
+                  durationStr: durStr,
+                  thumbnail: thumb,
+                  type: 'song',
+                  source: 'YouTube',
+                  channelTitle: artist,
+                });
+              }
+            } else if (it.playlistRenderer) {
+              const pr = it.playlistRenderer;
+              const playlistId = pr.playlistId;
+              if (!playlistId) continue;
+              const title = pr.title?.simpleText || pr.title?.runs?.map((x) => x.text).join('') || '';
+              const artist = pr.shortBylineText?.runs?.map((x) => x.text).join('') || 'Comunidade YouTube';
+              const thumb = pr.thumbnails?.[0]?.thumbnails?.slice(-1)[0]?.url || '';
+              if (title) {
+                addItem({
+                  playlistId,
+                  title,
+                  artist,
+                  type: playlistId.startsWith('PL') ? 'community_playlist' : 'playlist',
+                  source: 'YouTube',
+                  thumbnail: thumb,
+                });
+              }
+            }
+          }
+
+          if (sec.continuationItemRenderer) {
+            nextContinuation =
+              sec.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token || null;
+          }
+        }
+
+        if (!nextContinuation) {
+          const lastSec = sections[sections.length - 1];
+          if (lastSec?.continuationItemRenderer) {
+            nextContinuation =
+              lastSec.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token || null;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Connection_music-bridge] fetchYouTubeInnerTubeStep falhou:', err?.message || err);
+  }
+
+  return { items, continuation: nextContinuation };
+}
+
+// 1.2 Busca nativa do YouTube via InnerTube com paginação completa (youtubei/v1/search)
+export async function fetchYouTubeInnerTube(query) {
+  if (!query || !query.trim()) return [];
+  const q = query.trim();
+  const items = [];
+  const seen = new Set();
+  const seenTokens = new Set();
+
+  function addItem(item) {
+    if (!item) return;
+    const id = item.videoId || item.playlistId || item.id;
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    items.push(item);
+  }
+
+  let step = await fetchYouTubeInnerTubeStep(q, null);
+  for (const it of step.items) addItem(it);
+
+  let currentToken = step.continuation;
+  while (currentToken && !seenTokens.has(currentToken)) {
+    seenTokens.add(currentToken);
+    const nextStep = await fetchYouTubeInnerTubeStep(q, currentToken);
+    for (const it of nextStep.items) addItem(it);
+    currentToken = nextStep.continuation;
+  }
+
+  // Fallback InnerTube via vídeos do YouTube Music (com continuation) se YouTube web estiver vazio
+  if (items.length === 0) {
+    try {
+      const vids = await fetchCategory(q, 'videos');
+      for (const v of vids) addItem(v);
+    } catch {}
   }
 
   return items;
 }
 
-// 2. Busca do PACOTE COMPLETO estruturado (Músicas, Artistas, Álbuns, Playlists)
-// Executa as consultas necessárias no InnerTube e retorna UM único pacote estruturado.
-export async function handleSearchBundle(query) {
+// 2. Busca do PACOTE ESTRUTURADO (Músicas, Artistas, Álbuns, Playlists, YouTube)
+// Modo 'initial': entrega a 1ª página imediatamente e devolve os tokens de continuation para carregamento progressivo.
+// Modo 'full': aguarda toda a cadeia de continuation ser percorrida.
+export async function handleSearchBundle(query, mode = 'initial') {
   if (!query || !query.trim()) {
     return jsonResponse({
       ok: false,
@@ -147,33 +589,77 @@ export async function handleSearchBundle(query) {
       artists: [],
       albums: [],
       playlists: [],
+      youtube: [],
+      continuations: {},
       internalRequestsCount: 0,
     }, 400);
   }
 
   const q = query.trim();
 
-  // Executa as 4 buscas categorizadas no InnerTube em lote
-  const [songsRes, artistsRes, albumsRes, playlistsRes] = await Promise.allSettled([
-    fetchCategory(q, 'songs'),
-    fetchCategory(q, 'artists'),
-    fetchCategory(q, 'albums'),
-    fetchCategory(q, 'playlists'),
+  if (mode === 'full') {
+    // Executa as buscas completas percorrendo toda a cadeia de continuação
+    const [songsRes, artistsRes, albumsRes, playlistsRes, ytRes] = await Promise.allSettled([
+      fetchCategory(q, 'songs'),
+      fetchCategory(q, 'artists'),
+      fetchCategory(q, 'albums'),
+      fetchCategory(q, 'playlists'),
+      fetchYouTubeInnerTube(q),
+    ]);
+
+    const songs = songsRes.status === 'fulfilled' ? songsRes.value : [];
+    const artists = artistsRes.status === 'fulfilled' ? artistsRes.value : [];
+    const albums = albumsRes.status === 'fulfilled' ? albumsRes.value : [];
+    const playlists = playlistsRes.status === 'fulfilled' ? playlistsRes.value : [];
+    const youtube = ytRes.status === 'fulfilled' ? ytRes.value : [];
+
+    return jsonResponse({
+      ok: true,
+      query: q,
+      mode: 'full',
+      internalRequestsCount: 5,
+      songs,
+      artists,
+      albums,
+      playlists,
+      youtube,
+      continuations: {},
+    });
+  }
+
+  // Modelo progressivo / lazy loading: executa a 1ª página de cada categoria em paralelo
+  // Entrega esses resultados imediatamente e preserva os tokens de continuation para as páginas seguintes
+  const [songsStepRes, artistsStepRes, albumsStepRes, playlistsStepRes, ytStepRes] = await Promise.allSettled([
+    fetchCategoryStep(q, 'songs', null),
+    fetchCategoryStep(q, 'artists', null),
+    fetchCategoryStep(q, 'albums', null),
+    fetchCategoryStep(q, 'playlists', null),
+    fetchYouTubeInnerTubeStep(q, null),
   ]);
 
-  const songs = songsRes.status === 'fulfilled' ? songsRes.value : [];
-  const artists = artistsRes.status === 'fulfilled' ? artistsRes.value : [];
-  const albums = albumsRes.status === 'fulfilled' ? albumsRes.value : [];
-  const playlists = playlistsRes.status === 'fulfilled' ? playlistsRes.value : [];
+  const songsStep = songsStepRes.status === 'fulfilled' ? songsStepRes.value : { items: [], continuation: null };
+  const artistsStep = artistsStepRes.status === 'fulfilled' ? artistsStepRes.value : { items: [], continuation: null };
+  const albumsStep = albumsStepRes.status === 'fulfilled' ? albumsStepRes.value : { items: [], continuation: null };
+  const playlistsStep = playlistsStepRes.status === 'fulfilled' ? playlistsStepRes.value : { items: [], continuation: null };
+  const ytStep = ytStepRes.status === 'fulfilled' ? ytStepRes.value : { items: [], continuation: null };
 
   return jsonResponse({
     ok: true,
     query: q,
-    internalRequestsCount: 4, // 4 consultas estruturadas ao InnerTube para os 4 tipos nativos
-    songs,
-    artists,
-    albums,
-    playlists,
+    mode: 'initial',
+    internalRequestsCount: 5,
+    songs: songsStep.items,
+    artists: artistsStep.items,
+    albums: albumsStep.items,
+    playlists: playlistsStep.items,
+    youtube: ytStep.items,
+    continuations: {
+      songs: songsStep.continuation || '',
+      artists: artistsStep.continuation || '',
+      albums: albumsStep.continuation || '',
+      playlists: playlistsStep.continuation || '',
+      youtube: ytStep.continuation || '',
+    },
   });
 }
 
@@ -384,13 +870,88 @@ export async function handleRequest(request) {
   const pathname = url.pathname;
 
   try {
-    if (pathname.endsWith('/bundle') || pathname.endsWith('/search')) {
+    if (pathname.endsWith('/bundle')) {
       let query = url.searchParams.get('q') || url.searchParams.get('query');
+      let mode = url.searchParams.get('mode') || (url.searchParams.get('all') === 'true' ? 'full' : 'initial');
       if (request.method === 'POST') {
         const body = await request.json().catch(() => ({}));
         query = body.query || body.q || query;
+        if (body.mode) mode = body.mode;
+        else if (body.all) mode = 'full';
       }
-      return await handleSearchBundle(query);
+      return await handleSearchBundle(query, mode);
+    }
+
+    if (pathname.endsWith('/category') || pathname.endsWith('/search')) {
+      let query = url.searchParams.get('q') || url.searchParams.get('query') || '';
+      let type = url.searchParams.get('type') || url.searchParams.get('filter') || '';
+      let continuation = url.searchParams.get('continuation') || url.searchParams.get('ctoken') || '';
+      let stepOnly = url.searchParams.get('step') === 'true';
+
+      if (request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        query = body.query || body.q || query;
+        type = body.type || body.filter || type;
+        continuation = body.continuation || body.ctoken || continuation;
+        if (body.step !== undefined) stepOnly = Boolean(body.step);
+      }
+
+      // Se token de continuação foi fornecido ou stepOnly foi solicitado
+      if (continuation || stepOnly) {
+        const effectiveType = type && CATEGORY_PARAMS[type] ? type : 'songs';
+        const step = await fetchCategoryStep(query, effectiveType, continuation || null);
+        return jsonResponse({
+          ok: true,
+          query,
+          type: effectiveType,
+          items: step.items,
+          continuation: step.continuation || '',
+          hasMore: Boolean(step.continuation),
+          internalRequestsCount: 1,
+        });
+      }
+
+      // Se nenhum tipo de categoria for especificado, executa o bundle completo
+      if (!type || type === 'all' || type === 'bundle') {
+        return await handleSearchBundle(query);
+      }
+
+      // Busca na categoria específica percorrendo toda a cadeia de continuação do InnerTube
+      const effectiveType = CATEGORY_PARAMS[type] ? type : 'songs';
+      const items = await fetchCategory(query, effectiveType);
+      return jsonResponse({
+        ok: true,
+        query,
+        type: effectiveType,
+        items,
+        continuation: '',
+        hasMore: false,
+      });
+    }
+
+    if (pathname.endsWith('/youtube')) {
+      let query = url.searchParams.get('q') || url.searchParams.get('query');
+      let continuation = url.searchParams.get('continuation') || url.searchParams.get('ctoken');
+      let stepOnly = url.searchParams.get('step') === 'true';
+      if (request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        query = body.query || body.q || query;
+        continuation = body.continuation || body.ctoken || continuation;
+        if (body.step !== undefined) stepOnly = Boolean(body.step);
+      }
+      if (continuation || stepOnly) {
+        const step = await fetchYouTubeInnerTubeStep(query, continuation || null);
+        return jsonResponse({
+          ok: true,
+          query,
+          items: step.items,
+          continuation: step.continuation || '',
+          hasMore: Boolean(step.continuation),
+          internalRequestsCount: 1,
+        });
+      }
+      const items = await fetchYouTubeInnerTube(query);
+      return jsonResponse({ ok: true, query, items, internalRequestsCount: 1 });
     }
 
     if (pathname.endsWith('/browse')) {

@@ -19,9 +19,6 @@ import {
   Mic,
   Leaf,
   Flame,
-  Info,
-  Copy,
-  Check,
   Pause,
   Disc3,
   Moon,
@@ -380,7 +377,6 @@ export default function VoiceControls({ settings, voices, speaking, onChange, on
   const [testText, setTestText] = useState('Digite um texto para testar a voz...');
   const [isPlayingTest, setIsPlayingTest] = useState(false);
   const [activePreset, setActivePreset] = useState('padrao');
-  const [copiedReport, setCopiedReport] = useState(false);
 
   const utteranceRef = useRef(null);
 
@@ -473,41 +469,6 @@ export default function VoiceControls({ settings, voices, speaking, onChange, on
     onChange('maxChars', 200);
     onChange('speakInterval', 0.0);
     setActivePreset('padrao');
-  };
-
-  // Copiar Relatório Técnico das configurações do TTS e limitações do navegador
-  const handleCopyReport = () => {
-    const report = [
-      '===================================================================',
-      'RELATÓRIO TÉCNICO: CONFIGURAÇÕES DE VOZ E TTS (LIVENEXUS)',
-      '===================================================================',
-      `Data/Hora: ${new Date().toLocaleString()}`,
-      `User Agent: ${navigator.userAgent}`,
-      `Suporte Web Speech API: ${typeof window !== 'undefined' && 'speechSynthesis' in window ? 'SIM' : 'NÃO'}`,
-      `Total de Vozes Disponíveis: ${voices?.length || 0}`,
-      `Voz Selecionada: ${settings?.voice || 'Padrão do navegador'}`,
-      '-------------------------------------------------------------------',
-      'PARÂMETROS ATUAIS DO MOTOR:',
-      `• Velocidade (Rate): ${rate.toFixed(2)}x`,
-      `• Volume: ${Math.round(volume * 100)}%`,
-      `• Tom (Pitch): ${pitch.toFixed(2)}`,
-      `• Delay entre leituras: ${delay.toFixed(1)}s`,
-      `• Limite de caracteres: ${maxChars}`,
-      `• Intervalo entre falas: ${speakInterval.toFixed(1)}s`,
-      `• Preset Ativo: ${DJ_PRESETS.find(p => p.id === activePreset)?.name || 'Personalizado'}`,
-      '-------------------------------------------------------------------',
-      'DIAGNÓSTICO TÉCNICO / LIMITAÇÕES:',
-      'A API nativa do navegador (Web Speech API) permite apenas os parâmetros',
-      'Tom (Pitch), Velocidade (Rate) e Volume. Efeitos avançados de DSP (graves,',
-      'médios, agudos, compressor, reverb) não podem ser aplicados diretamente',
-      'à saída do speechSynthesis, pois o áudio é processado pelo daemon do',
-      'sistema operacional e enviado diretamente para a saída física de áudio.',
-      '==================================================================='
-    ].join('\n');
-
-    navigator.clipboard.writeText(report);
-    setCopiedReport(true);
-    setTimeout(() => setCopiedReport(false), 2000);
   };
 
   return (
@@ -816,30 +777,6 @@ export default function VoiceControls({ settings, voices, speaking, onChange, on
             );
           })}
         </div>
-      </section>
-
-      {/* SEÇÃO 3: Limitações da Web Speech API & Botão Copiar Relatório */}
-      <section className="rounded-2xl border border-white/10 bg-[#070a13] p-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0 max-w-4xl">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
-            <Info size={18} />
-          </div>
-          <div className="min-w-0 space-y-0.5">
-            <h4 className="text-xs font-bold text-blue-400">Limitações da Web Speech API</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              A API nativa do navegador permite apenas os parâmetros Tom (Pitch), Velocidade (Rate) e Volume. Equalização avançada (graves, médios, agudos), compressor, reverb e outros efeitos DSP não podem ser aplicados diretamente, pois o áudio é gerado pelo serviço nativo do sistema e enviado direto para a saída de som.
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleCopyReport}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold shrink-0 transition cursor-pointer"
-        >
-          {copiedReport ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-          <span>{copiedReport ? 'Relatório Copiado!' : 'Copiar Relatório'}</span>
-        </button>
       </section>
     </div>
   );

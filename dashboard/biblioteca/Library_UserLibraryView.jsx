@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Library, Music, Disc, User, ListMusic, Play, Trash2, ArrowLeft } from 'lucide-react';
-import { useUserLibrary } from '@dashboard/biblioteca/Library_useUserLibrary';
+import { useUserLibrary, classifyItemKind } from '@dashboard/biblioteca/Library_useUserLibrary';
 import { playTrack } from '@dashboard/biblioteca/Library_youtubePlayer';
 import { queueManager } from '@dashboard/biblioteca/Library_queueManager';
 
 export default function UserLibraryView({ onBack, onActivate }) {
-  const { library, songs, albums, artists, playlists, totalCount, remove } = useUserLibrary();
+  const { songs, albums, artists, playlists, totalCount, remove } = useUserLibrary();
   const [filter, setFilter] = useState('all'); // all | songs | albums | artists | playlists
 
   const displayedItems = (() => {
@@ -16,10 +16,40 @@ export default function UserLibraryView({ onBack, onActivate }) {
     return [...songs, ...albums, ...artists, ...playlists];
   })();
 
-  const handlePlay = (item) => {
+  const handlePlay = async (item) => {
+    const itemKind = classifyItemKind(item);
     const raw = item.rawRef || {};
+    const isPlaylist = itemKind === 'playlist' || itemKind === 'album' || item.type === 'playlist' || item.type === 'mix' || Boolean(item.playlistId) || Boolean(raw.playlistId);
+
+    if (isPlaylist) {
+      let tracksToPlay = raw.tracks || item.tracks || [];
+      const pId = item.playlistId || raw.playlistId || item.id;
+      if (tracksToPlay.length === 0 && pId) {
+        try {
+          const { getPlaylistItems } = await import('@dashboard/biblioteca/Library_musicSearch');
+          tracksToPlay = await getPlaylistItems(pId);
+        } catch {}
+      }
+      if (tracksToPlay.length > 0) {
+        const queueTracks = tracksToPlay.map((t, idx) => ({
+          id: t.videoId || `${pId}_${idx}`,
+          videoId: t.videoId,
+          title: t.title,
+          artist: t.artist || item.artist || 'YouTube Music',
+          album: t.album || '',
+          durationStr: t.durationStr || '',
+          thumbnail: t.thumbnail || item.thumbnail,
+          source: t.source || 'YouTube Music',
+          type: 'song',
+        }));
+        queueManager.setQueue(queueTracks, 0);
+        playTrack(queueTracks[0]);
+        return;
+      }
+    }
+
     const track = {
-      videoId: raw.videoId || item.videoId || (item.type === 'song' ? item.id : null),
+      videoId: raw.videoId || item.videoId || (itemKind === 'song' ? item.id : null),
       title: item.title,
       artist: item.artist,
       thumbnail: item.thumbnail,
@@ -46,8 +76,8 @@ export default function UserLibraryView({ onBack, onActivate }) {
     }
   };
 
-  const getIcon = (type) => {
-    switch (type) {
+  const getIcon = (kind) => {
+    switch (kind) {
       case 'album': return Disc;
       case 'artist': return User;
       case 'playlist': return ListMusic;
@@ -147,12 +177,14 @@ export default function UserLibraryView({ onBack, onActivate }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {displayedItems.map((item) => {
-            const Icon = getIcon(item.type);
-            const isSong = item.type === 'song';
+          {displayedItems.map((item, index) => {
+            const itemKind = classifyItemKind(item);
+            const Icon = getIcon(itemKind);
+            const isSong = itemKind === 'song';
+            const itemKey = item.id || item.videoId || item.playlistId || item.browseId || String(index);
             return (
               <div
-                key={item.id}
+                key={itemKey}
                 className="flex items-center gap-3 p-2.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-all group"
               >
                 {/* Thumbnail / avatar com play overlay */}
@@ -185,7 +217,7 @@ export default function UserLibraryView({ onBack, onActivate }) {
                   <div className="text-xs font-semibold text-white truncate">{item.title}</div>
                   <div className="text-[11px] text-[#B3B3B3] truncate flex items-center gap-1.5 mt-0.5">
                     <span className="capitalize text-[10px] px-1.5 py-0.2 rounded bg-white/10 text-slate-300">
-                      {item.type === 'song' ? 'música' : item.type === 'artist' ? 'artista' : item.type === 'album' ? 'álbum' : 'playlist'}
+                      {itemKind === 'song' ? 'música' : itemKind === 'artist' ? 'artista' : itemKind === 'album' ? 'álbum' : 'playlist'}
                     </span>
                     {item.artist && <span>{item.artist}</span>}
                   </div>
@@ -194,7 +226,7 @@ export default function UserLibraryView({ onBack, onActivate }) {
                 {/* Ações */}
                 <div className="flex items-center gap-1 shrink-0">
                   <button
-                    onClick={() => remove(item.id)}
+                    onClick={() => remove(item)}
                     className="p-1.5 rounded-lg text-[#B3B3B3] hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
                     title="Remover da biblioteca"
                   >

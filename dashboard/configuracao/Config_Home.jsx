@@ -26,7 +26,7 @@ const FEATURES = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen text-slate-200">
+    <div className="min-h-screen w-full overflow-x-hidden text-slate-200">
       {/* Navegação superior */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/40 backdrop-blur-md">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 md:px-8">

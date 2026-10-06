@@ -1,9 +1,5 @@
-// Busca no YouTube Music — MODO ZERO CREDITS.
-// Todas as buscas usam r.jina.ai (proxy de leitura gratuito, direto do frontend).
-// NENHUMA chamada a base44.functions.invoke — zero Integration Credits por busca.
-// As backend functions YoutubeMusicSearch/Album/Playlist/Mix permanecem no código
-// mas NÃO são chamadas pelo frontend em modo zero-credit.
-// NUNCA converte para youtube.com — preserva music.youtube.com sempre.
+// Busca no YouTube e YouTube Music via InnerTube API.
+// Dados estruturados nativos obtidos via InnerTube (sem Jina, sem scraping).
 
 const SEARCH_TIMEOUT = 12000;
 
@@ -15,6 +11,26 @@ export { parseMusicUrl } from './Library_musicUrlManager';
 const searchCache = new Map();
 const inFlightSearches = new Map();
 const CACHE_MAX = 50;
+
+let activeSearchSessionId = 0;
+const searchListeners = new Set();
+
+export function subscribeSearchProgress(listener) {
+  searchListeners.add(listener);
+  return () => {
+    searchListeners.delete(listener);
+  };
+}
+
+export function notifySearchProgress(term, results) {
+  for (const listener of searchListeners) {
+    try {
+      listener({ query: term, results });
+    } catch (e) {
+      console.warn('[musicSearch] progress listener error:', e);
+    }
+  }
+}
 
 function cacheKey(query, filter, continuation) {
   const normQuery = (query || '').trim().toLowerCase();
@@ -33,15 +49,114 @@ function setCached(key, val) {
   searchCache.set(key, val);
 }
 
-// ZERO CREDITS: r.jina.ai é a rota de busca — direto do frontend, sem backend.
-// Paginação (continuation) não é suportada pelo r.jina.ai — retorna vazio em modo zero-credit.
+function formatSearchItem(it) {
+  if (!it) return null;
+  const isVideo = it.source === 'YouTube' || it.type === 'video' || it._type === 'video';
+  const duration = typeof it.duration === 'number' ? it.duration : parseDurationStr(it.durationStr);
+  const thumb = it.thumbnail || (it.videoId ? `https://i.ytimg.com/vi/${it.videoId}/hqdefault.jpg` : '');
+
+  if (it.type === 'artist') {
+    return {
+      title: it.name || it.title,
+      artist: it.name || it.title,
+      type: 'artist',
+      browseId: it.browseId,
+      thumbnail: thumb,
+      source: 'YouTube Music',
+    };
+  }
+
+  if (it.type === 'album') {
+    return {
+      title: it.title,
+      artist: it.artist,
+      type: 'album',
+      browseId: it.browseId,
+      thumbnail: thumb,
+      source: 'YouTube Music',
+    };
+  }
+
+  if (it.type === 'playlist' || it.type === 'community_playlist' || it.type === 'mix') {
+    const isMix = it.type === 'mix' || it.playlistId?.startsWith('RD');
+    const isCommunity = it.type === 'community_playlist' || it.playlistId?.startsWith('PL');
+    return {
+      title: it.title,
+      artist: it.author || it.artist || 'YouTube Music',
+      type: isMix ? 'mix' : isCommunity ? 'community_playlist' : 'playlist',
+      playlistId: it.playlistId,
+      browseId: it.browseId,
+      thumbnail: thumb,
+      source: 'YouTube Music',
+    };
+  }
+
+  return {
+    videoId: it.videoId,
+    title: it.title,
+    artist: it.artist || (isVideo ? 'YouTube' : 'YouTube Music'),
+    album: it.album || '',
+    durationStr: it.durationStr || '',
+    duration,
+    thumbnail: thumb,
+    type: 'song',
+    source: isVideo ? 'YouTube' : 'YouTube Music',
+    channelTitle: it.artist || (isVideo ? 'YouTube' : 'YouTube Music'),
+    _type: isVideo ? 'video' : 'song',
+  };
+}
+
 async function fetchSearch(query, filter, continuation) {
   const key = cacheKey(query, filter, continuation);
   const cached = getCached(key);
   if (cached) return cached;
 
-  // Paginação indisponível em modo zero-credit (r.jina.ai não suporta continuation)
-  if (continuation) return { results: [], continuation: '' };
+  if (continuation) {
+    if (filter === 'youtube') {
+      try {
+        const res = await fetch(`/api/ytmusic/youtube?continuation=${encodeURIComponent(continuation)}&q=${encodeURIComponent(query || '')}`, {
+          headers: { 'Accept': 'application/json' },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const items = (data.items || []).map((it) => ({
+            ...it,
+            source: 'YouTube',
+            duration: parseDurationStr(it.durationStr),
+          })).filter(Boolean);
+          const result = { results: items, continuation: data.continuation || '' };
+          setCached(key, result);
+          return result;
+        }
+      } catch (err) {
+        console.warn('[musicSearch] fetchSearch youtube continuation falhou:', err?.message || err);
+      }
+      return { results: [], continuation: '' };
+    }
+
+    let type = 'songs';
+    if (filter === 'artists') type = 'artists';
+    else if (filter === 'albums') type = 'albums';
+    else if (filter === 'playlists') type = 'playlists';
+
+    try {
+      const res = await fetch(`/api/ytmusic/search?continuation=${encodeURIComponent(continuation)}&type=${type}&q=${encodeURIComponent(query || '')}`, {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok) {
+          const items = (data.items || []).map((it) => formatSearchItem(it)).filter(Boolean);
+          const result = { results: items, continuation: data.continuation || '' };
+          setCached(key, result);
+          return result;
+        }
+      }
+    } catch (err) {
+      console.warn('[musicSearch] fetchSearch continuation falhou:', err?.message || err);
+    }
+    return { results: [], continuation: '' };
+  }
 
   const normKey = (query || '').trim().toLowerCase();
   let searchPromise = inFlightSearches.get(normKey);
@@ -59,50 +174,18 @@ async function fetchSearch(query, filter, continuation) {
   if (filter === 'artists') filtered = allResults.filter((t) => t && t.type === 'artist');
   else if (filter === 'albums') filtered = allResults.filter((t) => t && t.type === 'album');
   else if (filter === 'playlists') filtered = allResults.filter((t) => t && (t.type === 'playlist' || t.type === 'community_playlist' || t.type === 'mix' || t.playlistId));
+  else if (filter === 'youtube') filtered = allResults.filter((t) => t && t.source === 'YouTube' && t.type !== 'community_playlist' && t.type !== 'playlist');
 
   const result = { results: filtered, continuation: '' };
   setCached(key, result);
   return result;
 }
 
-// ==========================================
-// CONSULTAS ÚNICAS VALIDADAS EM A + B + D + E
-// ==========================================
+// Consultas únicas mantidas para compatibilidade
 export function getUnifiedSearchQueries(term) {
   const trimmed = (term || '').trim();
   if (!trimmed) return [];
-
-  // 1. Teste A:
-  //    - term
-  //    - `${term} playlist`
-  // 2. Teste B:
-  //    - `${term} playlist` (duplicada com A)
-  //    - `playlist ${term}`
-  //    - `${term} melhores musicas playlist`
-  //    - `${term} discografia playlist`
-  //    - `${term} ao vivo playlist`
-  // 3. Teste D:
-  //    - Variações de B sobre base A (sem novas queries adicionais)
-  // 4. Teste E:
-  //    - Base A (term, term playlist)
-  //    - `${term} album discografia`
-  //    - `${term} artist channel`
-  //    - `${term} community playlist`
-  //
-  // Total de consultas únicas deduplicadas = 9
-  const rawQueries = [
-    trimmed,
-    `${trimmed} playlist`,
-    `playlist ${trimmed}`,
-    `${trimmed} melhores musicas playlist`,
-    `${trimmed} discografia playlist`,
-    `${trimmed} ao vivo playlist`,
-    `${trimmed} album discografia`,
-    `${trimmed} artist channel`,
-    `${trimmed} community playlist`,
-  ];
-
-  return [...new Set(rawQueries)];
+  return [trimmed];
 }
 
 // Chave unívoca de identificação real para deduplicação sem perda de entidades
@@ -162,42 +245,186 @@ function mergeItemMetadata(existing, incoming) {
   return merged;
 }
 
-// Execução unificada de A + B + D + E em paralelo via Jina Proxy
-async function fetchUnifiedSearch(term) {
-  const queries = getUnifiedSearchQueries(term);
-  if (queries.length === 0) return [];
+// Carregamento progressivo em segundo plano das páginas de continuação do InnerTube
+async function runProgressiveContinuations(term, globalMap, continuations, sessionId) {
+  const categories = Object.keys(continuations || {});
 
-  const queryPromises = queries.map(async (q) => {
-    try {
-      const text = await fetchViaJina(`https://music.youtube.com/search?q=${encodeURIComponent(q)}`);
-      return parseSearchMarkdown(text);
-    } catch (err) {
-      console.warn(`[musicSearch] Consulta '${q}' falhou:`, err?.message || err);
-      return [];
-    }
-  });
+  for (const cat of categories) {
+    let token = continuations[cat];
+    const seenTokens = new Set();
+    let emptyCount = 0;
 
-  const resultsArrays = await Promise.all(queryPromises);
+    while (token && !seenTokens.has(token)) {
+      if (sessionId !== activeSearchSessionId) {
+        // Nova busca iniciada, encerra o ciclo da busca anterior
+        return;
+      }
+      seenTokens.add(token);
 
-  // Deduplicação por ID real com preservação de todas as entidades únicas encontradas
-  const globalMap = new Map();
+      try {
+        const url = cat === 'youtube'
+          ? `/api/ytmusic/youtube?continuation=${encodeURIComponent(token)}&q=${encodeURIComponent(term)}`
+          : `/api/ytmusic/search?continuation=${encodeURIComponent(token)}&type=${cat}&q=${encodeURIComponent(term)}`;
 
-  for (const items of resultsArrays) {
-    for (const item of items) {
-      if (!item) continue;
-      const key = getItemEntityKey(item);
-      if (!key) continue;
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) break;
 
-      if (globalMap.has(key)) {
-        const existing = globalMap.get(key);
-        globalMap.set(key, mergeItemMetadata(existing, item));
-      } else {
-        globalMap.set(key, item);
+        const data = await res.json();
+        const items = data.items || [];
+
+        if (items.length > 0) {
+          emptyCount = 0;
+          for (const raw of items) {
+            const formatted = formatSearchItem(raw);
+            if (!formatted) continue;
+            const key = getItemEntityKey(formatted);
+            if (!key) continue;
+            if (globalMap.has(key)) {
+              globalMap.set(key, mergeItemMetadata(globalMap.get(key), formatted));
+            } else {
+              globalMap.set(key, formatted);
+            }
+          }
+
+          // Atualiza cache em memória com os resultados progressivamente acumulados
+          const accumulated = Array.from(globalMap.values());
+          setCached(cacheKey(term, '', ''), { results: accumulated, continuation: '' });
+
+          setCached(cacheKey(term, 'artists', ''), {
+            results: accumulated.filter((t) => t && t.type === 'artist'),
+            continuation: '',
+          });
+          setCached(cacheKey(term, 'albums', ''), {
+            results: accumulated.filter((t) => t && t.type === 'album'),
+            continuation: '',
+          });
+          setCached(cacheKey(term, 'playlists', ''), {
+            results: accumulated.filter((t) => t && (t.type === 'playlist' || t.type === 'community_playlist' || t.type === 'mix' || t.playlistId)),
+            continuation: '',
+          });
+          setCached(cacheKey(term, 'youtube', ''), {
+            results: accumulated.filter((t) => t && t.source === 'YouTube' && t.type !== 'community_playlist' && t.type !== 'playlist'),
+            continuation: '',
+          });
+
+          // Notifica os ouvintes da interface para acréscimo progressivo
+          notifySearchProgress(term, accumulated);
+        } else {
+          emptyCount += 1;
+          if (emptyCount >= 3) break;
+        }
+
+        token = data.continuation || null;
+      } catch (err) {
+        console.warn(`[musicSearch] erro na continuação progressiva (${cat}):`, err?.message || err);
+        break;
       }
     }
   }
+}
 
-  return Array.from(globalMap.values());
+// Execução unificada de busca via InnerTube (sem Jina)
+async function fetchUnifiedSearch(term) {
+  const trimmed = (term || '').trim();
+  if (!trimmed) return [];
+
+  const currentSessionId = ++activeSearchSessionId;
+
+  try {
+    const res = await fetch(`/api/ytmusic/bundle?q=${encodeURIComponent(trimmed)}`, {
+      headers: { 'Accept': 'application/json' },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok) {
+        const songs = (data.songs || []).map((s) => ({
+          videoId: s.videoId,
+          title: s.title,
+          artist: s.artist || 'YouTube Music',
+          album: s.album || '',
+          durationStr: s.durationStr || '',
+          duration: parseDurationStr(s.durationStr),
+          thumbnail: s.thumbnail || (s.videoId ? `https://i.ytimg.com/vi/${s.videoId}/hqdefault.jpg` : ''),
+          type: 'song',
+          source: 'YouTube Music',
+          channelTitle: s.artist || 'YouTube Music',
+          _type: 'song',
+        }));
+
+        const artists = (data.artists || []).map((a) => ({
+          title: a.name || a.title,
+          artist: a.name || a.title,
+          type: 'artist',
+          browseId: a.browseId,
+          thumbnail: a.thumbnail,
+          source: 'YouTube Music',
+        }));
+
+        const albums = (data.albums || []).map((al) => ({
+          title: al.title,
+          artist: al.artist,
+          type: 'album',
+          browseId: al.browseId,
+          thumbnail: al.thumbnail,
+          source: 'YouTube Music',
+        }));
+
+        const playlists = (data.playlists || []).map((p) => {
+          const isMix = p.playlistId?.startsWith('RD');
+          const isCommunity = p.playlistId?.startsWith('PL');
+          return {
+            title: p.title,
+            artist: p.author || 'YouTube Music',
+            type: isMix ? 'mix' : isCommunity ? 'community_playlist' : 'playlist',
+            playlistId: p.playlistId,
+            browseId: p.browseId,
+            thumbnail: p.thumbnail,
+            source: 'YouTube Music',
+          };
+        });
+
+        const ytVideos = (data.youtube || []).map((y) => ({
+          videoId: y.videoId,
+          title: y.title,
+          artist: y.artist || 'YouTube',
+          album: '',
+          durationStr: y.durationStr || '',
+          duration: parseDurationStr(y.durationStr),
+          thumbnail: y.thumbnail || (y.videoId ? `https://i.ytimg.com/vi/${y.videoId}/hqdefault.jpg` : ''),
+          type: y.type || 'song',
+          source: 'YouTube',
+          channelTitle: y.artist,
+          _type: 'video',
+        }));
+
+        const all = [...songs, ...artists, ...albums, ...playlists, ...ytVideos];
+
+        const globalMap = new Map();
+        for (const item of all) {
+          const key = getItemEntityKey(item);
+          if (!key) continue;
+          if (globalMap.has(key)) {
+            globalMap.set(key, mergeItemMetadata(globalMap.get(key), item));
+          } else {
+            globalMap.set(key, item);
+          }
+        }
+
+        const initialResults = Array.from(globalMap.values());
+
+        // Inicia carregamento progressivo em segundo plano se houver tokens de continuação
+        if (data.continuations && Object.keys(data.continuations).length > 0) {
+          runProgressiveContinuations(trimmed, globalMap, data.continuations, currentSessionId);
+        }
+
+        return initialResults;
+      }
+    }
+  } catch (err) {
+    console.warn('[musicSearch] InnerTube fetchUnifiedSearch falhou:', err?.message || err);
+  }
+
+  return [];
 }
 
 // Busca músicas (aba "Músicas") — Songs + Videos tocáveis (com videoId).
@@ -262,74 +489,270 @@ export async function searchMore(query, filter, continuation, opts = {}) {
 }
 
 // ==========================================
-// PARSER REPARADO DE PLAYLISTS E ÁLBUNS
+// RESOLUÇÃO DE PLAYLISTS E ÁLBUNS VIA INNERTUBE (WEB_REMIX)
 // ==========================================
+
+export async function fetchPlaylistViaInnerTube(playlistId) {
+  if (!playlistId) throw new Error('playlistId ausente');
+  const cleanId = String(playlistId).replace(/^[?&]list=/, '').trim();
+  const browseId = cleanId.startsWith('VL') ? cleanId : `VL${cleanId}`;
+  const url = `/api/ytmusic/browse?browseId=${encodeURIComponent(browseId)}`;
+  
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) {
+    throw new Error(`InnerTube HTTP ${res.status}: ${res.statusText}`);
+  }
+  const json = await res.json();
+  if (json.ok === false) {
+    throw new Error(json.error || 'Falha na resposta do InnerTube');
+  }
+
+  let tracks = json.tracks || [];
+  let title = json.title || `Playlist (${cleanId})`;
+  let subtitle = json.subtitle || json.author || 'YouTube Music';
+  let thumbnail = json.thumbnail || '';
+
+  if (tracks.length === 0 && json.raw) {
+    const raw = json.raw;
+    const twoCol = raw.contents?.twoColumnBrowseResultsRenderer;
+    const singleCol = raw.contents?.singleColumnBrowseResultsRenderer;
+
+    const header = raw.header?.musicResponsiveHeaderRenderer || 
+      raw.header?.musicDetailHeaderRenderer ||
+      twoCol?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.musicResponsiveHeaderRenderer;
+    
+    if (header?.title?.runs?.[0]?.text) {
+      title = header.title.runs.map(r => r.text).join('');
+    }
+    if (header?.subtitle?.runs?.[0]?.text) {
+      subtitle = header.subtitle.runs.map(r => r.text).join('');
+    }
+    if (header?.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)?.[0]?.url) {
+      thumbnail = header.thumbnail.musicThumbnailRenderer.thumbnail.thumbnails.slice(-1)[0].url;
+    }
+
+    const shelf = twoCol?.secondaryContents?.sectionListRenderer?.contents?.[0]?.musicPlaylistShelfRenderer ||
+      twoCol?.secondaryContents?.sectionListRenderer?.contents?.[0]?.musicShelfRenderer ||
+      twoCol?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.musicPlaylistShelfRenderer ||
+      singleCol?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.musicPlaylistShelfRenderer;
+
+    for (const item of shelf?.contents || []) {
+      const r = item.musicResponsiveListItemRenderer;
+      if (!r) continue;
+
+      const flex0 = r.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+      const flex1 = r.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+      const flex2 = r.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+      const fixed0 = r.fixedColumns?.[0]?.musicResponsiveListItemFixedColumnRenderer?.text?.runs || [];
+
+      const tTitle = flex0.map(x => x.text).join('').trim();
+      const tArtist = flex1[0]?.text?.trim() || flex1.map(x => x.text).join('').trim() || 'Artista';
+      const tAlbum = flex2.map(x => x.text).join('').trim() || (flex1.length > 2 ? flex1[2]?.text?.trim() : '');
+      const tBrowseId = flex1[0]?.navigationEndpoint?.browseEndpoint?.browseId || flex2[0]?.navigationEndpoint?.browseEndpoint?.browseId || '';
+      const tDur = fixed0.map(x => x.text).join('').trim();
+
+      const tVideoId = r.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId ||
+        r.playlistItemData?.videoId ||
+        r.navigationEndpoint?.watchEndpoint?.videoId;
+
+      if (tTitle && tVideoId) {
+        tracks.push({
+          id: tVideoId,
+          videoId: tVideoId,
+          title: tTitle,
+          artist: tArtist,
+          album: tAlbum,
+          browseId: tBrowseId,
+          durationStr: tDur,
+          duration: parseDurationStr(tDur),
+          thumbnail: `https://i.ytimg.com/vi/${tVideoId}/hqdefault.jpg`,
+          source: 'YouTube Music',
+          type: 'song',
+          channelTitle: tArtist,
+          _type: 'song',
+        });
+      }
+    }
+  }
+
+  const cleanTracks = tracks.map((t, idx) => ({
+    id: t.videoId || `track_${idx}`,
+    videoId: t.videoId,
+    title: t.title,
+    artist: t.artist || subtitle || 'YouTube Music',
+    album: t.album || '',
+    browseId: t.browseId || '',
+    durationStr: t.durationStr || '',
+    duration: typeof t.duration === 'number' ? t.duration : parseDurationStr(t.durationStr),
+    thumbnail: t.thumbnail || (t.videoId ? `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg` : thumbnail),
+    source: t.source || 'YouTube Music',
+    type: 'song',
+    channelTitle: t.artist || subtitle || 'YouTube Music',
+    _type: 'song',
+  }));
+
+  return {
+    playlistId: cleanId.replace(/^VL/, ''),
+    browseId,
+    title,
+    author: subtitle,
+    thumbnail: thumbnail || cleanTracks[0]?.thumbnail || '',
+    tracksCount: cleanTracks.length,
+    tracks: cleanTracks,
+  };
+}
+
+// Resolução de faixas de PLAYLISTS via InnerTube (VL + playlistId -> youtubei/v1/browse)
 export async function getPlaylistItems(playlistId, _apiKey) {
   if (!playlistId) return [];
   try {
-    const text = await fetchViaJina(`https://music.youtube.com/playlist?list=${encodeURIComponent(playlistId)}`);
-    return parseTracksFromMarkdown(text);
+    const res = await fetchPlaylistViaInnerTube(playlistId);
+    if (res.tracks && res.tracks.length > 0) {
+      return res.tracks;
+    }
   } catch (err) {
-    console.warn('[musicSearch] getPlaylistItems (jina) falhou:', err?.message || err);
-    return [];
+    console.warn('[musicSearch] InnerTube getPlaylistItems falhou:', err?.message || err);
   }
+  return [];
 }
 
-// Resolução de faixas de ÁLBUNS (MPRE/MPSP) via r.jina.ai (ZERO CREDITS).
+// Resolução de faixas de ÁLBUNS via InnerTube (sem Jina)
 export async function getAlbumItems(albumId) {
   if (!albumId) return [];
+  const cleanId = String(albumId).trim();
   try {
-    const text = await fetchViaJina(`https://music.youtube.com/browse/${encodeURIComponent(albumId)}`);
-    return parseTracksFromMarkdown(text);
+    const browseId = cleanId.startsWith('VL') ? cleanId : (cleanId.startsWith('OLAK') ? `VL${cleanId}` : cleanId);
+    const url = `/api/ytmusic/browse?browseId=${encodeURIComponent(browseId)}`;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.tracks && json.tracks.length > 0) {
+        return json.tracks.map((t, idx) => ({
+          id: t.videoId || `track_${idx}`,
+          videoId: t.videoId,
+          title: t.title,
+          artist: t.artist || json.subtitle || 'YouTube Music',
+          album: t.album || json.title || '',
+          durationStr: t.durationStr || '',
+          duration: typeof t.duration === 'number' ? t.duration : parseDurationStr(t.durationStr),
+          thumbnail: t.thumbnail || (t.videoId ? `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg` : json.thumbnail || ''),
+          source: 'YouTube Music',
+          type: 'song',
+          channelTitle: t.artist || json.subtitle || 'YouTube Music',
+          _type: 'song',
+        }));
+      }
+    }
   } catch (err) {
-    console.warn('[musicSearch] getAlbumItems (jina) falhou:', err?.message || err);
-    return [];
+    console.warn('[musicSearch] InnerTube getAlbumItems falhou:', err?.message || err);
   }
+
+  // Se for OLAK ou playlist de álbum, tenta via fetchPlaylistViaInnerTube
+  if (cleanId.startsWith('OLAK') || cleanId.startsWith('VLOLAK')) {
+    try {
+      const plRes = await fetchPlaylistViaInnerTube(cleanId);
+      if (plRes.tracks && plRes.tracks.length > 0) {
+        return plRes.tracks;
+      }
+    } catch {}
+  }
+
+  return [];
 }
 
-// Versão completa — via r.jina.ai (ZERO CREDITS).
+// Versão completa de álbum
 export async function getAlbumItemsFull(albumId) {
   if (!albumId) return { tracks: [], album: null, unavailableTracks: 0 };
-  try {
-    const text = await fetchViaJina(`https://music.youtube.com/browse/${encodeURIComponent(albumId)}`);
-    const tracks = parseTracksFromMarkdown(text);
-    return { tracks, album: null, unavailableTracks: 0 };
-  } catch (err) {
-    console.warn('[musicSearch] getAlbumItemsFull (jina) falhou:', err?.message || err);
-    return { tracks: [], album: null, unavailableTracks: 0 };
-  }
+  const tracks = await getAlbumItems(albumId);
+  return { tracks, album: null, unavailableTracks: 0 };
 }
 
-// Resolução de faixas de MIX RD (radio/curated) via r.jina.ai (ZERO CREDITS).
+// Resolução de faixas de MIX RD (radio/curated) via InnerTube (sem Jina)
 export async function getMixItems(mixId) {
   if (!mixId) return [];
   try {
-    const text = await fetchViaJina(`https://music.youtube.com/playlist?list=${encodeURIComponent(mixId)}`);
-    return parseTracksFromMarkdown(text);
+    const res = await fetchPlaylistViaInnerTube(mixId);
+    if (res.tracks && res.tracks.length > 0) {
+      return res.tracks;
+    }
   } catch (err) {
-    console.warn('[musicSearch] getMixItems (jina) falhou:', err?.message || err);
-    return [];
+    console.warn('[musicSearch] InnerTube getMixItems falhou:', err?.message || err);
   }
+
+  // Tenta rádio se tiver videoId no RDAMVM
+  const clean = String(mixId).replace(/^RDAMVM/, '').replace(/^RD/, '');
+  if (clean.length === 11) {
+    try {
+      const res = await fetch(`/api/ytmusic/radio?videoId=${encodeURIComponent(clean)}`, {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.tracks && json.tracks.length > 0) {
+          return json.tracks.map((t, idx) => ({
+            id: t.videoId || `mix_${idx}`,
+            videoId: t.videoId,
+            title: t.title,
+            artist: t.artist || 'YouTube Music',
+            album: '',
+            durationStr: t.durationStr || '',
+            duration: parseDurationStr(t.durationStr),
+            thumbnail: t.thumbnail || `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`,
+            source: 'YouTube Music',
+            type: 'song',
+            channelTitle: t.artist || 'YouTube Music',
+            _type: 'song',
+          }));
+        }
+      }
+    } catch {}
+  }
+
+  return [];
 }
 
-// Versão paginada do mix — via r.jina.ai (ZERO CREDITS).
+// Versão paginada do mix — via InnerTube
 export async function getMixItemsPaginated(mixId, continuation) {
   if (!mixId && !continuation) return { tracks: [], continuation: '', count: 0 };
-  if (continuation) return { tracks: [], continuation: '', count: 0 };
   const tracks = await getMixItems(mixId);
   return { tracks, continuation: '', count: tracks.length };
 }
 
-// Versão paginada — via r.jina.ai (ZERO CREDITS).
+// Versão paginada da playlist — via InnerTube
 export async function getPlaylistItemsPaginated(playlistId, continuation) {
   if (!playlistId && !continuation) return { tracks: [], continuation: '', count: 0 };
-  if (continuation) return { tracks: [], continuation: '', count: 0 };
   const tracks = await getPlaylistItems(playlistId);
   return { tracks, continuation: '', count: tracks.length };
 }
 
-// Busca relacionados (recomendações por artista)
+// Busca relacionados via InnerTube (rádio ou busca direta)
 export async function getRelatedTracks(track, _apiKey, maxResults = 10) {
+  if (track?.videoId) {
+    try {
+      const res = await fetch(`/api/ytmusic/radio?videoId=${encodeURIComponent(track.videoId)}`, {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.tracks && json.tracks.length > 0) {
+          return json.tracks.slice(0, maxResults).map((t, idx) => ({
+            id: t.videoId || `rel_${idx}`,
+            videoId: t.videoId,
+            title: t.title,
+            artist: t.artist || 'YouTube Music',
+            album: '',
+            durationStr: t.durationStr || '',
+            duration: parseDurationStr(t.durationStr),
+            thumbnail: t.thumbnail || `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`,
+            source: 'YouTube Music',
+            type: 'song',
+            channelTitle: t.artist || 'YouTube Music',
+          }));
+        }
+      }
+    } catch {}
+  }
+
   const query = track?.artist ? `${track.artist} topic` : (track?.title ? `${track.title} official audio` : null);
   if (!query) return [];
   const { items } = await searchMusic(query, null, { maxResults });
@@ -372,361 +795,12 @@ export async function getVideoInfo(videoId) {
   };
 }
 
-// --- Requisições via r.jina.ai ---
-const JINA_BASE = 'https://r.jina.ai/';
-const TIMEOUT_MS = 14000;
-
-async function fetchViaJina(targetUrl) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const res = await fetch(`${JINA_BASE}${targetUrl}`, {
-      signal: controller.signal,
-      headers: { 'Accept': 'text/plain', 'X-Timeout': '12' },
-    });
-    clearTimeout(timer);
-    if (!res.ok) throw new Error(`Serviço indisponível (HTTP ${res.status}).`);
-    const text = await res.text();
-    if (!text || text.length < 50) throw new Error('Resposta vazia do serviço.');
-    return text;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-// Parser de faixas reparado e resiliente (compatível com Markdown Links + Estrutura Tabular do Jina)
-function parseTracksFromMarkdown(text) {
-  if (!text || typeof text !== 'string') return [];
-  const tracks = [];
-  const seen = new Set();
-  const lines = text.split('\n');
-
-  function findTitleNearby(idx) {
-    for (let j = idx + 1; j < Math.min(lines.length, idx + 6); j++) {
-      const l = lines[j].trim();
-      if (!l) continue;
-      if (/^!\[/.test(l)) continue;
-      if (/^\[.*\]\(https?:\/\//.test(l)) continue;
-      if (/^(Song|Video|Playlist|Album|Artist|•)/i.test(l)) continue;
-      if (/^\d{1,2}:\d{2}/.test(l)) continue;
-      if (l.length > 1 && l.length < 150) return l;
-    }
-    return '';
-  }
-
-  // 1. Passagem Principal: Links Markdown tolerantes (music.youtube, www.youtube ou relativo /watch?v=)
-  const linkRe = /\[([^\]]*)\]\((?:https?:\/\/(?:music\.|www\.)?youtube\.com)?\/watch\?v=([a-zA-Z0-9_-]{11})(?:[^\)]*)\)/;
-
-  for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(linkRe);
-    if (!m) continue;
-    let title = m[1].trim();
-    const videoId = m[2];
-    if (seen.has(videoId)) continue;
-
-    // Se o texto do link for vazio ou imagem markdown, buscar título na linha mais próxima
-    if (!title || title.startsWith('![') || title.startsWith('#')) {
-      title = findTitleNearby(i);
-    }
-
-    // Coletar linhas de metadados próximas
-    const meta = [];
-    for (let j = i + 1; j < Math.min(i + 8, lines.length) && meta.length < 6; j++) {
-      const l = lines[j].trim();
-      if (l) meta.push(l);
-    }
-
-    let artist = '';
-    let album = '';
-    let durationStr = '';
-    let isSong = true;
-
-    const songLine = meta.find((l) => l.startsWith('Song'));
-    const videoLine = meta.find((l) => l.startsWith('Video'));
-
-    if (songLine || videoLine) {
-      isSong = !!songLine;
-      const line = songLine || videoLine;
-      const artistMatch = line.match(/\[([^\]]+)\]\((?:https?:\/\/(?:music\.|www\.)?youtube\.com)?\/channel\//);
-      if (artistMatch) artist = artistMatch[1].trim();
-      const albumMatch = line.match(/\[([^\]]+)\]\((?:https?:\/\/(?:music\.|www\.)?youtube\.com)?\/browse\//);
-      if (albumMatch) album = albumMatch[1].trim();
-      const durMatch = line.match(/(\d{1,2}:\d{2}(?::\d{2})?)\s*$/);
-      if (durMatch) durationStr = durMatch[1];
-    } else {
-      const artistLine = meta.find((l) => /\[([^\]]+)\]\((?:https?:\/\/(?:music\.|www\.)?youtube\.com)?\/channel\//.test(l));
-      if (artistLine) {
-        artist = artistLine.match(/\[([^\]]+)\]/)?.[1]?.trim() || '';
-      }
-      const durLine = meta.find((l) => /^\d{1,2}:\d{2}(?::\d{2})?$/.test(l));
-      if (durLine) durationStr = durLine;
-    }
-
-    // Se não encontrou duração nas linhas especiais, procurar padrão mm:ss em qualquer meta linha
-    if (!durationStr) {
-      for (const ml of meta) {
-        const dm = ml.match(/\b(\d{1,2}:\d{2}(?::\d{2})?)\b/);
-        if (dm) {
-          durationStr = dm[1];
-          break;
-        }
-      }
-    }
-
-    // Se não encontrou artista via link de canal, checar se a primeira linha de meta é o artista
-    if (!artist && meta.length > 0) {
-      const candidateArtist = meta[0];
-      if (
-        candidateArtist &&
-        candidateArtist !== durationStr &&
-        !candidateArtist.startsWith('http') &&
-        !candidateArtist.startsWith('![') &&
-        !candidateArtist.startsWith('#') &&
-        candidateArtist.length < 80
-      ) {
-        artist = candidateArtist.replace(/^\[([^\]]+)\]\([^\)]*\)/, '$1').trim();
-      }
-    }
-
-    // Extrair "Artista - Faixa" se o título contiver hífen
-    const { artist: parsedArtist, song: parsedSong } = parseTitle(title, artist);
-    const finalTitle = parsedSong || title || `Faixa ${videoId}`;
-    const finalArtist = parsedArtist || artist || 'YouTube Music';
-
-    seen.add(videoId);
-    const duration = parseDurationStr(durationStr);
-
-    tracks.push({
-      videoId,
-      title: finalTitle,
-      artist: finalArtist,
-      album: album || '',
-      thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-      duration,
-      durationStr: durationStr || '',
-      type: 'song',
-      source: 'YouTube Music',
-      channelTitle: finalArtist,
-      _type: isSong ? 'song' : 'video',
-    });
-  }
-
-  // 2. Passagem Secundária: Extrair watch?v= soltos no texto bruto (tabelas e links sem padrão markdown)
-  const allWatchMatches = [...text.matchAll(/watch\?v=([a-zA-Z0-9_-]{11})/g)];
-  for (const wm of allWatchMatches) {
-    const videoId = wm[1];
-    if (seen.has(videoId)) continue;
-
-    const matchIndex = wm.index || 0;
-    const textBefore = text.slice(Math.max(0, matchIndex - 300), matchIndex);
-    const textAfter = text.slice(matchIndex, matchIndex + 300);
-
-    const localLines = (textBefore + '\n' + textAfter).split('\n').map((l) => l.trim()).filter(Boolean);
-    let titleCandidate = '';
-    let artistCandidate = '';
-    let durCandidate = '';
-
-    for (const l of localLines) {
-      if (l.includes(videoId) || l.startsWith('http') || l.startsWith('![')) continue;
-      const dm = l.match(/\b(\d{1,2}:\d{2}(?::\d{2})?)\b/);
-      if (dm && !durCandidate) {
-        durCandidate = dm[1];
-        continue;
-      }
-      if (!titleCandidate && l.length > 2 && l.length < 120 && !l.startsWith('#')) {
-        titleCandidate = l.replace(/^\[([^\]]+)\]\([^\)]*\)/, '$1').trim();
-      } else if (!artistCandidate && l.length > 2 && l.length < 80 && !l.startsWith('#')) {
-        artistCandidate = l.replace(/^\[([^\]]+)\]\([^\)]*\)/, '$1').trim();
-      }
-    }
-
-    const { artist: parsedArtist, song: parsedSong } = parseTitle(titleCandidate, artistCandidate);
-    seen.add(videoId);
-
-    tracks.push({
-      videoId,
-      title: parsedSong || titleCandidate || `Faixa ${videoId}`,
-      artist: parsedArtist || artistCandidate || 'YouTube Music',
-      album: '',
-      thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-      duration: parseDurationStr(durCandidate),
-      durationStr: durCandidate || '',
-      type: 'song',
-      source: 'YouTube Music',
-      channelTitle: parsedArtist || artistCandidate || '',
-      _type: 'song',
-    });
-  }
-
-  return tracks;
-}
-
-// Parser do markdown da página de search do YouTube Music (via r.jina.ai).
-function parseSearchMarkdown(text) {
-  if (!text || typeof text !== 'string') return [];
-  const results = [];
-  const seen = new Set();
-  const lines = text.split('\n');
-
-  // Músicas — reusa o parser reparado de watch links
-  const songs = parseTracksFromMarkdown(text);
-  for (const s of songs) {
-    if (seen.has(s.videoId)) continue;
-    seen.add(s.videoId);
-    results.push({ ...s, type: 'song' });
-  }
-
-  function nearbyImage(idx) {
-    for (let j = Math.max(0, idx - 4); j <= Math.min(lines.length - 1, idx + 4); j++) {
-      const im = lines[j].match(/!\[[^\]]*\]\((https?:\/\/[^\)]+)\)/);
-      if (im) return im[1];
-    }
-    return '';
-  }
-
-  function nextTitle(idx) {
-    for (let j = idx + 1; j < Math.min(lines.length, idx + 6); j++) {
-      const l = lines[j].trim();
-      if (!l) continue;
-      if (/^!\[/.test(l)) continue;
-      if (/^\[.*\]\(https?:\/\//.test(l)) continue;
-      if (/^(Song|Video|Playlist|Album|Artist|•)/i.test(l)) continue;
-      if (/^\d{1,2}:\d{2}/.test(l)) continue;
-      return l;
-    }
-    return '';
-  }
-
-  const linkRe = /\[([^\]]*)\]\((https:\/\/music\.youtube\.com\/(?:watch\?v=|channel\/|browse\/|playlist\?list=)[^\)]*)\)/;
-
-  for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(linkRe);
-    if (!m) continue;
-    const linkText = m[1].trim();
-    const url = m[2];
-
-    if (url.includes('/watch?v=')) continue; // músicas já capturadas acima
-
-    if (url.includes('/channel/UC') || url.includes('/browse/UC')) {
-      const bidMatch = url.match(/\/(?:channel|browse)\/(UC[a-zA-Z0-9_-]+)/);
-      if (!bidMatch) continue;
-      const bid = bidMatch[1];
-      if (seen.has(bid)) continue;
-      const title = linkText || nextTitle(i);
-      if (!title) continue;
-      seen.add(bid);
-      results.push({
-        title,
-        artist: title,
-        type: 'artist',
-        browseId: bid,
-        thumbnail: nearbyImage(i),
-        music_url: url,
-        source: 'YouTube Music',
-      });
-    } else if (url.includes('/browse/MP')) {
-      const bidMatch = url.match(/\/browse\/(MP[a-zA-Z0-9_-]+)/);
-      if (!bidMatch) continue;
-      const bid = bidMatch[1];
-      if (seen.has(bid)) continue;
-      const title = linkText || nextTitle(i);
-      if (!title) continue;
-      seen.add(bid);
-      results.push({
-        title,
-        type: 'album',
-        browseId: bid,
-        thumbnail: nearbyImage(i),
-        music_url: url,
-        source: 'YouTube Music',
-      });
-    } else if (url.includes('/playlist?list=')) {
-      const pidMatch = url.match(/list=([a-zA-Z0-9_-]+)/);
-      if (!pidMatch) continue;
-      const pid = pidMatch[1];
-      if (seen.has(pid)) continue;
-      const title = linkText || nextTitle(i);
-      if (!title) continue;
-      seen.add(pid);
-      const isMix = pid.startsWith('RD');
-      const isCommunity = pid.startsWith('PL') || (!isMix && !pid.startsWith('OLAK'));
-      results.push({
-        title,
-        type: isMix ? 'mix' : (isCommunity ? 'community_playlist' : 'playlist'),
-        playlistId: pid,
-        thumbnail: nearbyImage(i),
-        music_url: url,
-        source: 'YouTube Music',
-      });
-    }
-  }
-
-  return results;
-}
-
-// Busca no YouTube (youtube.com) via r.jina.ai — ZERO CREDITS, frontend.
+// Busca no YouTube via InnerTube (sem Jina)
 export async function searchYouTube(query, opts = {}) {
   if (!query || !query.trim()) return { items: [], continuation: '' };
-  try {
-    const text = await fetchViaJina(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`);
-    const allItems = parseYouTubeMarkdown(text);
-    const items = typeof opts.maxResults === 'number' && opts.maxResults > 0 ? allItems.slice(0, opts.maxResults) : allItems;
-    return { items, continuation: '' };
-  } catch (err) {
-    console.warn('[musicSearch] searchYouTube (jina) falhou:', err?.message || err);
-    return { items: [], continuation: '' };
-  }
-}
-
-// Parser do markdown da página de resultados do YouTube (via r.jina.ai).
-function parseYouTubeMarkdown(text) {
-  const items = [];
-  const seen = new Set();
-
-  // Músicas/vídeos
-  const re = /\[([^\]]+)\]\(https?:\/\/(?:www\.|m\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})(?:[^\)]*)?\)/g;
-  let m;
-  while ((m = re.exec(text)) !== null) {
-    const title = m[1].trim();
-    const videoId = m[2];
-    if (seen.has(videoId)) continue;
-    seen.add(videoId);
-    const { artist, song } = parseTitle(title, '');
-    items.push({
-      videoId,
-      title: song,
-      artist,
-      album: '',
-      thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-      duration: 0,
-      durationStr: '',
-      type: 'song',
-      source: 'YouTube',
-      channelTitle: artist,
-    });
-  }
-
-  // Playlists da comunidade encontradas na busca do YouTube
-  const plRe = /\[([^\]]+)\]\(https?:\/\/(?:www\.|m\.)?youtube\.com\/playlist\?list=([a-zA-Z0-9_-]{10,})(?:[^\)]*)?\)/g;
-  let plMatch;
-  while ((plMatch = plRe.exec(text)) !== null) {
-    const title = plMatch[1].trim();
-    const playlistId = plMatch[2];
-    if (seen.has(playlistId)) continue;
-    seen.add(playlistId);
-    const isCommunity = playlistId.startsWith('PL');
-    items.push({
-      playlistId,
-      title,
-      artist: 'Comunidade YouTube',
-      type: isCommunity ? 'community_playlist' : 'playlist',
-      source: 'YouTube',
-      thumbnail: '',
-      music_url: `https://www.youtube.com/playlist?list=${playlistId}`,
-    });
-  }
-
-  return items;
+  const { results, continuation } = await fetchSearch(query, 'youtube');
+  const items = typeof opts.maxResults === 'number' && opts.maxResults > 0 ? results.slice(0, opts.maxResults) : results;
+  return { items, continuation };
 }
 
 // --- Helpers ---

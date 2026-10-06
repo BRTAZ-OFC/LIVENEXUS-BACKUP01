@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Play, Plus, Loader2, AlertCircle, ListMusic, Link2, Disc3, Clock, History, X, Trash2, ExternalLink, ChevronDown, User, Disc } from 'lucide-react';
 import { Input } from '@dashboard/componentes/ui/input';
 import { Button } from '@dashboard/componentes/ui/button';
-import { searchMusic, searchArtists, searchAlbums, searchPlaylists, searchMixes, searchMore, getPlaylistItems, getMixItems, getAlbumItems, getVideoInfo } from '@dashboard/biblioteca/Library_musicSearch';
+import { searchMusic, searchArtists, searchAlbums, searchPlaylists, searchMixes, searchMore, getPlaylistItems, getMixItems, getAlbumItems, getVideoInfo, subscribeSearchProgress } from '@dashboard/biblioteca/Library_musicSearch';
 import { parseMusicUrl, normalizeMusicUrl, isBlockedUrl } from '@dashboard/biblioteca/Library_musicUrlManager';
 import { queueManager } from '@dashboard/biblioteca/Library_queueManager';
 import { playTrack } from '@dashboard/biblioteca/Library_youtubePlayer';
@@ -28,6 +28,23 @@ export default function MusicSearch() {
   const [tab, setTab] = useState('songs');
   const [continuation, setContinuation] = useState('');
   const [searchHistory, setSearchHistory] = useState(() => searchHistoryManager.list());
+
+  // Atualização progressiva lazy loading para a aba ativa
+  useEffect(() => {
+    const unsubscribe = subscribeSearchProgress(({ query: q, results: allResults }) => {
+      if (q && query && q.toLowerCase() === query.trim().toLowerCase()) {
+        const tabCfg = TABS.find((t) => t.key === tab);
+        let filtered = allResults;
+        if (tabCfg?.filter === 'artists') filtered = allResults.filter((t) => t && t.type === 'artist');
+        else if (tabCfg?.filter === 'albums') filtered = allResults.filter((t) => t && t.type === 'album');
+        else if (tabCfg?.filter === 'playlists') filtered = allResults.filter((t) => t && (t.type === 'playlist' || t.type === 'community_playlist' || t.type === 'mix' || t.playlistId));
+        else if (tab === 'songs') filtered = allResults.filter((t) => t && t.videoId);
+        else if (tab === 'mixes') filtered = allResults.filter((t) => t && t.type === 'mix');
+        setResults(filtered);
+      }
+    });
+    return unsubscribe;
+  }, [query, tab]);
 
   // Executa a busca conforme a aba ativa. Cada função retorna { items, continuation }.
   async function handleSearch(e) {

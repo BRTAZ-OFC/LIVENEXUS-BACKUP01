@@ -26,7 +26,7 @@ const CATEGORIES = [
 const PACK_GROUPS = {
   Original: ['pack-live-completa-pro'],
   'Gamer / Tecnologia': [
-    'pack-gamer-esports', 'pack-cyberpunk-2099', 'pack-futurista-ultra',
+    'pack-gamer', 'pack-gamer-esports', 'pack-cyberpunk-2099', 'pack-futurista-ultra',
     'pack-scifi-command', 'pack-synthwave-80s', 'pack-glitch-protocol',
     'pack-hud-tactical', 'pack-holografico-light', 'pack-techwear-industrial',
     'pack-streamer-rgb'

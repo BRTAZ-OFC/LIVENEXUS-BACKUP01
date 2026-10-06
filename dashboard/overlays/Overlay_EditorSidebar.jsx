@@ -528,14 +528,8 @@ export default function OverlayEditorSidebar({
         scrollSpeed = 0;
       };
 
-      const preventManual = (e) => {
-        e.preventDefault();
-      };
-
       el.addEventListener('mousemove', handleMouseMove);
       el.addEventListener('mouseleave', handleMouseLeave);
-      el.addEventListener('wheel', preventManual, { passive: false });
-      el.addEventListener('touchmove', preventManual, { passive: false });
 
       const step = () => {
         if (scrollSpeed !== 0 && el) {
@@ -550,8 +544,6 @@ export default function OverlayEditorSidebar({
         cancel: () => {
           el.removeEventListener('mousemove', handleMouseMove);
           el.removeEventListener('mouseleave', handleMouseLeave);
-          el.removeEventListener('wheel', preventManual);
-          el.removeEventListener('touchmove', preventManual);
           cancelAnimationFrame(animationFrameId);
         }
       });

@@ -1,12 +1,23 @@
 import { useState } from 'react';
-import { FlaskConical, ChevronRight, ChevronLeft, Sparkles, Box, Shield, Layers, RadioTower, Radio, Volume2, HelpCircle, Keyboard } from 'lucide-react';
+import { FlaskConical, ChevronRight, ChevronLeft, Sparkles, Box, Shield, Layers, RadioTower, Radio, Volume2, HelpCircle, Keyboard, Library } from 'lucide-react';
 import { useAutoScroll } from '@dashboard/componentes/useAutoScroll';
 import YouTubeTest1Section from './lab/Admin_YouTubeTest1Section';
 import AdminRtcTestLabSection from './lab/rtc/Admin_RtcTestLabSection';
 import AdminWebSpeechVoicesTest from './lab/tts-neural/Admin_WebSpeechVoicesTest';
 import AdminGlobalShortcutsTest from './lab/global-shortcuts/Admin_GlobalShortcutsTest';
+import LabTestIdsLibrarySection from './lab/test-ids/Lab_TestIdsLibrarySection';
+import LabPhotoshopSection from './lab/photoshop/LabPhotoshopSection';
+import LabPhotoshop2Section from './lab/photoshop2/LabPhotoshop2Section';
+import LabPhotoshop3Section from './lab/photoshop3/LabPhotoshop3Section';
 
 const LAB_TOOLS = [
+  {
+    id: 'test-ids-library',
+    name: 'Teste Biblioteca',
+    category: 'Música & Biblioteca',
+    icon: Library,
+    description: 'Laboratório isolado para teste, identificação e salvamento de IDs de músicas e playlists do YouTube / YouTube Music.',
+  },
   {
     id: 'global-shortcuts-test',
     name: 'Teste Atalhos Globais',
@@ -41,6 +52,27 @@ const LAB_TOOLS = [
     category: 'Conexões & Streaming',
     icon: RadioTower,
     description: 'Conexão limpa com live pública sem Data API v3 · Bootstrap 1-shot + tentativa de chat direto pelo Frontend.',
+  },
+  {
+    id: 'lab-photoshop',
+    name: 'Photoshop',
+    category: 'Ferramentas',
+    icon: Sparkles,
+    description: 'Estúdio visual e editor de movimento baseado no projeto REAL MotionEditor para animação, timeline, keyframes e efeitos.',
+  },
+  {
+    id: 'lab-photoshop-2',
+    name: 'Photoshop 2',
+    category: 'Ferramentas',
+    icon: Sparkles,
+    description: 'Estúdio visual e editor de gráficos em movimento baseado no projeto REAL Nemo para GPU, shaders, timeline/graph editor, vetores e máscaras.',
+  },
+  {
+    id: 'lab-photoshop-3',
+    name: 'Photoshop 3',
+    category: 'Ferramentas',
+    icon: Sparkles,
+    description: 'Bancada de testes e Canvas nativo LiveNexus para suporte a texto, imagens, formas, movimentação, redimensionamento e futura árvore de animações.',
   },
 ];
 
@@ -136,8 +168,12 @@ export default function AdminLabSection() {
           </div>
         )}
 
+        {activeToolId === 'test-ids-library' && <LabTestIdsLibrarySection />}
         {activeToolId === 'teste-rtc' && <AdminRtcTestLabSection />}
         {activeToolId === 'youtube-test-1' && <YouTubeTest1Section />}
+        {activeToolId === 'lab-photoshop' && <LabPhotoshopSection />}
+        {activeToolId === 'lab-photoshop-2' && <LabPhotoshop2Section />}
+        {activeToolId === 'lab-photoshop-3' && <LabPhotoshop3Section />}
       </div>
 
       {/* Drawer deslizante de ferramentas (à direita) */}

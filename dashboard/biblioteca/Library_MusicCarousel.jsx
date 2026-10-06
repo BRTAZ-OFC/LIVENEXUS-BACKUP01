@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play, Plus, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUserLibrary } from '@dashboard/biblioteca/Library_useUserLibrary';
 
@@ -17,20 +17,8 @@ export default function MusicCarousel({ title, items, onActivate, onAdd, variant
 
   const [index, setIndex] = useState(0);
   const [noAnim, setNoAnim] = useState(false);
-  const pausedRef = useRef(false);
 
   useEffect(() => { setIndex(0); setNoAnim(false); }, [items]);
-
-  // Auto-advance devagar: um card a cada ~4s.
-  useEffect(() => {
-    if (count <= 1) return;
-    const id = setInterval(() => {
-      if (pausedRef.current) return;
-      setNoAnim(false);
-      setIndex((i) => i + 1);
-    }, 4000);
-    return () => clearInterval(id);
-  }, [count]);
 
   // Wrap infinito: ao completar um conjunto, volta ao início sem animação
   // (posição visualmente idêntica — o track é duplicado).
@@ -76,11 +64,7 @@ export default function MusicCarousel({ title, items, onActivate, onAdd, variant
           </div>
         </div>
       )}
-      <div
-        className="overflow-hidden"
-        onMouseEnter={() => { pausedRef.current = true; }}
-        onMouseLeave={() => { pausedRef.current = false; }}
-      >
+      <div className="overflow-hidden">
         <div className="flex" style={{ transform: `translate3d(${-offset}px,0,0)`, transition }}>
           {loop.map((it, i) => {
             const key = (it.videoId || it.playlistId || it.browseId || it.title) + '-' + i;

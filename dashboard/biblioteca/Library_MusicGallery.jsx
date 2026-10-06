@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, History, Trash2, Users, ArrowLeft } from 'lucide-react';
 import { useNewUserDataCentral } from '@dashboard/configuracao/DataCentral_NewUserDataCentral';
 import {
-  searchAll, searchMusic, searchPlaylists } from
+  searchAll, searchMusic, searchPlaylists, subscribeSearchProgress } from
 '@dashboard/biblioteca/Library_musicSearch';
 import { searchItunes } from '@dashboard/biblioteca/Library_itunes';
 import { searchDeezer } from '@dashboard/biblioteca/Library_deezer';
 import { searchBandcamp } from '@dashboard/biblioteca/Library_bandcamp';
 import { searchAudius } from '@dashboard/biblioteca/Library_audius';
 import { searchMixcloud } from '@dashboard/biblioteca/Library_mixcloud';
-import { aggregateSearch } from '@dashboard/biblioteca/Library_musicAggregator';
+import { aggregateSearch, mergeProgressiveGroups } from '@dashboard/biblioteca/Library_musicAggregator';
 import { queueManager } from '@dashboard/biblioteca/Library_queueManager';
 import { playTrack } from '@dashboard/biblioteca/Library_youtubePlayer';
 import { searchHistoryManager } from '@dashboard/biblioteca/Library_searchHistoryManager';
@@ -75,6 +75,19 @@ export default function MusicGallery({ externalQuery, onSearch, filter }) {
       setGroups({});
       setError(null);
     }
+  }, [externalQuery]);
+
+  // Carregamento progressivo lazy loading: conforme novas páginas chegam do InnerTube,
+  // acrescenta os resultados aos existentes preservando ordem, deduplicação por ID real,
+  // categorias e fontes já exibidas.
+  useEffect(() => {
+    const unsubscribe = subscribeSearchProgress(({ query: q, results }) => {
+      const currentTerm = (externalQuery || '').trim();
+      if (q && currentTerm && q.toLowerCase() === currentTerm.toLowerCase()) {
+        setGroups((prev) => mergeProgressiveGroups(prev, results));
+      }
+    });
+    return unsubscribe;
   }, [externalQuery]);
 
   async function loadBrowse() {

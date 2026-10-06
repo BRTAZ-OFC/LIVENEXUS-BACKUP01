@@ -22,16 +22,10 @@ export default function ChatFeed({ messages, test, setTest, onSend }) {
     checkButtons: true,
   });
 
-  // Scroll manual 2x mais rápido — multiplica o delta da roda do mouse/trackpad
+  // Scroll manual nativo
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const onWheel = (e) => {
-      e.preventDefault();
-      el.scrollTop += e.deltaY * 2;
-    };
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
   }, [messages.length > 0]);
 
   const handleScroll = () => {

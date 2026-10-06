@@ -70,5 +70,102 @@
         "horizontalGuides": []
       }
     }
+  ],
+  "84716221-4105-490b-868c-bc4088961c86": [
+    {
+      "id": "1791279448957",
+      "name": "Novo Cenário",
+      "mode": "LOCAL",
+      "localUrl": "https://ais-dev-nvl7h4r54wfgorvthculsz-53808708740.us-east5.run.app/cenario/1791279448957",
+      "broadcastUrl": "https://ais-dev-nvl7h4r54wfgorvthculsz-53808708740.us-east5.run.app/cenario/receiver/1791279448957?runtimeId=rtc_723d9e62d2b04b6a",
+      "instances": [
+        {
+          "id": "inst-1791279454659",
+          "widgetId": "manual-death-counter",
+          "elementKey": "full_widget",
+          "isFullWidget": true,
+          "name": "Contador de Mortes",
+          "x": 25.5,
+          "y": 34.5,
+          "width": 320,
+          "height": 120,
+          "zIndex": 1,
+          "visible": true,
+          "locked": false,
+          "config": {
+            "deathCount": 0,
+            "fontFamily": "Inter, sans-serif"
+          }
+        }
+      ],
+      "background": {
+        "type": "transparent",
+        "color": "#020617",
+        "gradient": "linear-gradient(135deg, #1e1b4b 0%, #311042 100%)",
+        "image": "",
+        "opacity": 100,
+        "blur": 0,
+        "brightness": 100,
+        "contrast": 100,
+        "saturate": 100,
+        "showBorder": false,
+        "borderWidth": "0px",
+        "borderRadius": "0px"
+      },
+      "visualizerSize": {
+        "width": 1920,
+        "height": 1080
+      },
+      "gridSettings": {
+        "showGrid": false,
+        "gridSize": 20,
+        "snapToGrid": false,
+        "showSafeAreas": false,
+        "verticalGuides": [],
+        "horizontalGuides": []
+      },
+      "subcenarios": [
+        {
+          "id": "default",
+          "name": "Subcenário 1",
+          "instances": [
+            {
+              "id": "inst-1791279454659",
+              "widgetId": "manual-death-counter",
+              "elementKey": "full_widget",
+              "isFullWidget": true,
+              "name": "Contador de Mortes",
+              "x": 25.5,
+              "y": 34.5,
+              "width": 320,
+              "height": 120,
+              "zIndex": 1,
+              "visible": true,
+              "locked": false,
+              "config": {
+                "deathCount": 0,
+                "fontFamily": "Inter, sans-serif"
+              }
+            }
+          ],
+          "background": {
+            "type": "transparent",
+            "color": "#020617",
+            "gradient": "linear-gradient(135deg, #1e1b4b 0%, #311042 100%)",
+            "image": "",
+            "opacity": 100,
+            "blur": 0,
+            "brightness": 100,
+            "contrast": 100,
+            "saturate": 100,
+            "showBorder": false,
+            "borderWidth": "0px",
+            "borderRadius": "0px"
+          },
+          "shortcut": "Shift + 1"
+        }
+      ],
+      "activeSubcenarioId": "default"
+    }
   ]
 }
