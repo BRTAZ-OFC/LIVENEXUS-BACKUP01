@@ -1,54 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import path from 'path'
-import fs from 'node:fs'
-import { fileURLToPath, pathToFileURL } from 'node:url'
-import { projectStoragePlugin } from './dashboard/painel-admin/lab/photoshop/server/projectStoragePlugin'
-import { assetStoragePlugin } from './dashboard/painel-admin/lab/photoshop/server/assetStoragePlugin'
-import { libraryStoragePlugin } from './dashboard/painel-admin/lab/photoshop/server/libraryStoragePlugin'
-import { exportPlugin } from './dashboard/painel-admin/lab/photoshop/server/exportPlugin'
-import { aiAssistPlugin } from './dashboard/painel-admin/lab/photoshop/server/aiAssistPlugin'
-
-function nemo2Plugin() {
-  const nemoDir = path.resolve(__dirname, './dashboard/painel-admin/lab/photoshop2');
-  const handler = (req, res, next) => {
-    if (!req.url.startsWith('/lab-nemo')) {
-      return next();
-    }
-    let reqPath = req.url.slice('/lab-nemo'.length).split('?')[0];
-    if (reqPath === '/' || reqPath === '') reqPath = '/index.html';
-    const filePath = path.join(nemoDir, reqPath);
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      const ext = path.extname(filePath).toLowerCase();
-      const mimeTypes = {
-        '.html': 'text/html; charset=utf-8',
-        '.js': 'application/javascript; charset=utf-8',
-        '.mjs': 'application/javascript; charset=utf-8',
-        '.css': 'text/css; charset=utf-8',
-        '.png': 'image/png',
-        '.jpg': 'image/jpeg',
-        '.svg': 'image/svg+xml',
-        '.wasm': 'application/wasm',
-        '.json': 'application/json',
-        '.ttf': 'font/ttf',
-        '.obj': 'text/plain',
-        '.vrm': 'application/octet-stream',
-      };
-      if (mimeTypes[ext]) {
-        res.setHeader('Content-Type', mimeTypes[ext]);
-      }
-      fs.createReadStream(filePath).pipe(res);
-      return;
-    }
-    next();
-  };
-
-  return {
-    name: 'nemo2-lab-plugin',
-    configureServer(server) { server.middlewares.use(handler); },
-    configurePreviewServer(server) { server.middlewares.use(handler); },
-  };
-}
+import { pathToFileURL } from 'node:url'
 
 function ytMusicPlugin() {
   return {
@@ -576,30 +529,12 @@ function authRoutesPlugin() {
 // https://vite.dev/config/
 export default defineConfig({
   resolve: {
-    alias: [
-      {
-        find: /^@\/(.*)/,
-        replacement: '$1',
-        async customResolver(source, importer, options) {
-          const cleanSource = source.startsWith('@/') ? source.slice(2) : source;
-          const target = path.resolve(__dirname, './dashboard', cleanSource);
-          const resolved = await this.resolve(target, importer, { skipSelf: true, ...options });
-          return resolved ? resolved.id : target;
-        }
-      },
-      {
-        find: '@dashboard',
-        replacement: path.resolve(__dirname, './dashboard'),
-      }
-    ]
+    alias: {
+      '@': path.resolve(__dirname, './dashboard'),
+      '@dashboard': path.resolve(__dirname, './dashboard'),
+    },
   },
   plugins: [
-    nemo2Plugin(),
-    projectStoragePlugin(),
-    assetStoragePlugin(),
-    libraryStoragePlugin(),
-    exportPlugin(),
-    aiAssistPlugin(),
     authRoutesPlugin(),
     ytMusicPlugin(),
     cloudflareStatsPlugin(),

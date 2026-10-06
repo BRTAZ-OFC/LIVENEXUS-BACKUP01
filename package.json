@@ -12,12 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dnd-kit/core": "^6.3.1",
-    "@dnd-kit/sortable": "^10.0.0",
-    "@dnd-kit/utilities": "^3.2.2",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
-    "@openai/chatkit-react": "^1.6.1",
     "@paper-design/shaders-react": "^0.0.81",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -48,7 +44,6 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
-    "@remotion/player": "4.0.463",
     "@stripe/react-stripe-js": "^3.0.0",
     "@stripe/stripe-js": "^5.2.0",
     "@tanstack/react-query": "^5.84.1",
@@ -60,7 +55,6 @@
     "embla-carousel-react": "^8.5.2",
     "framer-motion": "^11.16.4",
     "html2canvas": "^1.4.1",
-    "i18next": "^26.4.2",
     "iconify-icon": "^3.0.3",
     "input-otp": "^1.4.2",
     "jspdf": "^4.2.1",
@@ -77,7 +71,6 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.54.2",
     "react-hot-toast": "^2.6.0",
-    "react-i18next": "^17.0.15",
     "react-konva": "^19.3.0",
     "react-leaflet": "^4.2.1",
     "react-markdown": "^9.0.1",
@@ -85,14 +78,12 @@
     "react-resizable-panels": "^2.1.7",
     "react-router-dom": "^6.26.0",
     "recharts": "^2.15.4",
-    "remotion": "4.0.463",
     "sonner": "^2.0.1",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.171.0",
     "vaul": "^1.1.2",
-    "zod": "^3.24.2",
-    "zustand": "^5.0.15"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",

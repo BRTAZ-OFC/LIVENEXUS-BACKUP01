@@ -12,7 +12,7 @@ export default function WebcamSourceRenderer({ config = {}, isEditing = false })
   const mirror = config.mirror !== false; // default true for webcams
   const objectFit = config.objectFit || 'cover'; // cover, contain, fill
   const borderRadius = config.borderRadius ? (typeof config.borderRadius === 'number' ? `${config.borderRadius}px` : config.borderRadius) : '8px';
-  const showBorder = config.showBorder || Boolean(config.borderColor);
+  const showBorder = config.showBorder === true;
   const borderColor = config.borderColor || 'rgba(168, 85, 247, 0.4)';
   const borderWidth = config.borderWidth ? `${config.borderWidth}px` : '2px';
 

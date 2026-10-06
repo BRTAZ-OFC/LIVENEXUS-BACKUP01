@@ -140,7 +140,7 @@ export default function ReactChatAndVideoArea({ config = {}, isEditing = false }
       style={{
         borderRadius,
         background: backgroundColor,
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+        border: config.showBorder === true ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
       }}
       className="w-full h-full flex flex-col overflow-hidden text-slate-100 shadow-xl"
     >

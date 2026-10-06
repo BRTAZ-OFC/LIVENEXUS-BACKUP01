@@ -2440,10 +2440,17 @@ export default function OverlayEditorSidebar({
                         <button
                           type="button"
                           onClick={() => onUpdateInstance(selectedInst.id, {
-                            config: { ...selectedInst.config, showBorder: false }
+                            config: { 
+                              ...selectedInst.config, 
+                              showBorder: false,
+                              borderWidth: '0px',
+                              effBorderThickness: 0,
+                              effBorderActiveType: 'none',
+                              borderColor: 'transparent',
+                            }
                           })}
                           className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all ${
-                            selectedInst.config?.showBorder === false
+                            !selectedInst.config?.showBorder
                               ? 'bg-rose-600/30 border-rose-500/50 text-white'
                               : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
                           }`}
@@ -2453,11 +2460,23 @@ export default function OverlayEditorSidebar({
 
                         <button
                           type="button"
-                          onClick={() => onUpdateInstance(selectedInst.id, {
-                            config: { ...selectedInst.config, showBorder: true }
-                          })}
+                          onClick={() => {
+                            const curThickness = (selectedInst.config?.effBorderThickness !== undefined && selectedInst.config.effBorderThickness > 0) 
+                              ? selectedInst.config.effBorderThickness 
+                              : (parseInt(selectedInst.config?.borderWidth) || 0);
+                            onUpdateInstance(selectedInst.id, {
+                              config: { 
+                                ...selectedInst.config, 
+                                showBorder: true,
+                                borderWidth: `${curThickness}px`,
+                                effBorderThickness: curThickness,
+                                effBorderActiveType: (selectedInst.config?.effBorderActiveType && selectedInst.config.effBorderActiveType !== 'none') ? selectedInst.config.effBorderActiveType : 'border-solid',
+                                borderColor: (selectedInst.config?.borderColor && selectedInst.config.borderColor !== 'transparent') ? selectedInst.config.borderColor : '#ffffff'
+                              }
+                            });
+                          }}
                           className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all ${
-                            selectedInst.config?.showBorder !== false
+                            selectedInst.config?.showBorder === true
                               ? 'bg-purple-600 border-purple-400 text-white'
                               : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
                           }`}
@@ -2467,24 +2486,24 @@ export default function OverlayEditorSidebar({
                       </div>
 
                       {/* Opções de borda visíveis SOMENTE quando 'Com borda' estiver ativo */}
-                      {selectedInst.config?.showBorder !== false && (
+                      {selectedInst.config?.showBorder === true && (
                         <div className="space-y-2 pl-2 border-l-2 border-purple-500/40 pt-1">
                           <div className="grid grid-cols-2 gap-2 items-center">
                             <span className="text-[10px] text-slate-400 font-mono">Cor da Borda</span>
                             <div className="flex items-center gap-1.5 bg-black/40 border border-white/10 rounded-lg p-1">
                               <input
                                 type="color"
-                                value={selectedInst.config?.borderColor || '#ffffff'}
+                                value={selectedInst.config?.borderColor || selectedInst.config?.effBorderColor || '#ffffff'}
                                 onChange={(e) => onUpdateInstance(selectedInst.id, {
-                                  config: { ...selectedInst.config, borderColor: e.target.value }
+                                  config: { ...selectedInst.config, borderColor: e.target.value, effBorderColor: e.target.value }
                                 })}
                                 className="h-5 w-7 rounded border border-white/10 bg-transparent cursor-pointer p-0"
                               />
                               <input
                                 type="text"
-                                value={selectedInst.config?.borderColor || '#ffffff'}
+                                value={selectedInst.config?.borderColor || selectedInst.config?.effBorderColor || '#ffffff'}
                                 onChange={(e) => onUpdateInstance(selectedInst.id, {
-                                  config: { ...selectedInst.config, borderColor: e.target.value }
+                                  config: { ...selectedInst.config, borderColor: e.target.value, effBorderColor: e.target.value }
                                 })}
                                 className="w-full bg-transparent border-0 text-[10px] font-mono text-white p-0 uppercase"
                               />
@@ -2496,12 +2515,21 @@ export default function OverlayEditorSidebar({
                               <label className="text-[10px] text-slate-400 font-mono block mb-1">Espessura (px)</label>
                               <input
                                 type="number"
-                                min="1"
+                                min="0"
                                 max="20"
-                                value={parseInt(selectedInst.config?.borderWidth) || 1}
-                                onChange={(e) => onUpdateInstance(selectedInst.id, {
-                                  config: { ...selectedInst.config, borderWidth: `${e.target.value}px` }
-                                })}
+                                value={selectedInst.config?.effBorderThickness !== undefined ? selectedInst.config.effBorderThickness : (parseInt(selectedInst.config?.borderWidth) || 0)}
+                                onChange={(e) => {
+                                  const val = Math.max(0, parseInt(e.target.value) || 0);
+                                  onUpdateInstance(selectedInst.id, {
+                                    config: { 
+                                      ...selectedInst.config, 
+                                      borderWidth: `${val}px`, 
+                                      effBorderThickness: val,
+                                      showBorder: true,
+                                      effBorderActiveType: val > 0 ? (selectedInst.config?.effBorderActiveType === 'none' ? 'border-solid' : (selectedInst.config?.effBorderActiveType || 'border-solid')) : 'none'
+                                    }
+                                  });
+                                }}
                                 className="w-full bg-black/60 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-mono"
                               />
                             </div>
@@ -2534,7 +2562,7 @@ export default function OverlayEditorSidebar({
                               max="32"
                               value={parseInt(selectedInst.config?.borderRadius) || 12}
                               onChange={(e) => onUpdateInstance(selectedInst.id, {
-                                config: { ...selectedInst.config, borderRadius: `${e.target.value}px` }
+                                config: { ...selectedInst.config, borderRadius: `${e.target.value}px`, effBorderRadius: parseInt(e.target.value) || 0 }
                               })}
                               className="w-full accent-purple-600 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer"
                             />

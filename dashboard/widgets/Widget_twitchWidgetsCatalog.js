@@ -60,7 +60,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       defaultMode: 'split',
       backgroundColor: 'rgba(2, 6, 23, 0.9)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -75,7 +75,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.65)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -92,7 +92,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       textColor: '#ffffff',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -120,7 +120,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -137,7 +137,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       textColor: '#ffffff',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -167,7 +167,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       targetValue: 50,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -184,7 +184,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       targetValue: 2500,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -201,7 +201,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       targetValue: 5,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -219,7 +219,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       placeholder: 'Nenhum inscrito registrado',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -235,7 +235,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       placeholder: 'Nenhum cheer enviado',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -251,7 +251,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       placeholder: 'Sem raids recentes',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -267,7 +267,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       placeholder: 'Nenhum cheer registrado',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -283,7 +283,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       startValue: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -299,7 +299,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       startValue: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -317,7 +317,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       minValue: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -332,7 +332,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -347,7 +347,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -362,7 +362,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -379,7 +379,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -401,7 +401,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       ],
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -416,7 +416,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -431,7 +431,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -448,7 +448,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -463,7 +463,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -480,7 +480,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -495,7 +495,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -510,7 +510,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -525,7 +525,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -540,7 +540,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -555,7 +555,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   },
@@ -570,7 +570,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
       borderRadius: '12px',
-      showBorder: true,
+      showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
   }

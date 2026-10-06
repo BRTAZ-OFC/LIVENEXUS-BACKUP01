@@ -45,7 +45,7 @@ export default function BrowserSourceRenderer({ config = {}, isEditing = false }
 
   const customCss = config.customCss || '';
   const borderRadius = config.borderRadius ? (typeof config.borderRadius === 'number' ? `${config.borderRadius}px` : config.borderRadius) : '8px';
-  const showBorder = config.showBorder || Boolean(config.borderColor);
+  const showBorder = config.showBorder === true;
   const borderColor = config.borderColor || 'rgba(59, 130, 246, 0.4)';
   const borderWidth = config.borderWidth ? `${config.borderWidth}px` : '2px';
   const pointerEvents = config.allowInteraction ? 'auto' : 'none';

@@ -132,11 +132,12 @@ export default function PixWidget({ config = {}, instanceId }) {
   // Renderização elegante adaptada aos presets visuais já existentes no LiveNexus
   return (
     <div 
-      className="w-full h-full flex flex-col items-center justify-between p-4 rounded-xl text-white shadow-xl border select-none transition-all duration-300"
+      className="w-full h-full flex flex-col items-center justify-between p-4 rounded-xl text-white shadow-xl select-none transition-all duration-300"
       style={{
         fontFamily: config.fontFamily || 'Inter, sans-serif',
         background: config.backgroundColor || 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
-        borderColor: config.borderColor || 'rgba(168, 85, 247, 0.4)'
+        border: config.showBorder === true ? `1px solid ${config.borderColor || 'rgba(168, 85, 247, 0.4)'}` : 'none',
+        borderRadius: config.borderRadius || '12px'
       }}
     >
       {/* Cabeçalho */}

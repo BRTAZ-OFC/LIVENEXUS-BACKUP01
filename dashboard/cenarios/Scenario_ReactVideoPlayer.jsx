@@ -99,15 +99,16 @@ export default function ReactVideoPlayer({ config = {}, isEditing = false }) {
     }
   };
 
-  const borderRadius = config.borderRadius || '6px';
-  const borderColor = config.effBorderColor || '#3b82f6';
-  const borderThickness = config.effBorderThickness || 2;
+  const borderThickness = config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 0);
+  const hasNoBorder = !config.showBorder || config.showBorder === false || config.effBorderActiveType === 'none' || config.effBorderActiveType === 'border-transparent' || config.effBorderActiveType === 'border-radius' || borderThickness === 0;
+  const borderRadius = config.effBorderRadius !== undefined ? `${config.effBorderRadius}px` : (config.borderRadius || '6px');
+  const borderColor = config.borderColor || config.effBorderColor || '#3b82f6';
 
   // Visual container styling matching user's corrected design
   const containerStyle = {
     borderRadius,
-    border: `${borderThickness}px solid ${borderColor}`,
-    backgroundColor: '#020617',
+    border: hasNoBorder ? 'none' : `${borderThickness}px solid ${borderColor}`,
+    backgroundColor: config.backgroundColor || config.effBgColor || '#020617',
   };
 
   return (

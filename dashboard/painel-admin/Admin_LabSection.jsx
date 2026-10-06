@@ -6,8 +6,6 @@ import AdminRtcTestLabSection from './lab/rtc/Admin_RtcTestLabSection';
 import AdminWebSpeechVoicesTest from './lab/tts-neural/Admin_WebSpeechVoicesTest';
 import AdminGlobalShortcutsTest from './lab/global-shortcuts/Admin_GlobalShortcutsTest';
 import LabTestIdsLibrarySection from './lab/test-ids/Lab_TestIdsLibrarySection';
-import LabPhotoshopSection from './lab/photoshop/LabPhotoshopSection';
-import LabPhotoshop2Section from './lab/photoshop2/LabPhotoshop2Section';
 import LabPhotoshop3Section from './lab/photoshop3/LabPhotoshop3Section';
 
 const LAB_TOOLS = [
@@ -52,20 +50,6 @@ const LAB_TOOLS = [
     category: 'Conexões & Streaming',
     icon: RadioTower,
     description: 'Conexão limpa com live pública sem Data API v3 · Bootstrap 1-shot + tentativa de chat direto pelo Frontend.',
-  },
-  {
-    id: 'lab-photoshop',
-    name: 'Photoshop',
-    category: 'Ferramentas',
-    icon: Sparkles,
-    description: 'Estúdio visual e editor de movimento baseado no projeto REAL MotionEditor para animação, timeline, keyframes e efeitos.',
-  },
-  {
-    id: 'lab-photoshop-2',
-    name: 'Photoshop 2',
-    category: 'Ferramentas',
-    icon: Sparkles,
-    description: 'Estúdio visual e editor de gráficos em movimento baseado no projeto REAL Nemo para GPU, shaders, timeline/graph editor, vetores e máscaras.',
   },
   {
     id: 'lab-photoshop-3',
@@ -171,8 +155,6 @@ export default function AdminLabSection() {
         {activeToolId === 'test-ids-library' && <LabTestIdsLibrarySection />}
         {activeToolId === 'teste-rtc' && <AdminRtcTestLabSection />}
         {activeToolId === 'youtube-test-1' && <YouTubeTest1Section />}
-        {activeToolId === 'lab-photoshop' && <LabPhotoshopSection />}
-        {activeToolId === 'lab-photoshop-2' && <LabPhotoshop2Section />}
         {activeToolId === 'lab-photoshop-3' && <LabPhotoshop3Section />}
       </div>
 

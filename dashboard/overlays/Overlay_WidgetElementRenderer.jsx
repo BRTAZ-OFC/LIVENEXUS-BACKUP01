@@ -172,10 +172,13 @@ export default function WidgetElementRenderer({
     textAlign: config.textAlign || 'left',
   };
 
+  const thicknessVal = config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 0);
   const containerStyle = {
     ...baseStyle,
     background: config.backgroundColor || 'transparent',
-    border: config.showBorder ? `1px solid ${config.borderColor || 'rgba(255, 255, 255, 0.1)'}` : 'none',
+    border: (config.showBorder === true && thicknessVal > 0 && config.effBorderActiveType !== 'none' && config.effBorderActiveType !== 'border-transparent' && config.effBorderActiveType !== 'border-radius') 
+      ? `${thicknessVal}px ${config.borderStyle || 'solid'} ${config.borderColor || config.effBorderColor || 'rgba(255, 255, 255, 0.1)'}` 
+      : 'none',
     borderRadius: config.borderRadius || '12px'
   };
 
@@ -196,11 +199,14 @@ export default function WidgetElementRenderer({
       (config.backgroundColor && config.backgroundColor !== 'rgba(0, 0, 0, 0.45)' && config.backgroundColor !== 'transparent')
     );
 
+    const thickness = config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 0);
     const hasExplicitBorder = !!(
-      (config.effBorderActiveType && config.effBorderActiveType !== 'border-transparent') ||
-      config.effGlowActiveType === 'glow-neon' ||
-      (config.borderColor && config.borderColor !== 'rgba(255, 255, 255, 0.1)' && config.borderColor !== 'transparent')
+      (config.showBorder === true && thickness > 0) ||
+      (config.effBorderActiveType && config.effBorderActiveType !== 'border-transparent' && config.effBorderActiveType !== 'none' && config.effBorderActiveType !== 'border-radius' && config.showBorder !== false && thickness > 0) ||
+      config.effGlowActiveType === 'glow-neon'
     );
+
+    const isNoBorder = !hasExplicitBorder || config.showBorder === false || !config.showBorder || config.effBorderActiveType === 'none' || config.effBorderActiveType === 'border-transparent' || config.effBorderActiveType === 'border-radius' || config.border === 'none' || thickness === 0;
 
     const hasExplicitShadow = !!(
       config.effShadowActiveType ||
@@ -484,37 +490,30 @@ export default function WidgetElementRenderer({
     }
 
     // 8. BORDA / SUPERFÍCIE - Container effect
-    if (config.effBorderActiveType) {
-      const bColor = config.effBorderColor || '#ffffff';
-      const bThickness = config.effBorderThickness !== undefined ? config.effBorderThickness : 2;
-      const bRadius = config.effBorderRadius !== undefined ? config.effBorderRadius : 12;
+    if (config.showBorder === true && thickness > 0) {
+      const bColor = config.borderColor || config.effBorderColor || '#ffffff';
+      const bThickness = thickness;
+      const bRadius = config.effBorderRadius !== undefined ? config.effBorderRadius : (parseInt(config.borderRadius) || 12);
+      const bStyle = config.borderStyle || 'solid';
 
-      if (config.effBorderActiveType === 'border-solid') {
-        containerCSS += `border: ${bThickness}px solid ${bColor} !important; `;
-      } else if (config.effBorderActiveType === 'border-transparent') {
-        containerCSS += `border: ${bThickness}px solid transparent !important; `;
-      } else if (config.effBorderActiveType === 'border-glow') {
+      if (config.effBorderActiveType === 'border-glow') {
         const glow = config.effBorderGlow !== undefined ? config.effBorderGlow : 8;
-        containerCSS += `border: ${bThickness}px solid ${bColor} !important; box-shadow: 0 0 ${glow}px ${bColor} !important; `;
+        containerCSS += `border: ${bThickness}px ${bStyle} ${bColor} !important; box-shadow: 0 0 ${glow}px ${bColor} !important; `;
       } else if (config.effBorderActiveType === 'border-neon') {
         const neon = config.effBorderNeon !== undefined ? config.effBorderNeon : 8;
-        containerCSS += `border: ${bThickness}px solid ${bColor} !important; box-shadow: 0 0 ${neon}px ${bColor}, inset 0 0 ${neon / 2}px ${bColor} !important; `;
+        containerCSS += `border: ${bThickness}px ${bStyle} ${bColor} !important; box-shadow: 0 0 ${neon}px ${bColor}, inset 0 0 ${neon / 2}px ${bColor} !important; `;
       } else if (config.effBorderActiveType === 'border-gradient') {
         const bGradStart = config.effBorderGradStart || '#a855f7';
         const bGradEnd = config.effBorderGradEnd || '#ec4899';
         containerCSS += `border: ${bThickness}px solid transparent !important; border-image: linear-gradient(to right, ${bGradStart}, ${bGradEnd}) 1 !important; `;
-      } else if (config.effBorderActiveType === 'border-radius') {
-        containerCSS += `border-radius: ${bRadius}px !important; overflow: hidden !important; `;
+      } else {
+        containerCSS += `border: ${bThickness}px ${bStyle} ${bColor} !important; `;
       }
+      containerCSS += `border-radius: ${bRadius}px !important; `;
     } else {
-      // Legacy border fallback
-      if (config.effBorderThickness) {
-        containerCSS += `border: ${config.effBorderThickness}px solid ${config.effBorderColor || '#ffffff'} !important; `;
-      } else if (!hasExplicitBorder) {
-        containerCSS += `border: none !important; `;
-      }
-      if (config.effBorderRadius !== undefined) {
-        containerCSS += `border-radius: ${config.effBorderRadius}px !important; `;
+      containerCSS += `border: none !important; border-width: 0px !important; outline: none !important; `;
+      if (config.borderRadius) {
+        containerCSS += `border-radius: ${config.borderRadius} !important; `;
       }
     }
 
@@ -650,30 +649,36 @@ export default function WidgetElementRenderer({
         }
         ` : '')}
 
-        ${config.showBorder === false ? `
+        ${isNoBorder ? `
         .${uniqueClass},
+        .${uniqueClass} *,
         .${uniqueClass} .widget-inner-content,
+        .${uniqueClass} .widget-inner-content *,
         .${uniqueClass} header,
         .${uniqueClass} section,
-        .${uniqueClass} div {
-          border: none !important;
-          border-width: 0px !important;
-          border-color: transparent !important;
-          border-style: none !important;
-          outline: none !important;
-        }
-        ` : (!hasExplicitBorder ? `
-        .${uniqueClass},
-        .${uniqueClass} .widget-inner-content, 
-        .${uniqueClass} .widget-inner-content > div,
+        .${uniqueClass} article,
+        .${uniqueClass} aside,
+        .${uniqueClass} main,
+        .${uniqueClass} nav,
+        .${uniqueClass} div,
+        .${uniqueClass} span,
+        .${uniqueClass} p,
+        .${uniqueClass} ul,
+        .${uniqueClass} li,
+        .${uniqueClass} form,
+        .${uniqueClass} [class*="border"],
         .${uniqueClass} [style*="border"] {
           border: none !important;
           border-width: 0px !important;
           border-color: transparent !important;
           border-style: none !important;
+          border-top: none !important;
+          border-right: none !important;
+          border-bottom: none !important;
+          border-left: none !important;
           outline: none !important;
         }
-        ` : '')}
+        ` : ''}
 
         ${!hasExplicitShadow ? `
         .${uniqueClass},
