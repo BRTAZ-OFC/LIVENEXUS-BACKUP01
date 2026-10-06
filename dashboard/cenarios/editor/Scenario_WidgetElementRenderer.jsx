@@ -661,31 +661,14 @@ export default function WidgetElementRenderer({
 
         ${isNoBorder ? `
         .${uniqueClass},
-        .${uniqueClass} *,
+        .${uniqueClass} > div,
+        .${uniqueClass} > div > div:first-child,
         .${uniqueClass} .widget-inner-content,
-        .${uniqueClass} .widget-inner-content *,
-        .${uniqueClass} header,
-        .${uniqueClass} section,
-        .${uniqueClass} article,
-        .${uniqueClass} aside,
-        .${uniqueClass} main,
-        .${uniqueClass} nav,
-        .${uniqueClass} div,
-        .${uniqueClass} span,
-        .${uniqueClass} p,
-        .${uniqueClass} ul,
-        .${uniqueClass} li,
-        .${uniqueClass} form,
-        .${uniqueClass} [class*="border"],
-        .${uniqueClass} [style*="border"] {
+        .${uniqueClass} .widget-inner-content > div:first-child {
           border: none !important;
           border-width: 0px !important;
           border-color: transparent !important;
           border-style: none !important;
-          border-top: none !important;
-          border-right: none !important;
-          border-bottom: none !important;
-          border-left: none !important;
           outline: none !important;
         }
         ` : ''}
@@ -1281,17 +1264,18 @@ export default function WidgetElementRenderer({
       
       if (isReactWebcam) {
         const radius = config.borderRadius ? (typeof config.borderRadius === 'number' ? `${config.borderRadius}px` : config.borderRadius) : '6px';
-        const borderColor = config.effBorderColor || '#a855f7';
-        const borderThickness = config.effBorderThickness || 2;
+        const borderColor = config.borderColor || config.effBorderColor || '#a855f7';
+        const borderThickness = config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 0);
+        const hasBorder = config.showBorder === true && borderThickness > 0;
 
         return (
           <div 
             className="w-full h-full relative overflow-hidden flex items-center justify-center p-0"
             style={{
               borderRadius: radius,
-              border: `${borderThickness}px solid ${borderColor}`,
+              border: hasBorder ? `${borderThickness}px solid ${borderColor}` : 'none',
               backgroundColor: 'transparent',
-              boxShadow: 'inset 0 0 15px rgba(168, 85, 247, 0.05)'
+              boxShadow: hasBorder ? 'inset 0 0 15px rgba(168, 85, 247, 0.05)' : 'none'
             }}
           >
             {isEditing && (

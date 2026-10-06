@@ -651,31 +651,14 @@ export default function WidgetElementRenderer({
 
         ${isNoBorder ? `
         .${uniqueClass},
-        .${uniqueClass} *,
+        .${uniqueClass} > div,
+        .${uniqueClass} > div > div:first-child,
         .${uniqueClass} .widget-inner-content,
-        .${uniqueClass} .widget-inner-content *,
-        .${uniqueClass} header,
-        .${uniqueClass} section,
-        .${uniqueClass} article,
-        .${uniqueClass} aside,
-        .${uniqueClass} main,
-        .${uniqueClass} nav,
-        .${uniqueClass} div,
-        .${uniqueClass} span,
-        .${uniqueClass} p,
-        .${uniqueClass} ul,
-        .${uniqueClass} li,
-        .${uniqueClass} form,
-        .${uniqueClass} [class*="border"],
-        .${uniqueClass} [style*="border"] {
+        .${uniqueClass} .widget-inner-content > div:first-child {
           border: none !important;
           border-width: 0px !important;
           border-color: transparent !important;
           border-style: none !important;
-          border-top: none !important;
-          border-right: none !important;
-          border-bottom: none !important;
-          border-left: none !important;
           outline: none !important;
         }
         ` : ''}

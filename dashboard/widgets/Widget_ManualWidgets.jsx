@@ -117,7 +117,7 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#090d16',
-          border: '2px solid #ef4444',
+          border: config.showBorder === true ? '2px solid #ef4444' : 'none',
           borderRadius: '9999px',
           boxShadow: '0 0 15px rgba(239, 68, 68, 0.6)'
         }}
@@ -146,7 +146,7 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#0a0f1d',
-          border: '2px solid #3b82f6',
+          border: config.showBorder === true ? '2px solid #3b82f6' : 'none',
           borderRadius: '16px',
           boxShadow: '0 0 15px rgba(59, 130, 246, 0.6)'
         }}
@@ -196,7 +196,7 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#0a0f1d',
-          border: '2px solid #a855f7',
+          border: config.showBorder === true ? '2px solid #a855f7' : 'none',
           borderRadius: '16px',
           boxShadow: '0 0 15px rgba(168, 85, 247, 0.6)'
         }}
@@ -320,7 +320,7 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#090d16',
-          border: '2px solid #f97316',
+          border: config.showBorder === true ? '2px solid #f97316' : 'none',
           borderRadius: '9999px',
           boxShadow: '0 0 15px rgba(249, 115, 22, 0.6)'
         }}
