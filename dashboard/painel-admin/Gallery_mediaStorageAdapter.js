@@ -1,5 +1,6 @@
-// mediaStorageAdapter — camada isolada de mídia do usuário ("Minha Galeria").
-// Sincronizada com o Ramal da Galeria e o branch documental da Central de Dados (/api/admin/lab/user-gallery).
+// mediaStorageAdapter — camada reativa de mídia do usuário ("Minha Galeria").
+// Sincronizada diretamente com o Ramal da Galeria e o branch documental da Central de Dados (/api/admin/lab/user-gallery).
+// Sem cache paralelo em localStorage: a autoridade reside no backend/ramal.
 import { useSyncExternalStore } from 'react';
 import { authClient } from '@dashboard/login/authClient';
 
@@ -7,20 +8,6 @@ let images = []; // [{ mediaId, id, userId, url, filename, mimeType, createdAt, 
 let currentUserId = null;
 let galleryBranch = null;
 const listeners = new Set();
-
-const STORAGE_PREFIX = 'livenexus:gallery';
-
-function getStorageKey() {
-  return currentUserId ? `${STORAGE_PREFIX}:${currentUserId}` : null;
-}
-
-function persistToStorage() {
-  const key = getStorageKey();
-  if (!key) return;
-  try {
-    localStorage.setItem(key, JSON.stringify(images));
-  } catch {}
-}
 
 function emit() {
   listeners.forEach(l => {
@@ -33,16 +20,7 @@ export async function setUserId(userId, user) {
     galleryBranch = null;
   }
   currentUserId = userId || null;
-  const key = getStorageKey();
-  if (key) {
-    try {
-      images = JSON.parse(localStorage.getItem(key) || '[]');
-    } catch {
-      images = [];
-    }
-  } else {
-    images = [];
-  }
+  images = [];
   emit();
   if (currentUserId) {
     await hydrateUserGallery();
@@ -87,7 +65,6 @@ export async function hydrateUserGallery() {
       images = [];
     }
 
-    persistToStorage();
     emit();
   } catch (err) {
     console.warn('Erro ao hidratar galeria de usuário:', err);
@@ -102,7 +79,6 @@ export function removeGalleryImage(mediaId) {
   if (!mediaId) return;
   const targetId = String(mediaId);
   images = images.filter(i => String(i.mediaId) !== targetId && String(i.id) !== targetId);
-  persistToStorage();
   emit();
 }
 

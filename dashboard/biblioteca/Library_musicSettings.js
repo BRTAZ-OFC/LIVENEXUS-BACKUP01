@@ -1,6 +1,6 @@
-// Configurações do player de música — persistidas via localCache unificado com isolamento por userId.
-import { localCache } from '@dashboard/configuracao/Config_localCache';
-import { authClient } from '@dashboard/login/authClient';
+// Configurações do player de música — persistidas via libraryCache unificado com isolamento por userId.
+import { libraryCache as localCache } from './Library_cache.js';
+import { authClient } from '../login/authClient.js';
 
 function getCurrentUserId() {
   try {

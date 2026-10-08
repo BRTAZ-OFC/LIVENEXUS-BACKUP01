@@ -1,16 +1,15 @@
 // Busca no YouTube e YouTube Music via InnerTube API.
 // Dados estruturados nativos obtidos via InnerTube (sem Jina, sem scraping).
+import { libraryCache, CACHE_NAMESPACES } from './Library_cache.js';
 
 const SEARCH_TIMEOUT = 12000;
 
 // Re-exporta parseMusicUrl do MusicUrlManager (substitui parseYouTubeUrl)
-export { parseMusicUrl as parseYouTubeUrl } from './Library_musicUrlManager';
-export { parseMusicUrl } from './Library_musicUrlManager';
+export { parseMusicUrl as parseYouTubeUrl } from './Library_musicUrlManager.js';
+export { parseMusicUrl } from './Library_musicUrlManager.js';
 
-// Cache em memória (LRU simples) — evita re-fetch do mesmo termo/filtro/continuation.
-const searchCache = new Map();
+// Cache de busca unificado no libraryCache
 const inFlightSearches = new Map();
-const CACHE_MAX = 50;
 
 let activeSearchSessionId = 0;
 const searchListeners = new Set();
@@ -38,15 +37,11 @@ function cacheKey(query, filter, continuation) {
 }
 
 function getCached(key) {
-  return searchCache.get(key) || null;
+  return libraryCache.get('global', CACHE_NAMESPACES.LIBRARY_SEARCH, key);
 }
 
 function setCached(key, val) {
-  if (searchCache.size >= CACHE_MAX) {
-    const first = searchCache.keys().next().value;
-    if (first) searchCache.delete(first);
-  }
-  searchCache.set(key, val);
+  libraryCache.set('global', CACHE_NAMESPACES.LIBRARY_SEARCH, val, key);
 }
 
 function formatSearchItem(it) {

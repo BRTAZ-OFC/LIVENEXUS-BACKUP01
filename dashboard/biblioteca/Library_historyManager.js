@@ -1,7 +1,7 @@
-// Gerenciador de histórico de faixas tocadas com persistência via localCache e isolamento por userId
+// Gerenciador de histórico de faixas tocadas com persistência via libraryCache e isolamento por userId
 import { playerEvents } from './Library_playerEvents';
-import { localCache, CACHE_NAMESPACES } from '@dashboard/configuracao/Config_localCache';
-import { authClient } from '@dashboard/login/authClient';
+import { libraryCache as localCache, CACHE_NAMESPACES } from './Library_cache.js';
+import { authClient } from '../login/authClient.js';
 
 function getCurrentUserId() {
   try {

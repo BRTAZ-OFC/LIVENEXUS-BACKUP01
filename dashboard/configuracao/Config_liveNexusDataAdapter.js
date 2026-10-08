@@ -17,64 +17,6 @@ import { vodsRamal } from '@dashboard/conexao/ramal/Config_VodsRamal';
 import { messagesRamal } from '@dashboard/conexao/ramal/Config_MessagesRamal';
 import { reviewsRamal } from '@dashboard/conexao/ramal/Review_Ramal';
 
-const STORAGE_PREFIX = 'livenexus:data:';
-
-function getStorageItems(collection) {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(`${STORAGE_PREFIX}${collection}`);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {
-    console.warn(`[liveNexusDataAdapter] Erro ao ler ${collection}:`, e);
-  }
-
-  // Pre-seed inicial para Avaliações se a coleção estiver vazia
-  if (collection === 'Review') {
-    const seed = [
-      {
-        id: 'rev_1',
-        name: 'Lucas "Speedy" Ramos',
-        email: 'lucas@stream.test',
-        message: 'O leitor de voz do LiveNexus mudou minhas transmissões! Integração perfeita entre Twitch e Kick.',
-        rating: 5,
-        created_date: new Date(Date.now() - 86400000 * 2).toISOString(),
-      },
-      {
-        id: 'rev_2',
-        name: 'Camila Gamer',
-        email: 'camila@stream.test',
-        message: 'Criar overlays e metas personalizadas ficou absurdamente fácil. O suporte para cenas é fantástico.',
-        rating: 5,
-        created_date: new Date(Date.now() - 86400000 * 5).toISOString(),
-      },
-      {
-        id: 'rev_3',
-        name: 'Thiago Play',
-        email: 'thiago@stream.test',
-        message: 'Multichat unificado com filtros anti-flood de primeira qualidade. Não faço live sem ele.',
-        rating: 5,
-        created_date: new Date(Date.now() - 86400000 * 8).toISOString(),
-      }
-    ];
-    try {
-      localStorage.setItem(`${STORAGE_PREFIX}Review`, JSON.stringify(seed));
-    } catch {}
-    return seed;
-  }
-
-  return [];
-}
-
-function setStorageItems(collection, items) {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(`${STORAGE_PREFIX}${collection}`, JSON.stringify(items));
-  } catch (e) {
-    console.warn(`[liveNexusDataAdapter] Erro ao salvar ${collection}:`, e);
-  }
-}
-
-
 // Repositório de Sessões de Live (Live Sessions / VODs)
 export const liveSessionRepository = {
   async list(filter = {}, sortField = '-created_date', limit = 50) {
