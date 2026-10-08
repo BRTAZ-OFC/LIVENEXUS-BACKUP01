@@ -126,7 +126,7 @@ import { authClient } from '@dashboard/login/authClient';
 function getCurrentUserId(userId) {
   if (userId) return userId;
   try {
-    return authClient.getUserDataCache()?.id || null;
+    return authClient.getUser()?.id || null;
   } catch {
     return null;
   }

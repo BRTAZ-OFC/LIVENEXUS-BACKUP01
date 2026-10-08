@@ -1,6 +1,6 @@
 // mediaStorageAdapter — camada reativa de mídia do usuário ("Minha Galeria").
 // Sincronizada diretamente com o Ramal da Galeria e o branch documental da Central de Dados (/api/admin/lab/user-gallery).
-// Sem cache paralelo em localStorage: a autoridade reside no backend/ramal.
+// A autoridade de persistência reside no backend/ramal.
 import { useSyncExternalStore } from 'react';
 import { authClient } from '@dashboard/login/authClient';
 
@@ -182,7 +182,7 @@ export async function deleteUserImage(mediaId) {
   const targetId = String(mediaId);
   const img = images.find(i => (String(i.mediaId) === targetId || String(i.id) === targetId));
 
-  // Remoção otimista instantânea do estado local e cache
+  // Remoção otimista instantânea do estado local da galeria
   removeGalleryImage(targetId);
 
   if (galleryBranch) {

@@ -27,13 +27,13 @@ export const authClient = {
     }
   },
 
-  // Retorna o cache local de dados do usuário (somente para leitura/exibição secundária)
-  // NUNCA deve ser usado como prova ou autoridade de autenticação.
-  getUserDataCache() {
+  // Retorna os dados do usuário da sessão local ativa (leitura para exibição na UI)
+  // A autoridade de autenticação é a tabela sessions do D1 via /api/auth/me.
+  getUser() {
     if (typeof window === 'undefined') return null;
     try {
-      const cached = safeStorage.getItem(STORAGE_USER_KEY);
-      return cached ? JSON.parse(cached) : null;
+      const raw = safeStorage.getItem(STORAGE_USER_KEY);
+      return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
     }
@@ -60,7 +60,7 @@ export const authClient = {
         return user;
       }
 
-      // Resposta não-2xx (401, etc.): invalida cache local e lança erro de autenticação
+      // Resposta não-2xx (401, etc.): limpa credenciais locais e lança erro de autenticação
       if (typeof window !== 'undefined') {
         safeStorage.removeItem(STORAGE_USER_KEY);
         safeStorage.removeItem(STORAGE_TOKEN_KEY);
@@ -71,7 +71,7 @@ export const authClient = {
       err.status = res.status;
       throw err;
     } catch (err) {
-      // Falhas de rede ou status 401: NÃO usa cache local como credencial de autenticação
+      // Falhas de rede ou status 401: NÃO usa credenciais locais expiradas
       if (typeof window !== 'undefined') {
         safeStorage.removeItem(STORAGE_USER_KEY);
       }
@@ -186,7 +186,7 @@ export const authClient = {
         return user;
       }
     } catch {
-      // Ignora falha remota e aplica localmente apenas se houver usuário em cache
+      // Ignora falha remota e aplica localmente apenas se houver usuário ativo
     }
 
     if (typeof window !== 'undefined') {
@@ -201,7 +201,7 @@ export const authClient = {
     return updates;
   },
 
-  // Encerra sessão do usuário: invalida credenciais remotas e remove caches locais
+  // Encerra sessão do usuário: invalida credenciais remotas e remove dados da sessão local
   async logout(redirectUrl = '/login') {
     try {
       await fetch(`${API_BASE_URL}/api/auth/logout`, {

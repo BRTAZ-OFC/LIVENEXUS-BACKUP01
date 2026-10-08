@@ -10,7 +10,7 @@ const initial = {
     socketActive: 0, pingTimerActive: 0, metaTimerActive: 0,
     connectedAt: null, disconnectedAt: null, disconnectReason: null,
     messagesReceived: 0, lastMessageAt: null,
-    lastMetaStatus: null, lastCache: null, lastMetaAt: null, viewers: null, online: null,
+    lastMetaStatus: null, lastMetaAt: null, viewers: null, online: null,
     backoffIndex: 0, offlineStreak: 0, offlineEmitted: false, currentMetaDelay: null, nextMetaPollAt: null,
     reconnectSupported: false, recoveryStatus: null,
     lastError: null, lastErrorAt: null,
@@ -23,7 +23,7 @@ const initial = {
     reconnectAttempts: 0, reconnectSuccessCount: 0, currentBackoff: null, reconnectScheduled: false,
     connectedAt: null, disconnectedAt: null, disconnectReason: null,
     messagesReceived: 0, lastMessageAt: null,
-    lastMetaStatus: null, lastCache: null, lastMetaAt: null, viewers: null, online: null,
+    lastMetaStatus: null, lastMetaAt: null, viewers: null, online: null,
     backoffIndex: 0, offlineStreak: 0, offlineEmitted: false, currentMetaDelay: null, nextMetaPollAt: null,
     lastError: null, lastErrorAt: null,
   },
@@ -48,7 +48,7 @@ export const diag = JSON.parse(JSON.stringify(initial));
 const LAYERS = {
   A: 'A — UI', B: 'B — StreamingProvider', C: 'C — módulo de plataforma',
   D: 'D — navegador/WebSocket', E: 'E — Worker Cloudflare', F: 'F — API upstream',
-  G: 'G — CORS', H: 'H — cache', I: 'I — TTS', J: 'J — fila',
+  G: 'G — CORS', I: 'I — TTS', J: 'J — fila',
   K: 'K — autenticação', L: 'L — desconhecido',
 };
 
@@ -63,7 +63,6 @@ export function classifyLayer({ platform, step, status, message }) {
     if (/fila|queue|enqueue/i.test(m + s)) return LAYERS.J;
     return LAYERS.I;
   }
-  if (/cache|hit|miss/i.test(m + s)) return LAYERS.H;
   if (/auth|token|login|unauthorized/i.test(m + s)) return LAYERS.K;
   if (platform && step) return LAYERS.C;
   if (status >= 500) return LAYERS.E;
@@ -102,7 +101,6 @@ function probableCause(layer, e) {
     case LAYERS.D: return 'Falha de transporte WebSocket/IRC no navegador.';
     case LAYERS.I: return 'Falha no motor speechSynthesis do navegador.';
     case LAYERS.J: return 'Anomalia na fila de fala (duplicação/perda/ordem).';
-    case LAYERS.H: return 'Comportamento anômalo de cache.';
     case LAYERS.K: return 'Falha de autenticação/token.';
     case LAYERS.C: return 'Erro interno do módulo de plataforma.';
     default: return 'Causa não determinada.';
@@ -121,11 +119,10 @@ export const getPersistenceSnapshot = () => persistenceSnapshot;
 export const clearPersistenceSnapshot = () => { persistenceSnapshot = null; };
 
 // --- Store de sessão do laboratório (resultados de testes, fora do diag de produção) ---
-export const labStore = { workerResults: [], queueTest: null, multiTest: null, cacheTest: null, burstTest: null, ttsEvents: [], currentTestRunId: null };
+export const labStore = { workerResults: [], queueTest: null, multiTest: null, burstTest: null, ttsEvents: [], currentTestRunId: null };
 export function addWorkerResult(r) { labStore.workerResults.unshift(r); if (labStore.workerResults.length > 60) labStore.workerResults.length = 60; }
 export function setQueueTest(r) { labStore.queueTest = r; }
 export function setMultiTest(r) { labStore.multiTest = r; }
-export function setCacheTest(r) { labStore.cacheTest = r; }
 export function setBurstTest(r) { labStore.burstTest = r; }
 
 // --- Isolamento de execução de teste (testRunId) + eventos de ciclo de vida TTS ---
@@ -275,7 +272,7 @@ export const resetDiag = () => {
   diag.Errors.length = 0;
   diag.App.activeSection = null; diag.App.visibilityState = null;
   persistenceSnapshot = null;
-  labStore.workerResults = []; labStore.queueTest = null; labStore.multiTest = null; labStore.cacheTest = null; labStore.burstTest = null; labStore.ttsEvents = []; labStore.currentTestRunId = null;
+  labStore.workerResults = []; labStore.queueTest = null; labStore.multiTest = null; labStore.burstTest = null; labStore.ttsEvents = []; labStore.currentTestRunId = null;
   _activeQueue.clear(); _receivedTs.length = 0; _spokenTs.length = 0; _speechDurations.length = 0; _waits.length = 0; _queueWaits.length = 0; _lifecycle.clear(); _peakQueue = 0; _canceled = 0; _ttsErrors = 0;
 };
 

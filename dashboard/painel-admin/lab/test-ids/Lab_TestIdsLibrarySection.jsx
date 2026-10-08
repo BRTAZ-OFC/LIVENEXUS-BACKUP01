@@ -466,7 +466,7 @@ export default function LabTestIdsLibrarySection() {
       try {
         let tracksToPlay = song.rawRef?.tracks || song.tracks || [];
 
-        // Se a playlist salva não tiver as faixas em cache, obtém via InnerTube direto (sem Jina/pesquisa)
+        // Se a playlist salva não tiver as faixas anexadas, obtém via InnerTube direto (sem Jina/pesquisa)
         if (tracksToPlay.length === 0) {
           const res = await fetchPlaylistViaInnerTube(song.playlistId || song.id);
           tracksToPlay = res.tracks;

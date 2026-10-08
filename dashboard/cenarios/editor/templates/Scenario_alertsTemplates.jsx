@@ -528,7 +528,7 @@ export const EVENT_LIST_TEMPLATES = [
       return (
         <div className="w-full h-full p-3 bg-slate-950/90 border border-cyan-400 flex flex-col justify-between select-none text-left overflow-hidden shadow-2xl" style={{ clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))' }}>
           <div className="flex justify-between text-[9px] font-mono text-cyan-300 border-b border-cyan-400/30 pb-1">
-            <span>[EVENT_BUFFER_CACHE]</span>
+            <span>[EVENT_BUFFER]</span>
             <span>{isOnline ? 'SYNC: OK' : 'SYNC: OFF'}</span>
           </div>
           <div className="flex-1 flex flex-col justify-end space-y-1 my-1 overflow-hidden">

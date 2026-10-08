@@ -1,12 +1,11 @@
 /**
  * Live Nexus — Channel Meta Worker (Kick resolve + meta)
- * SEPARADO do channel-verify. Sem setInterval. Sob demanda + cache.
+ * SEPARADO do channel-verify. Sem setInterval. Sob demanda direta.
  *
  * Rotas:
- *   POST /kick/resolve { slug } -> { chatroomId, _cache } | { error }
- *   POST /kick/meta    { slug } -> { streamId, title, thumbnail, startedAt, viewers, online, _cache } | { error }
+ *   POST /kick/resolve { slug } -> { chatroomId } | { error }
+ *   POST /kick/meta    { slug } -> { streamId, title, thumbnail, startedAt, viewers, online } | { error }
  *
- * Cache: Cache API (caches.default), TTL manual (meta 25s, resolve 60s).
  * CORS: produção (livenexus.base44.app) + preview Base44 (https://*.base44.app).
  * Rate limit: contador in-memory por isolate (soft, best-effort) — /kick/meta máx 30/min/IP.
  * Sem secrets. Sem Base44. Sem setInterval.

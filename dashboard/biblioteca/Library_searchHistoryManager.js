@@ -1,4 +1,4 @@
-// Gerenciador de histórico de buscas em tempo de execução (sem cache).
+// Gerenciador de histórico de buscas em tempo de execução.
 const MAX_ITEMS = 20;
 
 class SearchHistoryManager {

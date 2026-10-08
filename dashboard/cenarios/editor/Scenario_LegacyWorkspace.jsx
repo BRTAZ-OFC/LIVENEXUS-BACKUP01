@@ -50,7 +50,7 @@ export default function OverlaysWorkspace({ selectedOverlayId }) {
   // Grid / Guides Settings
   const [gridSettings, setGridSettings] = useState(() => {
     try {
-      const uid = authClient.getUserDataCache()?.id || 'anonymous';
+      const uid = authClient.getUser()?.id || 'anonymous';
       const raw = safeStorage.getItem(`livenexus:scenario_grid_settings:${uid}`);
       const saved = raw ? JSON.parse(raw) : null;
       if (saved && typeof saved === 'object') {
@@ -88,7 +88,7 @@ export default function OverlaysWorkspace({ selectedOverlayId }) {
     setGridSettings(prev => {
       const updated = { ...prev, ...newSettings };
       try {
-        const uid = authClient.getUserDataCache()?.id || 'anonymous';
+        const uid = authClient.getUser()?.id || 'anonymous';
         safeStorage.setItem(`livenexus:scenario_grid_settings:${uid}`, JSON.stringify(updated));
       } catch (e) {}
       return updated;

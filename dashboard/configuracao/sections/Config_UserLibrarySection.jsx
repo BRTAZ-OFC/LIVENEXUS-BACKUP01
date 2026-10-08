@@ -374,7 +374,7 @@ export default function UserLibrarySection() {
       try {
         let tracksToPlay = song.rawRef?.tracks || song.tracks || [];
 
-        // Se a playlist salva não tiver as faixas em cache, obtém via InnerTube direto
+        // Se a playlist salva não tiver as faixas anexadas, obtém via InnerTube direto
         if (tracksToPlay.length === 0) {
           const res = await fetchPlaylistViaInnerTube(song.playlistId || song.id);
           tracksToPlay = res.tracks;

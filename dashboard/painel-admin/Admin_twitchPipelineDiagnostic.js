@@ -91,7 +91,6 @@ const initial = {
 };
 
 let state = { ...initial, msgIdCounts: { ...initial.msgIdCounts }, rawMsgIdCounts: emptyRawMsgIdCounts() };
-let cachedSnapshot = null;
 const listeners = new Set();
 
 // --- Histórico cronológico em memória (máx MAX_HISTORY registros) ---
@@ -151,7 +150,6 @@ function buildSnapshot() {
 }
 
 function emit() {
-  cachedSnapshot = null;
   for (const fn of listeners) { try { fn(); } catch { /* listener isolado */ } }
 }
 
@@ -162,8 +160,7 @@ function subscribe(fn) {
 }
 
 function getSnapshot() {
-  if (!cachedSnapshot) cachedSnapshot = buildSnapshot();
-  return cachedSnapshot;
+  return buildSnapshot();
 }
 
 const twitchPipelineDiagnostic = {

@@ -5,7 +5,7 @@ import {
   searchMusic, getAlbumItems, getPlaylistItems, getMixItems, getRelatedTracks,
 } from '@dashboard/biblioteca/Library_musicSearch';
 import { buildItemTags } from '@dashboard/biblioteca/Library_buildTags';
-import { fetchArtistTagsCached } from '@dashboard/biblioteca/Library_lastfmTags';
+import { fetchArtistTags } from '@dashboard/biblioteca/Library_lastfmTags';
 
 // Detalhe aberto "in-place" (sem nova página) ao clicar numa miniatura.
 // Lista as faixas do artista/álbum/playlist/mix ou relacionadas (para música).
@@ -63,12 +63,11 @@ export default function MusicDetail({ item, onBack, onSelect, onAdd, onOpenEntit
     if (!artist) { setLfmTags([]); return; }
     setLfmTags([]);
     let alive = true;
-    fetchArtistTagsCached(artist).then((tags) => { if (alive && tags.length) setLfmTags(tags); });
+    fetchArtistTags(artist).then((tags) => { if (alive && tags.length) setLfmTags(tags); });
     return () => { alive = false; };
   }, [item]);
 
-  // Busca tags (Last.fm) por artista de cada faixa — em paralelo, com cache e limite,
-  // para classificar o gênero individualmente mesmo quando o YouTube não fornece gênero.
+  // Busca tags (Last.fm) por artista de cada faixa diretamente
   useEffect(() => {
     if (!tracks.length) return;
     let alive = true;
@@ -78,7 +77,7 @@ export default function MusicDetail({ item, onBack, onSelect, onAdd, onOpenEntit
       while (idx < artists.length && alive) {
         const a = artists[idx++];
         try {
-          const tags = await fetchArtistTagsCached(a);
+          const tags = await fetchArtistTags(a);
           if (alive && tags.length) setArtistTagMap((prev) => ({ ...prev, [a.toLowerCase()]: tags }));
         } catch { /* ignore */ }
       }

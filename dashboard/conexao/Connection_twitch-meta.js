@@ -1,14 +1,12 @@
 /**
  * Live Nexus — Twitch Meta Worker (Helix oficial)
- * SEPARADO do channel-meta. Sem setInterval. Sob demanda + cache.
+ * SEPARADO do channel-meta. Sem setInterval. Sob demanda direta.
  *
  * Rota:
- *   POST /twitch/meta { login } -> { online, streamId, title, viewers, startedAt, thumbnail, _cache } | { error }
+ *   POST /twitch/meta { login } -> { online, streamId, title, viewers, startedAt, thumbnail } | { error }
  *
  * Fonte: Twitch Helix oficial (GET /helix/streams?user_login=).
- * App access token: obtido server-side via client_credentials, cacheado em memória do isolate,
- *   renovado antes de expirar, invalidado e re-obtido uma única vez em caso de 401.
- * Cache meta: Cache API (caches.default), TTL 25s por login.
+ * App access token: obtido server-side via client_credentials sob demanda.
  * CORS: produção (livenexus.base44.app) + preview Base44 (https://*.base44.app).
  * Rate limit: contador in-memory por isolate (soft, best-effort) — /twitch/meta máx 30/min/IP.
  * Secrets: env.TWITCH_CLIENT_ID e env.TWITCH_CLIENT_SECRET (NUNCA hardcoded, NUNCA retornados).
@@ -62,12 +60,7 @@ function rateLimit(key, limit, windowMs) {
 }
 
 // --- App access token (client credentials) ---
-let tokenCache = { token: null, expiresAt: 0 };
-const TOKEN_REFRESH_MARGIN = 60_000; // renova 60s antes de expirar
-
 async function getAppToken(env) {
-  const now = Date.now();
-  if (tokenCache.token && tokenCache.expiresAt - now > TOKEN_REFRESH_MARGIN) return tokenCache.token;
   const params = new URLSearchParams({
     client_id: env.TWITCH_CLIENT_ID,
     client_secret: env.TWITCH_CLIENT_SECRET,
@@ -76,25 +69,15 @@ async function getAppToken(env) {
   const r = await fetch(`${TOKEN_URL}?${params}`, { method: 'POST', headers: { 'Accept': 'application/json' } });
   if (!r.ok) return null;
   const d = await r.json().catch(() => null);
-  if (!d?.access_token) return null;
-  tokenCache = { token: d.access_token, expiresAt: now + (d.expires_in || 0) * 1000 };
-  return tokenCache.token;
+  return d?.access_token || null;
 }
-function invalidateToken() { tokenCache = { token: null, expiresAt: 0 }; }
 
-// Consulta Helix /streams. Em 401, invalida o token, re-obtém uma única vez e refaz a chamada.
+// Consulta Helix /streams sob demanda
 async function fetchHelix(login, env) {
   const token = await getAppToken(env);
   if (!token) return { error: 'token' };
   const url = `${HELIX_STREAMS}?user_login=${encodeURIComponent(login)}`;
-  const doFetch = (tk) => fetch(url, { headers: { 'Client-ID': env.TWITCH_CLIENT_ID, 'Authorization': `Bearer ${tk}` } });
-  let r = await doFetch(token);
-  if (r.status === 401) {
-    invalidateToken();
-    const tk2 = await getAppToken(env);
-    if (!tk2) return { error: 'token' };
-    r = await doFetch(tk2);
-  }
+  const r = await fetch(url, { headers: { 'Client-ID': env.TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}` } });
   if (!r.ok) return { error: 'helix', status: r.status };
   const d = await r.json().catch(() => null);
   return { data: d };

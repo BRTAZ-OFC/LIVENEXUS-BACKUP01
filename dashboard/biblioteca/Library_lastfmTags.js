@@ -4,11 +4,7 @@
 const JINA = 'https://r.jina.ai/';
 const TIMEOUT = 10000;
 
-// Busca de tags do artista diretamente na fonte oficial sem cache.
-export async function fetchArtistTagsCached(artist) {
-  return fetchArtistTags(artist);
-}
-
+// Busca de tags do artista diretamente na fonte oficial
 export async function fetchArtistTags(artist) {
   if (!artist || !artist.trim()) return [];
   try {

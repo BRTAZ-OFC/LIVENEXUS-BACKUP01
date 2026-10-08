@@ -119,7 +119,7 @@ export default function DocumentSections({ domain, adminMode = true }) {
     setError('');
     try {
       const targetId = targetUser.id;
-      // Carrega registros do ramal com fallback para dados em cache do usuário
+      // Carrega registros do ramal com fallback para dados pré-carregados do usuário
       let rawData = null;
       try {
         rawData = await branch('GET', { targetUserId: targetId });

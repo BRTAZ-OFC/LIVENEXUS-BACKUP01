@@ -327,7 +327,7 @@ export default function OverlayEditorSidebar({
   const [librarySearchQuery, setLibrarySearchQuery] = useState('');
   const [libraryFavorites, setLibraryFavorites] = useState(() => {
     try {
-      const uid = authClient.getUserDataCache()?.id || 'anonymous';
+      const uid = authClient.getUser()?.id || 'anonymous';
       const raw = safeStorage.getItem(`livenexus:overlay_favorites:${uid}`);
       const saved = raw ? JSON.parse(raw) : null;
       return Array.isArray(saved) ? saved : [];
@@ -341,7 +341,7 @@ export default function OverlayEditorSidebar({
     setLibraryFavorites(prev => {
       const next = prev.includes(id) ? prev.filter(fId => fId !== id) : [...prev, id];
       try {
-        const uid = authClient.getUserDataCache()?.id || 'anonymous';
+        const uid = authClient.getUser()?.id || 'anonymous';
         safeStorage.setItem(`livenexus:overlay_favorites:${uid}`, JSON.stringify(next));
       } catch (err) {}
       return next;

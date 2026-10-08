@@ -1,10 +1,10 @@
-// Gerenciador de histórico de faixas tocadas em tempo de execução (sem cache)
+// Gerenciador de histórico de faixas tocadas em tempo de execução.
 import { playerEvents } from './Library_playerEvents';
 import { authClient } from '../login/authClient.js';
 
 function getCurrentUserId() {
   try {
-    return authClient.getUserDataCache()?.id || 'anonymous';
+    return authClient.getUser()?.id || 'anonymous';
   } catch {
     return 'anonymous';
   }

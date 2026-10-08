@@ -1,4 +1,4 @@
-// Configurações do player de música — sem cache, estado em tempo de execução.
+// Configurações do player de música — estado em tempo de execução.
 export const DEFAULT_MUSIC_SETTINGS = {
   volume: 80,
   repeat: 'off', // 'off' | 'one' | 'all'
