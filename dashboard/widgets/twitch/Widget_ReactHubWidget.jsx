@@ -155,7 +155,6 @@ export default function ReactHubWidget({ config = {} }) {
       style={{
         borderRadius,
         background: backgroundColor,
-        border: config.showBorder ? '1px solid rgba(59, 130, 246, 0.3)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
       className="w-full h-full flex flex-col overflow-hidden text-slate-100 shadow-2xl select-none"

@@ -25,7 +25,7 @@ function createLabelTemplates({ title, icon: Icon, defaultColor = 'purple' }) {
         const d = detail || (isOnline ? 'Nenhum registro' : 'Live offline');
 
         return (
-          <div className={`w-full h-full p-2.5 rounded-xl bg-slate-950/90 border ${c.border} flex items-center gap-3 select-none text-left shadow-xl`}>
+          <div className={`w-full h-full p-2.5 rounded-xl bg-slate-950/90 flex items-center gap-3 select-none text-left shadow-xl`}>
             <div className={`h-10 w-10 rounded-lg ${c.bgBadge} border ${c.border} flex items-center justify-center ${c.textAcc} shrink-0`}>
               <Icon className="h-5 w-5" />
             </div>

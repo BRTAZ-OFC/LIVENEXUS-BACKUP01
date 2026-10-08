@@ -97,7 +97,6 @@ export function TwitchUptime({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -130,7 +129,6 @@ export function TwitchCommandsList({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -191,7 +189,6 @@ export function TwitchMilestones({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -236,7 +233,6 @@ export function TwitchRules({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -274,7 +270,6 @@ export function TwitchSchedule({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -322,7 +317,6 @@ export function TwitchScheduleTicker({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -380,7 +374,6 @@ export function TwitchModeratorFeed({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >

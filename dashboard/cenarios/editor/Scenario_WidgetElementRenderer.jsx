@@ -174,6 +174,10 @@ export default function WidgetElementRenderer({
   const connections = propConnections || contextStreaming?.connections || {};
   const streamMeta = propStreamMeta || contextStreaming?.streamMeta || {};
 
+  const isReactWebcam = (instanceId && instanceId.includes('react-cam')) || 
+                        (instanceName && instanceName.toLowerCase().includes('câmera do streamer')) ||
+                        (config.isWebcamFrame === true);
+
   const baseStyle = {
     color: config.textColor || '#ffffff',
     fontSize: config.fontSize || '14px',
@@ -183,13 +187,14 @@ export default function WidgetElementRenderer({
   };
 
   const thicknessVal = config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 0);
+  const effectiveRadius = config.borderRadius ? `${Math.max(0.5, parseFloat(config.borderRadius) || 1)}px` : '1px';
   const containerStyle = {
     ...baseStyle,
     background: config.backgroundColor || 'transparent',
     border: (config.showBorder === true && thicknessVal > 0 && config.effBorderActiveType !== 'none' && config.effBorderActiveType !== 'border-transparent' && config.effBorderActiveType !== 'border-radius') 
       ? `${thicknessVal}px ${config.borderStyle || 'solid'} ${config.borderColor || config.effBorderColor || 'rgba(255, 255, 255, 0.1)'}` 
       : 'none',
-    borderRadius: config.borderRadius || '6px'
+    borderRadius: effectiveRadius
   };
 
   const uniqueClass = useMemo(() => {
@@ -281,7 +286,9 @@ export default function WidgetElementRenderer({
     const isTransparent = config.effBgActiveType === 'bg-transparent' || config.backgroundColor === 'transparent' || config.isTransparent === true || config.bgMode === 'transparent' || config.effBgType === 'transparent';
 
     // 1. FUNDOS BÁSICOS - container effect
-    if (isTransparent) {
+    if (isReactWebcam) {
+      containerCSS += `background: transparent !important; `;
+    } else if (isTransparent) {
       containerCSS += `background: transparent !important; background-image: none !important; box-shadow: none !important; `;
     } else if (config.effBgActiveType) {
       if (config.effBgActiveType === 'bg-solid') {
@@ -500,10 +507,11 @@ export default function WidgetElementRenderer({
     }
 
     // 8. BORDA / SUPERFÍCIE - Container effect
+    const effectiveRadiusVal = config.borderRadius ? `${Math.max(0.5, parseFloat(config.borderRadius) || 1)}px` : '1px';
     if (config.showBorder === true && thickness > 0) {
       const bColor = config.borderColor || config.effBorderColor || '#ffffff';
       const bThickness = thickness;
-      const bRadius = config.effBorderRadius !== undefined ? config.effBorderRadius : (parseInt(config.borderRadius) || 12);
+      const bRadius = config.effBorderRadius !== undefined ? Math.max(0.5, config.effBorderRadius) : (parseFloat(config.borderRadius) ? Math.max(0.5, parseFloat(config.borderRadius)) : 1);
       const bStyle = config.borderStyle || 'solid';
 
       if (config.effBorderActiveType === 'border-glow') {
@@ -523,7 +531,7 @@ export default function WidgetElementRenderer({
     } else {
       containerCSS += `border: none !important; border-width: 0px !important; outline: none !important; `;
       if (config.borderRadius) {
-        containerCSS += `border-radius: ${config.borderRadius} !important; `;
+        containerCSS += `border-radius: ${effectiveRadiusVal} !important; `;
       }
     }
 
@@ -898,7 +906,9 @@ export default function WidgetElementRenderer({
     uniqueClass,
     elementKey,
     isFullWidget,
-    widgetId
+    widgetId,
+    instanceId,
+    instanceName
   ]);
 
   const renderContent = () => {
@@ -1025,7 +1035,7 @@ export default function WidgetElementRenderer({
       }
 
       return (
-        <div className="w-full h-full relative overflow-hidden widget-inner-content" style={{ borderRadius: config.borderRadius || '6px' }}>
+        <div className="w-full h-full relative overflow-hidden widget-inner-content" style={{ borderRadius: effectiveRadius }}>
           <StructuralWidgetRenderer
             typeId={targetCategory}
             widgetId={widgetId || config.targetWidgetId || config.widgetId}
@@ -1057,7 +1067,7 @@ export default function WidgetElementRenderer({
 
     if (isReactChatInstance) {
       return (
-        <div className="w-full h-full relative overflow-hidden widget-inner-content pointer-events-auto" style={{ borderRadius: config.borderRadius || '6px' }}>
+        <div className="w-full h-full relative overflow-hidden widget-inner-content pointer-events-auto" style={{ borderRadius: effectiveRadius }}>
           <ReactChatAndVideoArea config={config} isEditing={isEditing} />
         </div>
       );
@@ -1070,7 +1080,7 @@ export default function WidgetElementRenderer({
     if (foundWidget && (isFullWidget || elementKey === 'full_widget')) {
       const WidgetComponent = foundWidget.component;
       return (
-        <div className="w-full h-full relative overflow-hidden widget-inner-content" style={{ borderRadius: config.borderRadius || '6px' }}>
+        <div className="w-full h-full relative overflow-hidden widget-inner-content" style={{ borderRadius: effectiveRadius }}>
           <WidgetComponent config={{ ...foundWidget.defaultConfig, ...config }} />
         </div>
       );
@@ -1263,8 +1273,7 @@ export default function WidgetElementRenderer({
                             (config.isWebcamFrame === true);
       
       if (isReactWebcam) {
-        const radius = config.borderRadius ? (typeof config.borderRadius === 'number' ? `${config.borderRadius}px` : config.borderRadius) : '6px';
-        const borderColor = config.borderColor || config.effBorderColor || '#a855f7';
+        const radius = effectiveRadius;
         const borderThickness = config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 0);
         const hasBorder = config.showBorder === true && borderThickness > 0;
 
@@ -1273,7 +1282,6 @@ export default function WidgetElementRenderer({
             className="w-full h-full relative overflow-hidden flex items-center justify-center p-0"
             style={{
               borderRadius: radius,
-              border: hasBorder ? `${borderThickness}px solid ${borderColor}` : 'none',
               backgroundColor: 'transparent',
               boxShadow: hasBorder ? 'inset 0 0 15px rgba(168, 85, 247, 0.05)' : 'none'
             }}
@@ -1292,7 +1300,7 @@ export default function WidgetElementRenderer({
       // For rectangles and rounded rectangles, render HTML div with real 100% dimensions and clean CSS border-radius
       if (shapeType === 'rounded-rectangle' || shapeType === 'rectangle' || shapeType === 'square') {
         const radius = shapeType === 'rounded-rectangle'
-          ? (config.borderRadius ? (typeof config.borderRadius === 'number' ? `${config.borderRadius}px` : config.borderRadius) : '6px')
+          ? effectiveRadius
           : '0px';
 
         return (

@@ -173,13 +173,14 @@ export default function WidgetElementRenderer({
   };
 
   const thicknessVal = config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 0);
+  const effectiveRadius = config.borderRadius ? `${Math.max(0.5, parseFloat(config.borderRadius) || 1)}px` : '1px';
   const containerStyle = {
     ...baseStyle,
     background: config.backgroundColor || 'transparent',
     border: (config.showBorder === true && thicknessVal > 0 && config.effBorderActiveType !== 'none' && config.effBorderActiveType !== 'border-transparent' && config.effBorderActiveType !== 'border-radius') 
       ? `${thicknessVal}px ${config.borderStyle || 'solid'} ${config.borderColor || config.effBorderColor || 'rgba(255, 255, 255, 0.1)'}` 
       : 'none',
-    borderRadius: config.borderRadius || '12px'
+    borderRadius: effectiveRadius
   };
 
   const uniqueClass = useMemo(() => {
@@ -490,10 +491,11 @@ export default function WidgetElementRenderer({
     }
 
     // 8. BORDA / SUPERFÍCIE - Container effect
+    const effectiveRadiusVal = config.borderRadius ? `${Math.max(0.5, parseFloat(config.borderRadius) || 1)}px` : '1px';
     if (config.showBorder === true && thickness > 0) {
       const bColor = config.borderColor || config.effBorderColor || '#ffffff';
       const bThickness = thickness;
-      const bRadius = config.effBorderRadius !== undefined ? config.effBorderRadius : (parseInt(config.borderRadius) || 12);
+      const bRadius = config.effBorderRadius !== undefined ? Math.max(0.5, config.effBorderRadius) : (parseFloat(config.borderRadius) ? Math.max(0.5, parseFloat(config.borderRadius)) : 1);
       const bStyle = config.borderStyle || 'solid';
 
       if (config.effBorderActiveType === 'border-glow') {
@@ -513,7 +515,7 @@ export default function WidgetElementRenderer({
     } else {
       containerCSS += `border: none !important; border-width: 0px !important; outline: none !important; `;
       if (config.borderRadius) {
-        containerCSS += `border-radius: ${config.borderRadius} !important; `;
+        containerCSS += `border-radius: ${effectiveRadiusVal} !important; `;
       }
     }
 
@@ -1015,7 +1017,7 @@ export default function WidgetElementRenderer({
       }
 
       return (
-        <div className="w-full h-full relative overflow-hidden widget-inner-content" style={{ borderRadius: config.borderRadius || '12px' }}>
+        <div className="w-full h-full relative overflow-hidden widget-inner-content" style={{ borderRadius: effectiveRadius }}>
           <StructuralWidgetRenderer
             typeId={targetCategory}
             widgetId={widgetId || config.targetWidgetId || config.widgetId}
@@ -1047,7 +1049,7 @@ export default function WidgetElementRenderer({
     if (foundWidget && (isFullWidget || elementKey === 'full_widget')) {
       const WidgetComponent = foundWidget.component;
       return (
-        <div className="w-full h-full relative overflow-hidden widget-inner-content" style={{ borderRadius: config.borderRadius || '12px' }}>
+        <div className="w-full h-full relative overflow-hidden widget-inner-content" style={{ borderRadius: effectiveRadius }}>
           <WidgetComponent config={{ ...foundWidget.defaultConfig, ...config }} />
         </div>
       );

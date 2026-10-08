@@ -485,6 +485,26 @@ export default function ScenarioEditorWorkspace({ cenario, userId }) {
     const finalWidth = width || defaultDims.width || 360;
     const finalHeight = height || defaultDims.height || 240;
 
+    const mergedConfig = {
+      showBorder: true,
+      effBorderThickness: 1,
+      borderWidth: '1px',
+      borderRadius: '1px',
+      effBorderRadius: 1,
+      borderColor: '#ffffff',
+      borderStyle: 'solid',
+      ...(defaultConfig || {}),
+      showBorder: true
+    };
+    if (mergedConfig.effBorderThickness === undefined || mergedConfig.effBorderThickness === 0) {
+      mergedConfig.effBorderThickness = 1;
+      mergedConfig.borderWidth = '1px';
+    }
+    if (!mergedConfig.borderRadius || parseFloat(mergedConfig.borderRadius) < 0.5) {
+      mergedConfig.borderRadius = '1px';
+      mergedConfig.effBorderRadius = 1;
+    }
+
     const newInst = {
       id: `inst-${Date.now()}`,
       widgetId: widgetId,
@@ -498,7 +518,7 @@ export default function ScenarioEditorWorkspace({ cenario, userId }) {
       zIndex: activeSub.instances.length + 1,
       visible: true,
       locked: false,
-      config: { ...(defaultConfig || {}) },
+      config: mergedConfig,
     };
 
     setSubcenarios(prev => prev.map(s => s.id === activeSubcenarioId ? {

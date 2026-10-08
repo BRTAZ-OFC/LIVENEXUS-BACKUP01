@@ -1882,10 +1882,12 @@ export default function OverlayEditorSidebar({
                             config: { 
                               ...selectedInst.config, 
                               showBorder: false,
-                              borderWidth: '0px',
-                              effBorderThickness: 0,
+                              borderWidth: `${Math.max(1, selectedInst.config?.effBorderThickness || parseInt(selectedInst.config?.borderWidth) || 1)}px`,
+                              effBorderThickness: Math.max(1, selectedInst.config?.effBorderThickness || parseInt(selectedInst.config?.borderWidth) || 1),
+                              borderRadius: `${Math.max(0.5, parseFloat(selectedInst.config?.borderRadius) || 1)}px`,
+                              effBorderRadius: Math.max(0.5, parseFloat(selectedInst.config?.borderRadius) || 1),
                               effBorderActiveType: 'none',
-                              borderColor: 'transparent',
+                              borderColor: selectedInst.config?.borderColor || '#ffffff',
                             }
                           })}
                           className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all ${
@@ -1900,15 +1902,18 @@ export default function OverlayEditorSidebar({
                         <button
                           type="button"
                           onClick={() => {
-                            const curThickness = (selectedInst.config?.effBorderThickness !== undefined && selectedInst.config.effBorderThickness > 0) 
+                            const curThickness = Math.max(1, (selectedInst.config?.effBorderThickness !== undefined && selectedInst.config.effBorderThickness > 0) 
                               ? selectedInst.config.effBorderThickness 
-                              : (parseInt(selectedInst.config?.borderWidth) || 0);
+                              : (parseInt(selectedInst.config?.borderWidth) || 1));
+                            const curRadius = Math.max(0.5, parseFloat(selectedInst.config?.borderRadius) || 1);
                             onUpdateInstance(selectedInst.id, {
                               config: { 
                                 ...selectedInst.config, 
                                 showBorder: true,
                                 borderWidth: `${curThickness}px`,
                                 effBorderThickness: curThickness,
+                                borderRadius: `${curRadius}px`,
+                                effBorderRadius: curRadius,
                                 effBorderActiveType: (selectedInst.config?.effBorderActiveType && selectedInst.config.effBorderActiveType !== 'none') ? selectedInst.config.effBorderActiveType : 'border-solid',
                                 borderColor: (selectedInst.config?.borderColor && selectedInst.config.borderColor !== 'transparent') ? selectedInst.config.borderColor : '#ffffff'
                               }
@@ -1954,18 +1959,18 @@ export default function OverlayEditorSidebar({
                               <label className="text-[10px] text-slate-400 font-mono block mb-1">Espessura (px)</label>
                               <input
                                 type="number"
-                                min="0"
+                                min="1"
                                 max="20"
-                                value={selectedInst.config?.effBorderThickness !== undefined ? selectedInst.config.effBorderThickness : (parseInt(selectedInst.config?.borderWidth) || 0)}
+                                value={selectedInst.config?.effBorderThickness !== undefined ? Math.max(1, selectedInst.config.effBorderThickness) : Math.max(1, parseInt(selectedInst.config?.borderWidth) || 1)}
                                 onChange={(e) => {
-                                  const val = Math.max(0, parseInt(e.target.value) || 0);
+                                  const val = Math.max(1, parseInt(e.target.value) || 1);
                                   onUpdateInstance(selectedInst.id, {
                                     config: { 
                                       ...selectedInst.config, 
                                       borderWidth: `${val}px`, 
                                       effBorderThickness: val,
                                       showBorder: true,
-                                      effBorderActiveType: val > 0 ? (selectedInst.config?.effBorderActiveType === 'none' ? 'border-solid' : (selectedInst.config?.effBorderActiveType || 'border-solid')) : 'none'
+                                      effBorderActiveType: (selectedInst.config?.effBorderActiveType === 'none' ? 'border-solid' : (selectedInst.config?.effBorderActiveType || 'border-solid'))
                                     }
                                   });
                                 }}
@@ -1989,25 +1994,30 @@ export default function OverlayEditorSidebar({
                               </select>
                             </div>
                           </div>
-
-                          <div className="space-y-1">
-                            <div className="flex justify-between items-center text-[10px] text-slate-300 font-mono">
-                              <span>Arredondamento</span>
-                              <span>{selectedInst.config?.borderRadius || '12px'}</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="0"
-                              max="32"
-                              value={parseInt(selectedInst.config?.borderRadius) || 12}
-                              onChange={(e) => onUpdateInstance(selectedInst.id, {
-                                config: { ...selectedInst.config, borderRadius: `${e.target.value}px`, effBorderRadius: parseInt(e.target.value) || 0 }
-                              })}
-                              className="w-full accent-purple-600 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer"
-                            />
-                          </div>
                         </div>
                       )}
+
+                      {/* Controle de Arredondamento para Com Borda e Sem Borda (Mínimo 0.5px, Padrão 1px, Nunca 0) */}
+                      <div className="space-y-1 pt-1">
+                        <div className="flex justify-between items-center text-[10px] text-slate-300 font-mono">
+                          <span>Arredondamento</span>
+                          <span>{parseFloat(selectedInst.config?.borderRadius) ? `${Math.max(0.5, parseFloat(selectedInst.config?.borderRadius))}px` : '1px'}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.5"
+                          step="0.5"
+                          max="32"
+                          value={Math.max(0.5, parseFloat(selectedInst.config?.borderRadius) || 1)}
+                          onChange={(e) => {
+                            const val = Math.max(0.5, parseFloat(e.target.value) || 0.5);
+                            onUpdateInstance(selectedInst.id, {
+                              config: { ...selectedInst.config, borderRadius: `${val}px`, effBorderRadius: val }
+                            });
+                          }}
+                          className="w-full accent-purple-600 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
                     </div>
 
                     {/* REQUISITO 1: EFEITOS - BOTÕES PEQUENOS E COMPACTOS (SEM SELECTS) */}
@@ -4298,7 +4308,7 @@ export default function OverlayEditorSidebar({
                         type="button"
                         onClick={() => onUpdateBackground({ type: type.id })}
                         className={`text-[10px] py-1 rounded transition-all font-medium ${
-                          (background?.type || 'transparent') === type.id
+                          (background?.type || 'solid') === type.id
                             ? 'bg-purple-600 text-white shadow'
                             : 'text-slate-400 hover:text-white'
                         }`}
@@ -4354,7 +4364,7 @@ export default function OverlayEditorSidebar({
                 </div>
 
                 {/* Solid Color Config */}
-                {(background?.type || 'transparent') === 'solid' && (
+                {(background?.type || 'solid') === 'solid' && (
                   <div className="space-y-3 border-t border-white/5 pt-3 animate-fade-in">
                     <div className="flex items-center justify-between gap-2 bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5">
                       <span className="text-[10px] text-slate-400 font-mono">Selecionar Cor</span>
@@ -4393,7 +4403,7 @@ export default function OverlayEditorSidebar({
                 )}
 
                 {/* Gradient Config */}
-                {(background?.type || 'transparent') === 'gradient' && (
+                {(background?.type || 'solid') === 'gradient' && (
                   <div className="space-y-3 border-t border-white/5 pt-3 animate-fade-in">
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-400 font-mono block">Fórmula CSS do Gradiente</label>
@@ -4439,7 +4449,7 @@ export default function OverlayEditorSidebar({
                 )}
 
                 {/* Image Config */}
-                {(background?.type || 'transparent') === 'image' && (
+                {(background?.type || 'solid') === 'image' && (
                   <div className="space-y-3 border-t border-white/5 pt-3 animate-fade-in">
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-400 font-mono block">URL da Imagem de Fundo</label>

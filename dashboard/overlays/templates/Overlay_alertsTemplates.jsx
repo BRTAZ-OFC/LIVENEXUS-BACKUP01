@@ -16,7 +16,7 @@ export const ALERTS_TEMPLATES = [
       const detail = lastEvent ? (lastEvent.text || lastEvent.detail || 'Evento no canal') : (isOnline ? 'Nenhum evento registrado' : 'Live offline');
 
       return (
-        <div className="w-full h-full px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-950/90 via-slate-950/90 to-indigo-950/90 border border-purple-500/40 shadow-2xl flex items-center justify-between select-none overflow-hidden text-left">
+        <div className="w-full h-full px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-950/90 via-slate-950/90 to-indigo-950/90 shadow-2xl flex items-center justify-between select-none overflow-hidden text-left">
           <div className="flex items-center gap-3">
             <div className="h-11 w-11 rounded-xl bg-purple-600/30 border border-purple-400/50 flex items-center justify-center text-purple-300 shadow-md shrink-0">
               <Award className="h-6 w-6" />

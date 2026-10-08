@@ -23,7 +23,6 @@ export function TwitchLatestSub({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -64,7 +63,6 @@ export function TwitchLatestCheer({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -105,7 +103,6 @@ export function TwitchLatestRaid({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -148,7 +145,6 @@ export function TwitchTopCheer({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -191,7 +187,6 @@ export function TwitchSubCounter({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -230,7 +225,6 @@ export function TwitchBitsCounter({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >

@@ -94,7 +94,6 @@ export default function MultiViewersCounter({ config = {}, elementKey = 'full_wi
   const containerStyle = {
     backgroundColor: config.backgroundColor || 'rgba(0, 0, 0, 0.65)',
     borderRadius: config.borderRadius || '12px',
-    border: config.showBorder === true ? '1px solid rgba(255, 255, 255, 0.12)' : 'none',
     fontFamily: config.fontFamily || 'Inter, sans-serif',
   };
 

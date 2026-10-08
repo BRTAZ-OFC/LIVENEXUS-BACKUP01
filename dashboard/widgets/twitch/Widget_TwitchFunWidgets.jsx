@@ -42,7 +42,6 @@ export function TwitchWordCloud({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -112,7 +111,6 @@ export function TwitchEmoteShower({ config = {} }) {
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
         borderRadius: config.borderRadius || '12px',
-        border: config.showBorder ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >

@@ -136,7 +136,6 @@ export default function PixWidget({ config = {}, instanceId }) {
       style={{
         fontFamily: config.fontFamily || 'Inter, sans-serif',
         background: config.backgroundColor || 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
-        border: config.showBorder === true ? `1px solid ${config.borderColor || 'rgba(168, 85, 247, 0.4)'}` : 'none',
         borderRadius: config.borderRadius || '12px'
       }}
     >

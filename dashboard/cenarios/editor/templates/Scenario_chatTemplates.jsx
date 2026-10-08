@@ -15,7 +15,7 @@ export const CHAT_TEMPLATES = [
       const displayMsgs = messages.slice(0, 5);
 
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/80 border border-purple-500/30 backdrop-blur-md flex flex-col justify-between overflow-hidden shadow-xl select-none" style={{ fontFamily: config.fontFamily || 'Inter, sans-serif' }}>
+        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 backdrop-blur-md flex flex-col justify-between overflow-hidden shadow-xl select-none" style={{ fontFamily: config.fontFamily || 'Inter, sans-serif' }}>
           <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2 shrink-0">
             <div className="flex items-center gap-2">
               <span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />

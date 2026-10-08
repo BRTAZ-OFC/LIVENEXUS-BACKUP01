@@ -107,7 +107,6 @@ export default function ReactVideoPlayer({ config = {}, isEditing = false }) {
   // Visual container styling matching user's corrected design
   const containerStyle = {
     borderRadius,
-    border: hasNoBorder ? 'none' : `${borderThickness}px solid ${borderColor}`,
     backgroundColor: config.backgroundColor || config.effBgColor || '#020617',
   };
 

@@ -137,7 +137,6 @@ export default function TwitchAlerts({ config = {} }) {
         className={`max-w-md w-full rounded-2xl p-5 backdrop-blur-xl shadow-2xl flex items-center gap-4 animate-scale-in text-left ${details.colorClass}`}
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
-          border: config.showBorder === true ? undefined : 'none'
         }}
       >
         <div className="p-3 rounded-xl bg-black/40 shrink-0">

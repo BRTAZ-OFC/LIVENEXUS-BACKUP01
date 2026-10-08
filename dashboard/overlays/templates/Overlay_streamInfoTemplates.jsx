@@ -17,7 +17,7 @@ export const STATUS_LABEL_TEMPLATES = [
       const g = isOnline ? (game || '') : '';
 
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-purple-500/30 flex flex-col justify-between select-none text-left shadow-xl">
+        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
           <div className="flex justify-between items-center text-[10px] font-mono">
             <div className="flex items-center gap-1.5">
               <span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />

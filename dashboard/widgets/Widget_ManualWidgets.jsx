@@ -3,7 +3,7 @@ import { getCurrentTrack } from '@dashboard/biblioteca/Library_youtubePlayer';
 import { playerEvents } from '@dashboard/biblioteca/Library_playerEvents';
 
 const shells = [
-  'rounded-xl bg-slate-950/90 border border-slate-500/40 text-white p-4',
+  'rounded-xl bg-slate-950/90 text-white p-4',
   'rounded-full bg-indigo-950/90 border-2 border-indigo-400 text-indigo-100 px-6 py-3',
   'rounded-none bg-black border-l-4 border-lime-400 text-lime-300 p-4 font-mono',
   'rounded-2xl bg-gradient-to-r from-purple-950 via-fuchsia-900 to-slate-950 border border-fuchsia-400/70 text-white p-4',
@@ -117,7 +117,6 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#090d16',
-          border: config.showBorder === true ? '2px solid #ef4444' : 'none',
           borderRadius: '9999px',
           boxShadow: '0 0 15px rgba(239, 68, 68, 0.6)'
         }}
@@ -146,7 +145,6 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#0a0f1d',
-          border: config.showBorder === true ? '2px solid #3b82f6' : 'none',
           borderRadius: '16px',
           boxShadow: '0 0 15px rgba(59, 130, 246, 0.6)'
         }}
@@ -196,7 +194,6 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#0a0f1d',
-          border: config.showBorder === true ? '2px solid #a855f7' : 'none',
           borderRadius: '16px',
           boxShadow: '0 0 15px rgba(168, 85, 247, 0.6)'
         }}
@@ -320,7 +317,6 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#090d16',
-          border: config.showBorder === true ? '2px solid #f97316' : 'none',
           borderRadius: '9999px',
           boxShadow: '0 0 15px rgba(249, 115, 22, 0.6)'
         }}

@@ -15,7 +15,7 @@ export const CHATTER_LEADERBOARD_TEMPLATES = [
       const list = chatters.slice(0, 3);
 
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-purple-500/40 flex flex-col justify-between select-none text-left shadow-xl overflow-hidden">
+        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl overflow-hidden">
           <div className="text-[10px] font-mono font-bold text-purple-300 uppercase pb-1.5 border-b border-white/10 flex items-center justify-between">
             <span className="flex items-center gap-1.5"><Trophy className="h-3.5 w-3.5 text-amber-400" /> TOP CHATTERS</span>
             <span className="text-[9px] text-slate-400">{isOnline ? 'AO VIVO' : 'OFFLINE'}</span>
@@ -359,7 +359,7 @@ export const POLL_TEMPLATES = [
       const totalVotes = Object.values(votesMap).reduce((a, b) => a + Number(b || 0), 0);
 
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-purple-500/40 flex flex-col justify-between select-none text-left shadow-xl">
+        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
           <div className="flex items-center gap-1.5 pb-1 border-b border-white/10">
             <Vote className="h-4 w-4 text-purple-400" />
             <span className="text-[9px] font-mono font-bold text-purple-300 uppercase">ENQUETE AO VIVO</span>
@@ -698,7 +698,7 @@ export const RAFFLE_TEMPLATES = [
     badge: 'Classic Raffle',
     render: ({ participants = [], winner = null, isOnline = false }) => {
       return (
-        <div className="w-full h-full p-3.5 rounded-2xl bg-slate-950/90 border border-purple-500/40 flex flex-col justify-between select-none text-center shadow-xl">
+        <div className="w-full h-full p-3.5 rounded-2xl bg-slate-950/90 flex flex-col justify-between select-none text-center shadow-xl">
           <div className="flex items-center justify-center gap-1.5 text-purple-300 font-mono text-[9px] font-bold uppercase">
             <Gift className="h-4 w-4 text-purple-400" /> SORTEIO DO CHAT
           </div>
@@ -928,7 +928,7 @@ export const SUB_TRAIN_TEMPLATES = [
     badge: 'Hype Train',
     render: ({ isOnline = false }) => {
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-purple-500/40 shadow-xl flex flex-col justify-between select-none text-left">
+        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 shadow-xl flex flex-col justify-between select-none text-left">
           <div className="flex justify-between items-center text-[10px] font-mono">
             <span className="font-bold text-purple-300 flex items-center gap-1.5"><Flame className="h-4 w-4 text-purple-400" /> TREM DO SUB</span>
             <span className="text-white font-bold">{isOnline ? 'NÍVEL 1' : 'OFFLINE'}</span>

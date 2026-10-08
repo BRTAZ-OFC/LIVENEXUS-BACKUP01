@@ -16,7 +16,7 @@ export const CHAT_SPEED_TEMPLATES = [
       const pct = Math.min(100, Math.round((spd / 120) * 100));
 
       return (
-        <div className="w-full h-full p-3 rounded-full bg-slate-950/90 border border-purple-500/40 flex flex-col items-center justify-center select-none aspect-square text-center shadow-xl">
+        <div className="w-full h-full p-3 rounded-full bg-slate-950/90 flex flex-col items-center justify-center select-none aspect-square text-center shadow-xl">
           <Activity className="h-5 w-5 text-purple-400 mb-0.5 animate-pulse" />
           <span className="text-2xl font-black text-white font-mono leading-none">{spd}</span>
           <span className="text-[8.5px] font-mono text-purple-300 uppercase mt-0.5">MSG / MIN</span>
@@ -260,7 +260,7 @@ export const HYPE_METER_TEMPLATES = [
       const hp = isOnline ? hype : 0;
 
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-orange-500/40 flex flex-col items-center justify-between select-none shadow-xl">
+        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 flex flex-col items-center justify-between select-none shadow-xl">
           <div className="flex items-center gap-1 text-orange-400">
             <Flame className="h-5 w-5 animate-bounce" />
             <span className="text-[9px] font-mono font-bold uppercase">HYPE</span>
@@ -504,7 +504,7 @@ export const CHAT_VIBE_TEMPLATES = [
       const score = isOnline ? vibeScore : 0;
 
       return (
-        <div className="w-full h-full rounded-2xl bg-slate-950/90 border border-emerald-500/40 p-3 flex flex-col items-center justify-between select-none text-center shadow-xl">
+        <div className="w-full h-full rounded-2xl bg-slate-950/90 p-3 flex flex-col items-center justify-between select-none text-center shadow-xl">
           <span className="text-[9px] font-mono text-emerald-300 font-bold uppercase">VIBE DO CHAT</span>
           <Smile className="h-10 w-10 text-emerald-400 animate-pulse my-auto" />
           <span className="text-xs font-mono font-black text-white">{isOnline ? `${score}% POSITIVO` : 'LIVE OFFLINE'}</span>
@@ -739,7 +739,7 @@ export const VIEWERS_CHART_TEMPLATES = [
       const cur = isOnline ? currentViewers : 0;
 
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-purple-500/40 shadow-xl flex flex-col justify-between select-none text-left">
+        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 shadow-xl flex flex-col justify-between select-none text-left">
           <div className="flex justify-between items-center text-[10px] font-mono">
             <span className="font-bold text-purple-300 flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5" /> AUDIÊNCIA EM TEMPO REAL</span>
             <span className="text-white font-black">{!isOnline ? 'Offline' : `${cur} viewers`}</span>

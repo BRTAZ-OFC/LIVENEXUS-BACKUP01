@@ -43,7 +43,6 @@ export default function YouTubeNativePoll({ config = {}, elementKey = 'full_widg
     <div className="flex h-full flex-col gap-3 overflow-auto rounded-xl bg-slate-950/80 p-4 text-sm"
       style={{
         fontFamily: config.fontFamily || 'Inter, sans-serif',
-        border: config.showBorder === true ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
         borderRadius: config.borderRadius || '12px'
       }}>
       <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">YouTube · Enquete nativa</span>

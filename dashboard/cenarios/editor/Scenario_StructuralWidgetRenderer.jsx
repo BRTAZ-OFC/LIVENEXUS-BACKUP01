@@ -1,3 +1,4 @@
+import React from 'react';
 import { getTemplateForWidget } from './templates/Scenario_index';
 import { useStreaming } from '@dashboard/configuracao/Config_StreamingContext';
 import { eventDetails, eventLabel, genericEventAllowed, platformEvents, platformIsOnline, platformMessages, platformMeta, platformViewers, selectedPlatforms, visibleChatText } from '@dashboard/overlays/Overlay_platformData';
@@ -178,9 +179,34 @@ export default function StructuralWidgetRenderer({
     modLogs: customProps.modLogs || [],
     ...customProps
   });
-  if (effectiveWidgetId !== 'twitch-chat-box' || selectedPlatforms(config).length <= 1) return rendered;
+
+  const needsBorderOverride = typeof config.showBorder === 'boolean';
+  let finalRendered = rendered;
+  if (needsBorderOverride && React.isValidElement(rendered)) {
+    finalRendered = React.cloneElement(rendered, {
+      className: `${rendered.props.className || ''} structural-border-reset`.trim()
+    });
+  }
+
+  const result = (
+    <>
+      {needsBorderOverride && (
+        <style>{`
+          .structural-border-reset { 
+            border: none !important; 
+            border-width: 0px !important; 
+            outline: none !important;
+            box-shadow: none !important;
+          }
+        `}</style>
+      )}
+      {finalRendered}
+    </>
+  );
+
+  if (effectiveWidgetId !== 'twitch-chat-box' || selectedPlatforms(config).length <= 1) return result;
   return <div className="ln-multichat-pattern w-full h-full">
     <style>{`.ln-multichat-pattern [data-chat-text] { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden !important; overflow-wrap: anywhere; white-space: normal !important; }`}</style>
-    {rendered}
+    {result}
   </div>;
 }
