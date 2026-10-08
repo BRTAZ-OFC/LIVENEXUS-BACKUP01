@@ -180,7 +180,7 @@ export default function StructuralWidgetRenderer({
     ...customProps
   });
 
-  const needsBorderOverride = typeof config.showBorder === 'boolean';
+  const needsBorderOverride = config.showBorder === false;
   let finalRendered = rendered;
   if (needsBorderOverride && React.isValidElement(rendered)) {
     finalRendered = React.cloneElement(rendered, {
@@ -195,6 +195,7 @@ export default function StructuralWidgetRenderer({
           .structural-border-reset { 
             border: none !important; 
             border-width: 0px !important; 
+            border-radius: 0px !important;
             outline: none !important;
             box-shadow: none !important;
           }

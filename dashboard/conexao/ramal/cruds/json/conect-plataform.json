@@ -1,0 +1,13 @@
+{
+  "user_id": "string",
+  "platform": "string",
+  "channel_id": "string",
+  "channel_name": "string",
+  "channel_handle": "string",
+  "verification_code": "string",
+  "bio_link_code": "string",
+  "status": "pending",
+  "created_at": "timestamp",
+  "verified_at": "timestamp",
+  "unlinked_at": "timestamp"
+}

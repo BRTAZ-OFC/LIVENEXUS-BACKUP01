@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-const file = path.resolve(process.cwd(), 'dashboard/overlays/overlays.json');
+const file = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/overlays.json');
 let pending = Promise.resolve();
 const key = (userId) => {
   if (typeof userId !== 'string' || !userId.trim()) throw new Error('Usuário não identificado.');

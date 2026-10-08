@@ -591,23 +591,16 @@ export default function OverlaysWorkspace({ selectedOverlayId }) {
     }
 
     const mergedConfig = {
-      effBorderThickness: 1,
-      borderWidth: '1px',
-      borderRadius: '1px',
-      effBorderRadius: 1,
-      borderColor: '#ffffff',
-      borderStyle: 'solid',
       ...(defaultConfig || {}),
-      showBorder: true
+      showBorder: false,
+      borderWidth: '0px',
+      effBorderThickness: 0,
+      borderRadius: '0px',
+      effBorderRadius: 0,
+      effBorderActiveType: 'none',
+      borderColor: '#ffffff',
+      borderStyle: 'solid'
     };
-    if (mergedConfig.effBorderThickness === undefined || mergedConfig.effBorderThickness === 0) {
-      mergedConfig.effBorderThickness = 1;
-      mergedConfig.borderWidth = '1px';
-    }
-    if (!mergedConfig.borderRadius || parseFloat(mergedConfig.borderRadius) < 0.5) {
-      mergedConfig.borderRadius = '1px';
-      mergedConfig.effBorderRadius = 1;
-    }
 
     const newInst = {
       id: `inst-${Date.now()}`,

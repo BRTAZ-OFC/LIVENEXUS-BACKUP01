@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-const file = path.resolve(process.cwd(), 'dashboard/configuracao/messages.json');
+const file = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/messages.json');
 let pending = Promise.resolve();
 const statuses = new Set(['novo', 'lido', 'respondido']);
 

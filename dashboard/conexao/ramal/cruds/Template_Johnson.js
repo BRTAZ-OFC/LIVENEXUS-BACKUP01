@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 
-const root = path.resolve(process.cwd(), 'dashboard/Imagem/template');
+const root = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json');
 const documentFile = path.join(root, 'templates.json');
 const inventoryFile = path.join(root, 'inventario.csv');
 let pending = Promise.resolve();

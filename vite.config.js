@@ -439,6 +439,10 @@ function documentaryDomainsPlugin() {
       const { handleReviewsRequest } = await import('./dashboard/painel-admin/Review_Handler.js');
       return handleReviewsRequest(req, res);
     }
+    if (pathname === '/api/plataformas') {
+      const { handlePlataformasRequest } = await import('./dashboard/conexao/ramal/Plataformas_Handler.js');
+      return handlePlataformasRequest(req, res);
+    }
     next();
   }
   return {

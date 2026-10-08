@@ -1880,13 +1880,12 @@ export default function OverlayEditorSidebar({
                         <button
                           type="button"
                           onClick={() => {
-                            const curThickness = selectedInst.config?.effBorderThickness !== undefined ? selectedInst.config.effBorderThickness : (parseInt(selectedInst.config?.borderWidth) || 0);
                             onUpdateInstance(selectedInst.id, {
                               config: { 
                                 ...selectedInst.config, 
                                 showBorder: false,
-                                borderWidth: `${Math.max(0, curThickness)}px`,
-                                effBorderThickness: Math.max(0, curThickness),
+                                borderWidth: '0px',
+                                effBorderThickness: 0,
                                 borderRadius: '0px',
                                 effBorderRadius: 0,
                                 effBorderActiveType: 'none',

@@ -856,6 +856,22 @@ export function StreamingProvider({ children }) {
         credentials: 'include',
         body: JSON.stringify({ channels: { [data.platform]: entry } }),
       });
+      // Salvar na tabela / JSON de plataformas para o Painel Admin
+      await fetch('/api/plataformas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          platform: data.platform,
+          channel_id: data.channelIdentifier,
+          channel_name: data.channelIdentifier,
+          channel_handle: data.channelIdentifier,
+          verification_code: data.verificationProof || data.challengeKey || '',
+          bio_link_code: data.challengeKey || '',
+          status: 'verified',
+          verified_at: data.verifiedAt || new Date().toISOString()
+        }),
+      });
       console.log('[LIVENEXUS-RENEW] VERIFIED_CHANNEL_SAVED', { platform: data.platform, channelIdentifier: data.channelIdentifier, ts: new Date().toISOString() });
     } catch (e) {
       console.error('[LIVENEXUS] VERIFIED_CHANNEL_ERROR', e);

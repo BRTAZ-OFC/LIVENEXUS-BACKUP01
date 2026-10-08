@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-const file = path.resolve(process.cwd(), 'dashboard/painel-admin/reviews.json');
+const file = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/reviews.json');
 let pending = Promise.resolve();
 
 async function read() {

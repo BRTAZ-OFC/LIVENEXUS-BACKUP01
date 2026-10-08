@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const file = path.resolve(process.cwd(), 'dashboard/biblioteca/biblioteca.json');
+const file = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/biblioteca.json');
 const categories = { song: 'songs', album: 'albums', artist: 'artists', playlist: 'playlists' };
 const empty = () => ({ songs: [], albums: [], artists: [], playlists: [] });
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);

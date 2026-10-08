@@ -10,9 +10,17 @@ const shells = [
   'rounded-lg bg-white/95 border border-slate-300 text-slate-900 p-4 shadow-lg'
 ];
 
-function Frame({ config, children, label, className = '' }) {
+function Frame({ config = {}, children, label, className = '' }) {
   const style = Math.max(0, Math.min(5, Number(config.structuralPreset) || 0));
-  return <div className={`w-full h-full min-w-0 overflow-hidden flex ${style === 2 ? 'items-center justify-between gap-3' : style === 4 ? 'items-center justify-center gap-3' : 'flex-col justify-center gap-2'} ${shells[style ? style - 1 : 0]} ${className}`} style={{ fontFamily: config.fontFamily || 'Inter, sans-serif' }}>
+  const showBorder = config.showBorder === true;
+  let shellStr = shells[style ? style - 1 : 0] || shells[0];
+  if (!showBorder) {
+    shellStr = shellStr
+      .replace(/\bborder-[^\s]+/g, '')
+      .replace(/\bborder\b/g, '')
+      .replace(/\brounded-[^\s]+/g, 'rounded-none');
+  }
+  return <div className={`w-full h-full min-w-0 overflow-hidden flex ${style === 2 ? 'items-center justify-between gap-3' : style === 4 ? 'items-center justify-center gap-3' : 'flex-col justify-center gap-2'} ${shellStr} ${className}`} style={{ fontFamily: config.fontFamily || 'Inter, sans-serif' }}>
     {label && style !== 5 && <span className="text-[10px] font-bold uppercase tracking-[.17em] opacity-70">{label}</span>}
     {children}
   </div>;

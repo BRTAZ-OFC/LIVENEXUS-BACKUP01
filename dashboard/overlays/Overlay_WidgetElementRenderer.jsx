@@ -172,12 +172,20 @@ export default function WidgetElementRenderer({
     textAlign: config.textAlign || 'left',
   };
 
-  const thicknessVal = Math.max(1, config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 1));
-  const effectiveRadius = config.borderRadius ? `${Math.max(1, parseFloat(config.borderRadius) || 1)}px` : '1px';
+  const showBorder = config.showBorder === true;
+  const thicknessVal = showBorder
+    ? (config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 0))
+    : 0;
+  const effectiveRadius = showBorder
+    ? (config.effBorderRadius !== undefined ? `${config.effBorderRadius}px` : (config.borderRadius ? `${parseFloat(config.borderRadius) || 0}px` : '0px'))
+    : '0px';
+
   const containerStyle = {
     ...baseStyle,
     background: config.backgroundColor || 'transparent',
-    border: `${thicknessVal}px ${config.borderStyle || 'solid'} ${config.borderColor || config.effBorderColor || 'rgba(255, 255, 255, 0.1)'}`,
+    border: showBorder && thicknessVal > 0
+      ? `${thicknessVal}px ${config.borderStyle || 'solid'} ${config.borderColor || config.effBorderColor || 'rgba(255, 255, 255, 0.1)'}`
+      : 'none',
     borderRadius: effectiveRadius
   };
 
@@ -489,11 +497,11 @@ export default function WidgetElementRenderer({
     }
 
     // 8. BORDA / SUPERFÍCIE - Container effect
-    const effectiveRadiusVal = config.borderRadius ? `${Math.max(0.5, parseFloat(config.borderRadius) || 1)}px` : '1px';
+    const effectiveRadiusVal = (config.showBorder === true && config.borderRadius) ? `${parseFloat(config.borderRadius) || 0}px` : '0px';
     if (config.showBorder === true && thickness > 0) {
       const bColor = config.borderColor || config.effBorderColor || '#ffffff';
       const bThickness = thickness;
-      const bRadius = config.effBorderRadius !== undefined ? Math.max(0.5, config.effBorderRadius) : (parseFloat(config.borderRadius) ? Math.max(0.5, parseFloat(config.borderRadius)) : 1);
+      const bRadius = config.effBorderRadius !== undefined ? config.effBorderRadius : (parseFloat(config.borderRadius) ? parseFloat(config.borderRadius) : 0);
       const bStyle = config.borderStyle || 'solid';
 
       if (config.effBorderActiveType === 'border-glow') {
@@ -511,10 +519,7 @@ export default function WidgetElementRenderer({
       }
       containerCSS += `border-radius: ${bRadius}px !important; `;
     } else {
-      containerCSS += `border: none !important; border-width: 0px !important; outline: none !important; `;
-      if (config.borderRadius) {
-        containerCSS += `border-radius: ${effectiveRadiusVal} !important; `;
-      }
+      containerCSS += `border: none !important; border-width: 0px !important; outline: none !important; border-radius: 0px !important; `;
     }
 
     // 3. Composite Animations (Core animations & animated effects) - Content or Container
@@ -660,6 +665,7 @@ export default function WidgetElementRenderer({
           border-color: transparent !important;
           border-style: none !important;
           outline: none !important;
+          border-radius: 0px !important;
         }
         ` : ''}
 

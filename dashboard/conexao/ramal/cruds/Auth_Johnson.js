@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const safeCwd = (typeof process !== 'undefined' && typeof process.cwd === 'function') ? process.cwd() : '';
-const file = path.resolve(safeCwd, 'dashboard/configuracao/auth_activation.json');
+const file = path.resolve(safeCwd, 'dashboard/conexao/ramal/cruds/json/auth_activation.json');
 let pending = Promise.resolve();
 
 const read = async () => {

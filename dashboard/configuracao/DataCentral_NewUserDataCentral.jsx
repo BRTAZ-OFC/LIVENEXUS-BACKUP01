@@ -3,6 +3,7 @@ import {
   liveSessionRepository, 
   contactRepository 
 } from '@dashboard/configuracao/Config_liveNexusDataAdapter';
+import { plataformasRamal } from '@dashboard/conexao/ramal/plataformas';
 import { loadFilterConfig, saveFilterConfig } from '@dashboard/configuracao/Config_filterConfig';
 import { useAuth } from '@dashboard/login/AuthContext';
 import { authClient } from '@dashboard/login/authClient';
@@ -56,6 +57,7 @@ export function NewUserDataCentralProvider({ children }) {
   const galleryBranch = useCallback((operation, params) => dispatchDocument('/api/admin/lab/user-gallery', galleryRamal, operation, params), [dispatchDocument]);
   const libraryBranch = useCallback((operation, params) => dispatchDocument('/api/library', libraryRamal, operation, params), [dispatchDocument]);
   const templateBranch = useCallback((operation, params) => dispatchDocument('/api/templates', templateRamal, operation, params), [dispatchDocument]);
+  const plataformasBranch = useCallback((operation, params) => dispatchDocument('/api/plataformas', plataformasRamal, operation, params), [dispatchDocument]);
   const messagesBranch = useCallback((operation, params) => dispatchDocument('/api/contacts', messagesRamal, operation, params), [dispatchDocument]);
   const vodsBranch = useCallback((operation, params) => dispatchDocument('/api/live-sessions', vodsRamal, operation, params), [dispatchDocument]);
   const reviewsBranch = useCallback((operation, params) => dispatchDocument('/api/reviews', reviewsRamal, operation, params), [dispatchDocument]);
@@ -68,6 +70,7 @@ export function NewUserDataCentralProvider({ children }) {
   // Estados Reais sincronizados com o Backend/Banco
   const [sessions, setSessions] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [plataformas, setPlataformas] = useState([]);
   const [reviewsError, setReviewsError] = useState('');
   const [contacts, setContacts] = useState([]);
   const [filters, setFilters] = useState(loadFilterConfig());
@@ -79,15 +82,17 @@ export function NewUserDataCentralProvider({ children }) {
     if (!isAuthenticated) return;
     setIsLoading(true);
     try {
-      const [sessResult, revResult, contResult] = await Promise.allSettled([
+      const [sessResult, revResult, contResult, platResult] = await Promise.allSettled([
         vodsBranch('GET'),
         reviewsBranch('GET'),
-        messagesBranch('GET')
+        messagesBranch('GET'),
+        plataformasBranch('GET')
       ]);
       
       let loadedSessions = [];
       let loadedReviews = [];
       let loadedContacts = [];
+      let loadedPlataformas = [];
 
       if (sessResult.status === 'fulfilled') {
         loadedSessions = sessResult.value;
@@ -109,9 +114,16 @@ export function NewUserDataCentralProvider({ children }) {
         console.error('[DataCentral] Mensagens indisponíveis:', contResult.reason);
       }
 
+      if (platResult.status === 'fulfilled') {
+        loadedPlataformas = platResult.value;
+      } else {
+        console.error('[DataCentral] Plataformas indisponíveis:', platResult.reason);
+      }
+
       setSessions(loadedSessions || []);
       setReviews(loadedReviews || []);
       setContacts(loadedContacts || []);
+      setPlataformas(loadedPlataformas || []);
     } catch (error) {
       console.error('[DataCentral] Erro ao carregar dados reais:', error);
     } finally {
@@ -170,6 +182,17 @@ export function NewUserDataCentralProvider({ children }) {
     await refreshAll(true);
   }, [refreshAll, messagesBranch]);
 
+  const savePlataforma = useCallback(async (id, changes) => {
+    const res = await plataformasBranch('PATCH', { id, payload: changes });
+    await refreshAll(true);
+    return res;
+  }, [refreshAll, plataformasBranch]);
+
+  const deletePlataforma = useCallback(async (id) => {
+    await plataformasBranch('DELETE', { id });
+    await refreshAll(true);
+  }, [refreshAll, plataformasBranch]);
+
   const value = {
     userId,
     documentRtcRegistry: user?.rtcRegistry || user?.data?.rtcRegistry || null,
@@ -178,6 +201,7 @@ export function NewUserDataCentralProvider({ children }) {
     galleryBranch,
     libraryBranch,
     templateBranch,
+    plataformasBranch,
     messagesBranch,
     vodsBranch,
     reviewsBranch,
@@ -187,6 +211,7 @@ export function NewUserDataCentralProvider({ children }) {
     reviews,
     reviewsError,
     contacts,
+    plataformas,
     filters,
     runtimeId,
     rtcSession: { isRunning: false, runtimeId, stats: null },
@@ -202,6 +227,8 @@ export function NewUserDataCentralProvider({ children }) {
     deleteReview,
     saveContact,
     deleteContact,
+    savePlataforma,
+    deletePlataforma,
     
     // Repositórios Diretos (para operações CRUD)
     sessionRepo: liveSessionRepository,

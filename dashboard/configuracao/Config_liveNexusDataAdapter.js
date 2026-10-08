@@ -129,9 +129,43 @@ export const publicLivesRepository = {
   }
 };
 
+export const plataformasRepository = {
+  async list() {
+    return plataformasRequest('/api/plataformas');
+  },
+  async get(id) {
+    return plataformasRequest(`/api/plataformas?id=${encodeURIComponent(id)}`);
+  },
+  async create(data = {}) {
+    return plataformasRequest('/api/plataformas', 'POST', data);
+  },
+  async update(id, changes = {}) {
+    return plataformasRequest(`/api/plataformas?id=${encodeURIComponent(id)}`, 'PATCH', changes);
+  },
+  async delete(id) {
+    return plataformasRequest(`/api/plataformas?id=${encodeURIComponent(id)}`, 'DELETE');
+  }
+};
+
+async function plataformasRequest(url, method = 'GET', body = null) {
+  const options = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(authClient.getToken() ? { Authorization: `Bearer ${authClient.getToken()}` } : {}),
+    },
+    credentials: 'include',
+    ...(body ? { body: JSON.stringify(body) } : {})
+  };
+  const res = await fetch(new URL(url, window.location.origin), options);
+  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+  return res.json();
+}
+
 export const liveNexusDataAdapter = {
   liveSession: liveSessionRepository,
   review: reviewRepository,
   contact: contactRepository,
+  plataformas: plataformasRepository,
   publicLives: publicLivesRepository
 };

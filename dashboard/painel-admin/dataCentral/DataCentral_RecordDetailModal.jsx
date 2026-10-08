@@ -214,6 +214,59 @@ export default function RecordDetailModal({
             </div>
           )}
 
+          {/* CAMPOS ESPECÍFICOS DE PLATAFORMAS */}
+          {type === 'plataformas' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1">Plataforma</label>
+                  <input
+                    type="text"
+                    value={formData.platform || ''}
+                    disabled={readOnly}
+                    onChange={(e) => handleFieldChange('platform', e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1">Status</label>
+                  <select
+                    value={formData.status || 'pending'}
+                    disabled={readOnly}
+                    onChange={(e) => handleFieldChange('status', e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-violet-500 cursor-pointer"
+                  >
+                    <option value="pending">Pendente</option>
+                    <option value="verified">Verificado</option>
+                    <option value="unlinked">Desvinculado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Channel Handle</label>
+                <input
+                  type="text"
+                  value={formData.channel_handle || ''}
+                  disabled={readOnly}
+                  onChange={(e) => handleFieldChange('channel_handle', e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Channel ID</label>
+                <input
+                  type="text"
+                  value={formData.channel_id || ''}
+                  disabled={readOnly}
+                  onChange={(e) => handleFieldChange('channel_id', e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-violet-500"
+                />
+              </div>
+            </div>
+          )}
+
           {/* CAMPOS ESPECÍFICOS DE AVALIAÇÕES */}
           {type === 'reviews' && (
             <div className="space-y-4">

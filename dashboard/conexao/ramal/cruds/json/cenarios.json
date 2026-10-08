@@ -1,81 +1,9 @@
 {
-  "e262e68a-c7e7-46de-b084-635bffcaa252": [
-    {
-      "id": "1790536942534",
-      "name": "Novo Cenário",
-      "mode": "LOCAL",
-      "localUrl": "/cenario/1790536942534",
-      "broadcastUrl": "https://broadcast.site/1790536942534",
-      "instances": [],
-      "background": {
-        "type": "transparent",
-        "color": "#020617",
-        "gradient": "linear-gradient(135deg, #1e1b4b 0%, #311042 100%)",
-        "image": "",
-        "opacity": 100,
-        "blur": 0,
-        "brightness": 100,
-        "contrast": 100,
-        "saturate": 100,
-        "showBorder": false,
-        "borderWidth": "0px",
-        "borderRadius": "0px"
-      },
-      "visualizerSize": {
-        "width": 1920,
-        "height": 1080
-      },
-      "gridSettings": {
-        "showGrid": false,
-        "gridSize": 20,
-        "snapToGrid": false,
-        "showSafeAreas": false,
-        "verticalGuides": [],
-        "horizontalGuides": []
-      }
-    }
-  ],
-  "d9a71a3e-f4cc-4263-9361-0417de37d90a": [
-    {
-      "id": "1790536942534",
-      "name": "Novo Cenário",
-      "mode": "LOCAL",
-      "localUrl": "/cenario/1790536942534",
-      "broadcastUrl": "https://broadcast.site/1790536942534",
-      "instances": [],
-      "background": {
-        "type": "transparent",
-        "color": "#020617",
-        "gradient": "linear-gradient(135deg, #1e1b4b 0%, #311042 100%)",
-        "image": "",
-        "opacity": 100,
-        "blur": 0,
-        "brightness": 100,
-        "contrast": 100,
-        "saturate": 100,
-        "showBorder": false,
-        "borderWidth": "0px",
-        "borderRadius": "0px"
-      },
-      "visualizerSize": {
-        "width": 1920,
-        "height": 1080
-      },
-      "gridSettings": {
-        "showGrid": false,
-        "gridSize": 20,
-        "snapToGrid": false,
-        "showSafeAreas": false,
-        "verticalGuides": [],
-        "horizontalGuides": []
-      }
-    }
-  ],
   "84716221-4105-490b-868c-bc4088961c86": [
     {
       "id": "1791279448957",
       "name": "Novo Cenário",
-      "mode": "LOCAL",
+      "mode": "BROADCAST",
       "localUrl": "https://ais-dev-nvl7h4r54wfgorvthculsz-53808708740.us-east5.run.app/cenario/1791279448957",
       "broadcastUrl": "https://ais-dev-nvl7h4r54wfgorvthculsz-53808708740.us-east5.run.app/cenario/receiver/1791279448957?runtimeId=rtc_723d9e62d2b04b6a",
       "instances": [

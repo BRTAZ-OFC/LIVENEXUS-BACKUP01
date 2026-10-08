@@ -49,7 +49,10 @@ export default function DataCentralPage({ initialDetail = null }) {
     saveReview,
     deleteReview,
     saveContact,
-    deleteContact
+    deleteContact,
+    savePlataforma,
+    deletePlataforma,
+    plataformas,
   } = useNewUserDataCentral();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -77,6 +80,8 @@ export default function DataCentralPage({ initialDetail = null }) {
         await saveReview(payload.id, payload);
       } else if (modalType === 'contacts') {
         await saveContact(payload.id, payload);
+      } else if (modalType === 'plataformas') {
+        await savePlataforma(payload.id, payload);
       }
       setSelectedRecord(payload);
     } catch (err) {
@@ -94,6 +99,8 @@ export default function DataCentralPage({ initialDetail = null }) {
         await deleteReview(id);
       } else if (type === 'contacts') {
         await deleteContact(id);
+      } else if (type === 'plataformas') {
+        await deletePlataforma(id);
       }
       setIsModalOpen(false);
       setSelectedRecord(null);
@@ -105,6 +112,7 @@ export default function DataCentralPage({ initialDetail = null }) {
   const displaySessions = sessions;
   const displayReviews = reviews;
   const displayContacts = contacts;
+  const displayPlataformas = plataformas;
 
   const stats = [
     { 
@@ -130,6 +138,14 @@ export default function DataCentralPage({ initialDetail = null }) {
       icon: MessageSquare, 
       color: 'text-purple-400', 
       items: displayContacts 
+    },
+    { 
+      id: 'plataformas', 
+      label: 'Plataformas', 
+      count: plataformas.length, 
+      icon: Radio, 
+      color: 'text-sky-400', 
+      items: plataformas 
     }
   ];
 
@@ -164,13 +180,6 @@ export default function DataCentralPage({ initialDetail = null }) {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-white">Central de Dados</h1>
-                <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
-                  selectedView === 'db' 
-                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' 
-                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                }`}>
-                  {selectedView === 'db' ? 'Banco de Dados' : 'Armazenamento Local'}
-                </span>
                 {activeDetail && (
                   <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-violet-500/10 text-violet-300 border border-violet-500/30">
                     Visão Detalhada
@@ -636,6 +645,106 @@ export default function DataCentralPage({ initialDetail = null }) {
                         <div className="p-3 bg-black/40 rounded-lg border border-white/5 text-xs space-y-1">
                           <p className="text-[10px] uppercase font-bold text-slate-500">Mensagem Completa</p>
                           <p className="text-slate-200 leading-relaxed font-sans">{msg.message || 'Sem conteúdo de texto.'}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* ----------------- PLATAFORMAS ----------------- */}
+              {activeDetail === 'plataformas' && (() => {
+                const list = displayPlataformas.filter(p => 
+                  (p.channel_name || '').toLowerCase().includes(term) || 
+                  (p.channel_handle || '').toLowerCase().includes(term) ||
+                  (p.platform || '').toLowerCase().includes(term)
+                );
+
+                if (displayPlataformas.length === 0) {
+                  return (
+                    <div className="p-8 bg-white/5 border border-white/5 rounded-xl text-center text-slate-400 text-xs">
+                      <AlertCircle size={24} className="mx-auto mb-2 text-slate-500" />
+                      Nenhuma plataforma vinculada registrada.
+                    </div>
+                  );
+                }
+
+                if (list.length === 0) {
+                  return (
+                    <div className="p-8 bg-white/5 border border-white/5 rounded-xl text-center text-slate-400 text-xs">
+                      Nenhuma plataforma corresponde ao filtro de busca.
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {list.map((plat, idx) => (
+                      <div key={plat.id || idx} className="bg-white/5 border border-white/5 rounded-xl p-5 space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs uppercase font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                                Plataforma #{idx + 1}
+                              </span>
+                              <span className="text-xs font-mono text-slate-400">ID: {plat.id || '—'}</span>
+                            </div>
+                            <h3 className="text-base font-bold text-white mt-1">
+                              {plat.channel_name || 'Canal sem nome'}
+                            </h3>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className={`px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border ${
+                              plat.status === 'verified' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 
+                              plat.status === 'unlinked' ? 'bg-red-500/10 text-red-300 border-red-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                            }`}>
+                              Status: {plat.status || 'pending'}
+                            </span>
+                            <span className="text-xs font-mono text-slate-400">{formatDate(plat.created_at)}</span>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEdit('plataformas', plat)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 rounded-lg text-xs font-medium transition cursor-pointer"
+                                title="Editar plataforma"
+                                id={`edit-plataforma-${plat.id || idx}`}
+                              >
+                                <Edit3 size={13} />
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteRecord('plataformas', plat)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-xs font-medium transition cursor-pointer"
+                                title="Excluir plataforma"
+                                id={`delete-plataforma-${plat.id || idx}`}
+                              >
+                                <Trash2 size={13} />
+                                Excluir
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                          <div className="p-3 bg-black/40 rounded-lg border border-white/5">
+                            <p className="text-[10px] uppercase font-bold text-slate-500">Plataforma</p>
+                            <p className="text-white font-medium mt-0.5 capitalize">{plat.platform || '—'}</p>
+                          </div>
+                          <div className="p-3 bg-black/40 rounded-lg border border-white/5">
+                            <p className="text-[10px] uppercase font-bold text-slate-500">Channel Handle</p>
+                            <p className="text-slate-300 font-mono mt-0.5">{plat.channel_handle || '—'}</p>
+                          </div>
+                          <div className="p-3 bg-black/40 rounded-lg border border-white/5">
+                            <p className="text-[10px] uppercase font-bold text-slate-500">Channel ID</p>
+                            <p className="text-slate-300 font-mono mt-0.5 truncate">{plat.channel_id || '—'}</p>
+                          </div>
+                          <div className="p-3 bg-black/40 rounded-lg border border-white/5">
+                            <p className="text-[10px] uppercase font-bold text-slate-500">Verificação</p>
+                            <p className="text-white font-medium mt-0.5 truncate">{plat.verification_code || '—'}</p>
+                          </div>
                         </div>
                       </div>
                     ))}
