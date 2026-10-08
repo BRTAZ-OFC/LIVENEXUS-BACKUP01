@@ -1123,5 +1123,5 @@ export const useStreaming = () => {
 // causando "useStreaming must be used within a StreamingProvider".
 // decline() força full page reload quando este módulo muda.
 if (import.meta.hot) {
-  import.meta.hot.decline();
+  import.meta.hot.accept();
 }

@@ -50,6 +50,7 @@ function ScenarioInstanceItem({
         `.trim() || undefined,
         opacity,
         transition: 'opacity 0.35s ease-in-out',
+        pointerEvents: (!isSelected && (inst.config?.effBgActiveType === 'bg-transparent' || inst.config?.backgroundColor === 'transparent')) ? 'none' : 'auto',
       }}
       className={`group transition-all duration-150 ${
         isSelected

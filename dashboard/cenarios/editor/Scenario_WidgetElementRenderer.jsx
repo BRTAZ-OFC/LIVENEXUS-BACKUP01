@@ -186,14 +186,12 @@ export default function WidgetElementRenderer({
     textAlign: config.textAlign || 'left',
   };
 
-  const thicknessVal = config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 0);
-  const effectiveRadius = config.borderRadius ? `${Math.max(0.5, parseFloat(config.borderRadius) || 1)}px` : '1px';
+  const thicknessVal = Math.max(1, config.effBorderThickness !== undefined ? config.effBorderThickness : (parseInt(config.borderWidth) || 1));
+  const effectiveRadius = config.borderRadius ? `${Math.max(1, parseFloat(config.borderRadius) || 1)}px` : '1px';
   const containerStyle = {
     ...baseStyle,
     background: config.backgroundColor || 'transparent',
-    border: (config.showBorder === true && thicknessVal > 0 && config.effBorderActiveType !== 'none' && config.effBorderActiveType !== 'border-transparent' && config.effBorderActiveType !== 'border-radius') 
-      ? `${thicknessVal}px ${config.borderStyle || 'solid'} ${config.borderColor || config.effBorderColor || 'rgba(255, 255, 255, 0.1)'}` 
-      : 'none',
+    border: `${thicknessVal}px ${config.borderStyle || 'solid'} ${config.borderColor || config.effBorderColor || 'rgba(255, 255, 255, 0.1)'}`,
     borderRadius: effectiveRadius
   };
 

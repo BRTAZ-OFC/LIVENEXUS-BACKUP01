@@ -39,7 +39,10 @@ import { useGlobalScenarioShortcuts } from './cenarios/useGlobalScenarioShortcut
 export default function Dashboard() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const [activeSection, setActiveSection] = useState('overview');
+  const [activeSection, setActiveSection] = useState(() => {
+    if (typeof window === 'undefined') return 'overview';
+    return localStorage.getItem('livenexus_active_section') || 'overview';
+  });
   const s = useStreaming();
   const central = useNewUserDataCentral();
 
@@ -47,6 +50,9 @@ export default function Dashboard() {
   useGlobalScenarioShortcuts();
 
   useEffect(() => {
+    try {
+      localStorage.setItem('livenexus_active_section', activeSection);
+    } catch {}
     setAppSection(activeSection);
     recordDiagnosticEvent({
       level: 'info',
