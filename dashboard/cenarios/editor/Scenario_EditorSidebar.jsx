@@ -23,7 +23,7 @@ import {
 import GalleryPicker from '@dashboard/componentes/GalleryPicker';
 import PrebuiltOverlayGalleryModal from './Scenario_PrebuiltOverlayGalleryModal';
 import TemplateEditorGalleryModal from '@dashboard/Imagem/template/Template_EditorGalleryModal';
-import { localCache } from '@dashboard/configuracao/Config_localCache';
+import { safeStorage } from '@dashboard/login/safeStorage';
 import { authClient } from '@dashboard/login/authClient';
 import PrebuiltStructuralOverlaysModal from './Scenario_PrebuiltStructuralOverlaysModal';
 import { resolveWidgetCategory } from './Scenario_prebuiltStructuralCatalog';
@@ -338,7 +338,8 @@ export default function OverlayEditorSidebar({
   const [libraryFavorites, setLibraryFavorites] = useState(() => {
     try {
       const uid = authClient.getUserDataCache()?.id || 'anonymous';
-      const saved = localCache.get(uid, 'scenario_favorites');
+      const raw = safeStorage.getItem(`livenexus:scenario_favorites:${uid}`);
+      const saved = raw ? JSON.parse(raw) : null;
       return Array.isArray(saved) ? saved : [];
     } catch (e) {
       return [];
@@ -351,7 +352,7 @@ export default function OverlayEditorSidebar({
       const next = prev.includes(id) ? prev.filter(fId => fId !== id) : [...prev, id];
       try {
         const uid = authClient.getUserDataCache()?.id || 'anonymous';
-        localCache.set(uid, 'scenario_favorites', next);
+        safeStorage.setItem(`livenexus:scenario_favorites:${uid}`, JSON.stringify(next));
       } catch (err) {}
       return next;
     });

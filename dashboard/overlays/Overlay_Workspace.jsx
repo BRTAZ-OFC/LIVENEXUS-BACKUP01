@@ -5,7 +5,7 @@ import { getWidgetDefaultDimensions } from './Overlay_widgetElements';
 import { TWITCH_WIDGETS_CATALOG } from '@dashboard/widgets/Widget_twitchWidgetsCatalog';
 import { Check, Plus, Trash2, Save, Copy, ExternalLink, Layers } from 'lucide-react';
 import { useNewUserDataCentral } from '@dashboard/configuracao/DataCentral_NewUserDataCentral';
-import { localCache } from '@dashboard/configuracao/Config_localCache';
+import { safeStorage } from '@dashboard/login/safeStorage';
 
 const defaultBackground = {
   type: 'transparent',
@@ -44,7 +44,8 @@ export default function OverlaysWorkspace({ selectedOverlayId }) {
   // Grid / Guides Settings
   const [gridSettings, setGridSettings] = useState(() => {
     try {
-      const saved = userId ? localCache.get(userId, 'overlay_grid_settings') : null;
+      const raw = userId ? safeStorage.getItem(`livenexus:overlay_grid_settings:${userId}`) : null;
+      const saved = raw ? JSON.parse(raw) : null;
       if (saved && typeof saved === 'object') {
         return {
           showGrid: false,
@@ -80,7 +81,7 @@ export default function OverlaysWorkspace({ selectedOverlayId }) {
     setGridSettings(prev => {
       const updated = { ...prev, ...newSettings };
       try {
-        if (userId) localCache.set(userId, 'overlay_grid_settings', updated);
+        if (userId) safeStorage.setItem(`livenexus:overlay_grid_settings:${userId}`, JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });

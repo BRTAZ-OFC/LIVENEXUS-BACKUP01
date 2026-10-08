@@ -16,25 +16,14 @@ import { safeStorage } from '@dashboard/login/safeStorage';
 const CACHE_PREFIX = 'livenexus:cache:';
 export const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
 
-// Namespace constants para padronização em todo o LiveNexus
+// Namespace constants restritos exclusivamente à Biblioteca Musical
 export const CACHE_NAMESPACES = {
   LIBRARY: 'library',
   LIBRARY_HISTORY: 'playback_history',
   LIBRARY_SEARCH: 'music_search',
   LIBRARY_SEARCH_HISTORY: 'music_search_history',
-  SCENARIOS: 'scenarios',
-  OVERLAYS: 'overlays',
-  GALLERY: 'gallery',
-  DASHBOARD_MESSAGES: 'dashboard_messages',
-  DASHBOARD_SPEAKERS: 'dashboard_speakers',
-  DASHBOARD_TTS_COUNT: 'dashboard_tts_count',
-  DASHBOARD_PAST_LIVES: 'dashboard_past_lives',
-  DASHBOARD_CONNECTIONS: 'dashboard_connections',
-  DASHBOARD_STREAM_META: 'dashboard_stream_meta',
-  DASHBOARD_LIVE_ACTIVITY: 'dashboard_live_activity',
-  CENTRAL_DATA: 'central_data',
-  USER_FILTERS: 'user_filter_config',
-  USER_CONFIG: 'user_config',
+  MUSIC_SETTINGS: 'music_settings',
+  MUSIC_TAGS: 'music_tags',
 };
 
 function resolveUserId(userId) {

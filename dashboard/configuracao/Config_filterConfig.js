@@ -120,7 +120,7 @@ export function normalizeText(s) {
   return String(s || '').toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
-import { localCache } from '@dashboard/configuracao/Config_localCache';
+import { safeStorage } from '@dashboard/login/safeStorage';
 import { authClient } from '@dashboard/login/authClient';
 
 function getCurrentUserId(userId) {
@@ -132,8 +132,7 @@ function getCurrentUserId(userId) {
   }
 }
 
-// Persistência via Central (raiz do usuário). Zero créditos, determinístico.
-// Integrado à camada unificada localCache com TTL de 24h e isolamento por userId.
+// Persistência via safeStorage com isolamento por userId.
 const LEGACY_FILTER_KEY = 'livenexus:tts-filters';
 function mergeFilter(parsed) {
   return { ...defaultFilterConfig(), ...parsed, shared: { ...defaultRules(), ...(parsed.shared || {}) }, perPlatform: { Twitch: { ...defaultRules(), ...(parsed.perPlatform?.Twitch || {}) }, Kick: { ...defaultRules(), ...(parsed.perPlatform?.Kick || {}) }, YouTube: { ...defaultRules(), ...(parsed.perPlatform?.YouTube || {}) } } };
@@ -142,11 +141,13 @@ function mergeFilter(parsed) {
 export function loadFilterConfig(userId) {
   const uid = getCurrentUserId(userId);
   if (uid) {
-    const cached = localCache.get(uid, 'user_filter_config');
-    if (cached) return mergeFilter(cached);
+    try {
+      const raw = safeStorage.getItem(`livenexus:user_filter_config:${uid}`);
+      if (raw) return mergeFilter(JSON.parse(raw));
+    } catch {}
   }
   try {
-    const raw = localStorage.getItem(LEGACY_FILTER_KEY);
+    const raw = safeStorage.getItem(LEGACY_FILTER_KEY);
     if (raw) return mergeFilter(JSON.parse(raw));
   } catch {}
   return defaultFilterConfig();
@@ -155,7 +156,9 @@ export function loadFilterConfig(userId) {
 export function saveFilterConfig(c, userId) {
   const uid = getCurrentUserId(userId);
   if (uid) {
-    localCache.set(uid, 'user_filter_config', c);
+    try {
+      safeStorage.setItem(`livenexus:user_filter_config:${uid}`, JSON.stringify(c));
+    } catch {}
   }
-  try { localStorage.setItem(LEGACY_FILTER_KEY, JSON.stringify(c)); } catch {}
+  try { safeStorage.setItem(LEGACY_FILTER_KEY, JSON.stringify(c)); } catch {}
 }

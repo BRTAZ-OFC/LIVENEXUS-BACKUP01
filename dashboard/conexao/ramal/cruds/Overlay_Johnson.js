@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 const file = path.resolve(process.cwd(), 'dashboard/overlays/overlays.json');
 let pending = Promise.resolve();
@@ -8,10 +9,33 @@ const key = (userId) => {
   return userId;
 };
 const read = async () => {
-  try { return JSON.parse(await fs.readFile(file, 'utf8')); }
-  catch (error) { if (error.code === 'ENOENT') return {}; throw error; }
+  try {
+    const content = await fs.readFile(file, 'utf8');
+    if (!content.trim()) return {};
+    return JSON.parse(content);
+  } catch (error) {
+    if (error.code === 'ENOENT') return {};
+    if (error instanceof SyntaxError) {
+      console.warn(`[Overlay_Johnson] Erro de sintaxe detectado em overlays.json. Preservando arquivo original. Erro: ${error.message}`);
+      try {
+        await fs.copyFile(file, `${file}.corrupt-${Date.now()}`);
+      } catch {}
+      throw new Error('Banco de dados de overlays corrompido. Recuperação manual necessária.');
+    }
+    throw error;
+  }
 };
-const write = (db) => fs.writeFile(file, JSON.stringify(db, null, 2), 'utf8');
+const write = async (db) => {
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  const temporary = `${file}.${randomUUID()}.tmp`;
+  try {
+    await fs.writeFile(temporary, JSON.stringify(db, null, 2), 'utf8');
+    await fs.rename(temporary, file);
+  } catch (error) {
+    await fs.rm(temporary, { force: true });
+    throw error;
+  }
+};
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const merge = (original, changes) => {
   const next = { ...original };

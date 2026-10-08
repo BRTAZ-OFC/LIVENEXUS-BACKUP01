@@ -22,7 +22,7 @@ import { usesPlatformData } from './Overlay_platformData';
 import PlatformControls from './Overlay_PlatformControls';
 import ManualWidgetConfig from '@dashboard/widgets/Widget_ManualConfig';
 import TempoVisivelConfig from '@dashboard/componentes/TempoVisivelConfig';
-import { localCache } from '@dashboard/configuracao/Config_localCache';
+import { safeStorage } from '@dashboard/login/safeStorage';
 import { authClient } from '@dashboard/login/authClient';
 
 const FONT_CATEGORIES = {
@@ -328,7 +328,8 @@ export default function OverlayEditorSidebar({
   const [libraryFavorites, setLibraryFavorites] = useState(() => {
     try {
       const uid = authClient.getUserDataCache()?.id || 'anonymous';
-      const saved = localCache.get(uid, 'overlay_favorites');
+      const raw = safeStorage.getItem(`livenexus:overlay_favorites:${uid}`);
+      const saved = raw ? JSON.parse(raw) : null;
       return Array.isArray(saved) ? saved : [];
     } catch (e) {
       return [];
@@ -341,7 +342,7 @@ export default function OverlayEditorSidebar({
       const next = prev.includes(id) ? prev.filter(fId => fId !== id) : [...prev, id];
       try {
         const uid = authClient.getUserDataCache()?.id || 'anonymous';
-        localCache.set(uid, 'overlay_favorites', next);
+        safeStorage.setItem(`livenexus:overlay_favorites:${uid}`, JSON.stringify(next));
       } catch (err) {}
       return next;
     });

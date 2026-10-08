@@ -15,13 +15,11 @@ async function read() {
   catch (error) {
     if (error.code === 'ENOENT') return [];
     if (error instanceof SyntaxError) {
-      console.warn(`[Config_MessagesJohnson] Erro de sintaxe detectado em messages.json. Resetando para []. Erro: ${error.message}`);
-      // Salva um backup do arquivo corrompido para fins de depuração
+      console.warn(`[Config_MessagesJohnson] Erro de sintaxe detectado em messages.json. Preservando arquivo original. Erro: ${error.message}`);
       try {
-        await fs.copyFile(file, `${file}.corrupt`);
-        await fs.writeFile(file, '[]', 'utf8');
+        await fs.copyFile(file, `${file}.corrupt-${Date.now()}`);
       } catch {}
-      return [];
+      throw new Error('Banco de dados corrompido. Recuperação manual necessária.');
     }
     throw error;
   }

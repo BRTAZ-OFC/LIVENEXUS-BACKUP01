@@ -33,6 +33,9 @@ export async function handleDatabaseAdminRequest(req, res) {
         const chunks = [];
         for await (const chunk of req) chunks.push(chunk);
         const { originalId, newId, newName } = JSON.parse(Buffer.concat(chunks).toString());
+        if (!newId || !/^[a-z0-9_-]+$/.test(newId)) {
+            return res.end(JSON.stringify({ ok: false, error: 'Identificador técnico inválido.' }));
+        }
         if (schemas[newId]) throw new Error('CRUD já existente.');
         const originalSchema = schemas[originalId] || { id: originalId, name: originalId, fields: [] };
         schemas[newId] = { ...originalSchema, id: newId, name: newName, createdAt: new Date().toISOString() };

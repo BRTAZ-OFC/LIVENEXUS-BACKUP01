@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import OverlayVisualizer from './Scenario_Visualizer';
 import OverlayEditorSidebar from './Scenario_EditorSidebar';
 import { Check } from 'lucide-react';
-import { localCache } from '@dashboard/configuracao/Config_localCache';
+import { safeStorage } from '@dashboard/login/safeStorage';
 import { authClient } from '@dashboard/login/authClient';
 
 const defaultBackground = {
@@ -51,7 +51,8 @@ export default function OverlaysWorkspace({ selectedOverlayId }) {
   const [gridSettings, setGridSettings] = useState(() => {
     try {
       const uid = authClient.getUserDataCache()?.id || 'anonymous';
-      const saved = localCache.get(uid, 'scenario_grid_settings');
+      const raw = safeStorage.getItem(`livenexus:scenario_grid_settings:${uid}`);
+      const saved = raw ? JSON.parse(raw) : null;
       if (saved && typeof saved === 'object') {
         return {
           showGrid: false,
@@ -88,7 +89,7 @@ export default function OverlaysWorkspace({ selectedOverlayId }) {
       const updated = { ...prev, ...newSettings };
       try {
         const uid = authClient.getUserDataCache()?.id || 'anonymous';
-        localCache.set(uid, 'scenario_grid_settings', updated);
+        safeStorage.setItem(`livenexus:scenario_grid_settings:${uid}`, JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });

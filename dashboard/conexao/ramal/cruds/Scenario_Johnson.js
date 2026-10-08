@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 const file = path.resolve(process.cwd(), 'dashboard/painel-admin/db/cenarios.json');
 let pending = Promise.resolve();
@@ -7,8 +8,34 @@ const key = (userId) => {
   if (typeof userId !== 'string' || !userId.trim()) throw new Error('Usuário não identificado.');
   return userId;
 };
-const read = async () => JSON.parse(await fs.readFile(file, 'utf8'));
-const write = async (db) => fs.writeFile(file, JSON.stringify(db, null, 2), 'utf8');
+const read = async () => {
+  try {
+    const content = await fs.readFile(file, 'utf8');
+    if (!content.trim()) return {};
+    return JSON.parse(content);
+  } catch (error) {
+    if (error.code === 'ENOENT') return {};
+    if (error instanceof SyntaxError) {
+      console.warn(`[Scenario_Johnson] Erro de sintaxe detectado em cenarios.json. Preservando arquivo original. Erro: ${error.message}`);
+      try {
+        await fs.copyFile(file, `${file}.corrupt-${Date.now()}`);
+      } catch {}
+      throw new Error('Banco de dados de cenários corrompido. Recuperação manual necessária.');
+    }
+    throw error;
+  }
+};
+const write = async (db) => {
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  const temporary = `${file}.${randomUUID()}.tmp`;
+  try {
+    await fs.writeFile(temporary, JSON.stringify(db, null, 2), 'utf8');
+    await fs.rename(temporary, file);
+  } catch (error) {
+    await fs.rm(temporary, { force: true });
+    throw error;
+  }
+};
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const merge = (original, changes) => {
   const next = { ...original };
