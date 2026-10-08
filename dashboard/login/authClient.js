@@ -165,40 +165,28 @@ export const authClient = {
     return await res.json().catch(() => ({ success: true }));
   },
 
-  // Atualiza dados do usuário autenticado
+  // Atualiza dados do usuário autenticado no backend
   async updateMe(updates = {}) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(this.getToken() ? { Authorization: `Bearer ${this.getToken()}` } : {})
-        },
-        credentials: 'include',
-        body: JSON.stringify(updates)
-      });
+    const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(this.getToken() ? { Authorization: `Bearer ${this.getToken()}` } : {})
+      },
+      credentials: 'include',
+      body: JSON.stringify(updates)
+    });
 
-      if (res.ok) {
-        const user = await res.json();
-        if (typeof window !== 'undefined') {
-          safeStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
-        }
-        return user;
-      }
-    } catch {
-      // Ignora falha remota e aplica localmente apenas se houver usuário ativo
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || errorData.error || `Erro ao atualizar usuário: ${res.status}`);
     }
 
+    const user = await res.json();
     if (typeof window !== 'undefined') {
-      const currentJson = safeStorage.getItem(STORAGE_USER_KEY);
-      if (currentJson) {
-        const user = JSON.parse(currentJson);
-        const updated = { ...user, ...updates };
-        safeStorage.setItem(STORAGE_USER_KEY, JSON.stringify(updated));
-        return updated;
-      }
+      safeStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
     }
-    return updates;
+    return user;
   },
 
   // Encerra sessão do usuário: invalida credenciais remotas e remove dados da sessão local

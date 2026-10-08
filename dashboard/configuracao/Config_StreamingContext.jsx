@@ -55,53 +55,6 @@ function savePastLives(list) {
   try { localStorage.setItem(LIVES_KEY, JSON.stringify(list.slice(0, MAX_LIVES))); } catch {}
 }
 
-function loadInitialLiveActivity() {
-  if (typeof window === 'undefined') return { items: [], lastMessage: null, lastEvent: null };
-  try {
-    const raw = localStorage.getItem('livenexus_active_live_activity');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.items)) return parsed;
-    }
-  } catch (e) {}
-  return { items: [], lastMessage: null, lastEvent: null };
-}
-
-function loadInitialConnections() {
-  if (typeof window === 'undefined') return initial;
-  try {
-    const raw = localStorage.getItem('livenexus_active_connections');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        const sanitized = {};
-        for (const p of PLATFORMS) {
-          sanitized[p] = {
-            channel: parsed[p]?.channel || '',
-            status: 'idle',
-            error: '',
-            viewers: null
-          };
-        }
-        return sanitized;
-      }
-    }
-  } catch (e) {}
-  return initial;
-}
-
-function loadInitialStreamMeta() {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = localStorage.getItem('livenexus_active_stream_meta');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed) return parsed;
-    }
-  } catch (e) {}
-  return {};
-}
-
 const TTS_SETTINGS_KEY = 'livenexus:tts-settings-v1';
 
 function loadInitialTtsSettings() {
@@ -139,7 +92,7 @@ export const StreamingContext = createContext(null);
 
 export function StreamingProvider({ children }) {
   const central = useNewUserDataCentral();
-  const [connections, setConnections] = useState(() => loadInitialConnections());
+  const [connections, setConnections] = useState(initial);
   const [messages, setMessages] = useState([]);
   const [voices, setVoices] = useState([]);
   const [test, setTest] = useState('Olá, este é um teste de voz.');
@@ -150,8 +103,8 @@ export function StreamingProvider({ children }) {
   const [linkedChannels, setLinkedChannels] = useState({});
   const [settings, setSettings] = useState(() => loadInitialTtsSettings());
   const [filterConfig, setFilterConfig] = useState(() => loadFilterConfig());
-  const [liveActivity, setLiveActivity] = useState(() => loadInitialLiveActivity());
-  const [streamMeta, setStreamMeta] = useState(() => loadInitialStreamMeta());
+  const [liveActivity, setLiveActivity] = useState({ items: [], lastMessage: null, lastEvent: null });
+  const [streamMeta, setStreamMeta] = useState({});
   useEffect(() => { saveFilterConfig(filterConfig); }, [filterConfig]);
 
   // Telemetria TTS da sessão atual (B.4.2). Contadores cumulativos; fila/delay
@@ -192,19 +145,6 @@ export function StreamingProvider({ children }) {
   streamMetaRef.current = streamMeta;
 
   const syncChannelRef = useRef(null);
-  const saveStorageTimerRef = useRef(null);
-
-  const persistLiveActivityThrottled = useCallback(() => {
-    if (saveStorageTimerRef.current) return;
-    saveStorageTimerRef.current = setTimeout(() => {
-      saveStorageTimerRef.current = null;
-      try {
-        if (typeof window !== 'undefined' && liveActivityRef.current) {
-          localStorage.setItem('livenexus_active_live_activity', JSON.stringify(liveActivityRef.current));
-        }
-      } catch (e) {}
-    }, 1000);
-  }, []);
 
   // Sincronização local entre abas via BroadcastChannel (para cenários e overlays)
   useEffect(() => {
@@ -429,15 +369,11 @@ export function StreamingProvider({ children }) {
     // real entre na fonte, independentemente do destino final. Lab não contamina.
     if (!isLab) {
       twitchPipelineDiagnostic.incLiveActivity(item);
-      setLiveActivity(prev => {
-        const next = {
-          items: [item, ...prev.items.filter(i => i.id !== item.id)].slice(0, 200),
-          lastMessage: item.eventType ? prev.lastMessage : item,
-          lastEvent: item.eventType ? item : prev.lastEvent,
-        };
-        persistLiveActivityThrottled();
-        return next;
-      });
+      setLiveActivity(prev => ({
+        items: [item, ...prev.items.filter(i => i.id !== item.id)].slice(0, 200),
+        lastMessage: item.eventType ? prev.lastMessage : item,
+        lastEvent: item.eventType ? item : prev.lastEvent,
+      }));
       try {
         if (syncChannelRef.current) {
           syncChannelRef.current.postMessage({ type: 'NEW_LIVE_ACTIVITY', item });
@@ -625,21 +561,10 @@ export function StreamingProvider({ children }) {
 
   const broadcastLocalSync = (type, payload) => {
     try {
-      if (typeof window !== 'undefined') {
-        if (type === 'CONNECTIONS_UPDATE' && payload.connections) {
-          localStorage.setItem('livenexus_active_connections', JSON.stringify(payload.connections));
-        } else if (type === 'STREAM_META_UPDATE' && payload.streamMeta) {
-          localStorage.setItem('livenexus_active_stream_meta', JSON.stringify(payload.streamMeta));
-        } else if (type === 'STREAMING_STATE_SYNC') {
-          if (payload.connections) localStorage.setItem('livenexus_active_connections', JSON.stringify(payload.connections));
-          if (payload.streamMeta) localStorage.setItem('livenexus_active_stream_meta', JSON.stringify(payload.streamMeta));
-          if (payload.liveActivity) localStorage.setItem('livenexus_active_live_activity', JSON.stringify(payload.liveActivity));
-        }
-        if ('BroadcastChannel' in window) {
-          const ch = new BroadcastChannel('livenexus_local_streaming_sync');
-          ch.postMessage({ type, ...payload });
-          ch.close();
-        }
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const ch = new BroadcastChannel('livenexus_local_streaming_sync');
+        ch.postMessage({ type, ...payload });
+        ch.close();
       }
     } catch (e) {}
   };
@@ -1018,13 +943,6 @@ export function StreamingProvider({ children }) {
     });
     setStreamMeta({});
     broadcastLocalSync('STREAM_META_UPDATE', { streamMeta: {} });
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('livenexus_active_connections');
-        localStorage.removeItem('livenexus_active_stream_meta');
-        localStorage.removeItem('livenexus_active_live_activity');
-      }
-    } catch {}
   }, []);
 
   // Logout: desconecta tudo ANTES do redirect (hard reload).
