@@ -18,6 +18,7 @@ import MusicCarousel from './Library_MusicCarousel';
 import SearchResultGroup from './Library_SearchResultGroup';
 import MusicDetail from './Library_MusicDetail';
 import EntityPage from './Library_EntityPage';
+import { Cache_Biblioteca } from '@dashboard/biblioteca/cache/Cache_Biblioteca';
 import {
   PLATFORM_ORDER,
   CONTENT_TYPE_ORDER,
@@ -62,7 +63,14 @@ export default function MusicGallery({ externalQuery, onSearch, filter }) {
   const popView = () => setNav((n) => n.slice(0, -1));
   const currentView = nav[nav.length - 1] || null;
 
-  useEffect(() => {loadBrowse();}, []);
+  useEffect(() => {
+    // Apresentação imediata a partir do cache do usuário (sem tela em branco)
+    const cachedBrowse = Cache_Biblioteca.getHome();
+    if (cachedBrowse) {
+      setBrowse(cachedBrowse);
+    }
+    loadBrowse();
+  }, []);
 
   useEffect(() => {
     const t = (externalQuery || '').trim();
@@ -79,12 +87,16 @@ export default function MusicGallery({ externalQuery, onSearch, filter }) {
 
   // Carregamento progressivo lazy loading: conforme novas páginas chegam do InnerTube,
   // acrescenta os resultados aos existentes preservando ordem, deduplicação por ID real,
-  // categorias e fontes já exibidas.
+  // categorias e fontes já exibidas, mantendo o cache atualizado.
   useEffect(() => {
     const unsubscribe = subscribeSearchProgress(({ query: q, results }) => {
       const currentTerm = (externalQuery || '').trim();
       if (q && currentTerm && q.toLowerCase() === currentTerm.toLowerCase()) {
-        setGroups((prev) => mergeProgressiveGroups(prev, results));
+        setGroups((prev) => {
+          const merged = mergeProgressiveGroups(prev, results);
+          Cache_Biblioteca.setSearch(currentTerm, merged);
+          return merged;
+        });
       }
     });
     return unsubscribe;
@@ -112,7 +124,7 @@ export default function MusicGallery({ externalQuery, onSearch, filter }) {
       const auPlaylists = Array.isArray(au?.playlists) ? au.playlists : [];
       const dzPlaylists = Array.isArray(dz?.playlists) ? dz.playlists : [];
 
-      setBrowse({
+      const freshBrowse = {
         community: [
           ...(comm?.items || []).filter((p) => p.playlistId),
           ...dzPlaylists,
@@ -128,7 +140,10 @@ export default function MusicGallery({ externalQuery, onSearch, filter }) {
         audius: auTracks.slice(0, 20),
         deezer: dzTracks.slice(0, 20),
         mixcloud: (Array.isArray(mx) ? mx : []).slice(0, 20),
-      });
+      };
+
+      setBrowse(freshBrowse);
+      Cache_Biblioteca.setHome(freshBrowse);
     } catch (e) {
       console.warn('[MusicGallery] loadBrowse falhou:', e);
     } finally {
@@ -139,17 +154,29 @@ export default function MusicGallery({ externalQuery, onSearch, filter }) {
   async function runSearch(q) {
     const term = (q || '').trim();
     if (!term) return;
-    setLoading(true);
     setError(null);
     setSearched(true);
     setNav([]);
     searchHistoryManager.add(term);
     setHistory(searchHistoryManager.list());
+
+    // Reaproveita pesquisa em cache do usuário autenticado sem bloquear nova consulta
+    const cachedResults = Cache_Biblioteca.getSearch(term);
+    if (cachedResults) {
+      setGroups(cachedResults);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     try {
       const g = await aggregateSearch(term);
       setGroups(g);
+      Cache_Biblioteca.setSearch(term, g);
     } catch (err) {
-      setError(err.message || 'Erro na busca');
+      if (!cachedResults) {
+        setError(err.message || 'Erro na busca');
+      }
     } finally {
       setLoading(false);
     }

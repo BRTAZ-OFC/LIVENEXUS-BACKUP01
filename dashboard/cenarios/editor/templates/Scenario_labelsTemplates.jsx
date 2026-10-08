@@ -25,7 +25,7 @@ function createLabelTemplates({ title, icon: Icon, defaultColor = 'purple' }) {
         const d = detail || (isOnline ? 'Nenhum registro' : 'Live offline');
 
         return (
-          <div className={`w-full h-full p-2.5 rounded-xl bg-slate-950/90 border ${c.border} flex items-center gap-3 select-none text-left shadow-xl`}>
+          <div className={`w-full h-full p-2.5 rounded-none bg-slate-950/90 flex items-center gap-3 select-none text-left shadow-xl`}>
             <div className={`h-10 w-10 rounded-lg ${c.bgBadge} border ${c.border} flex items-center justify-center ${c.textAcc} shrink-0`}>
               <Icon className="h-5 w-5" />
             </div>
@@ -275,7 +275,7 @@ function createCounterTemplates({ title, icon: Icon, defaultColor = 'purple' }) 
         const val = isOnline ? count : 0;
 
         return (
-          <div className={`w-full h-full p-3 rounded-2xl bg-slate-950/90 border ${c.border} flex flex-col justify-between select-none text-left shadow-xl`}>
+          <div className={`w-full h-full p-3 rounded-none bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl`}>
             <div className="flex justify-between items-center text-[9px] font-mono">
               <span className={`font-bold ${c.textAcc} flex items-center gap-1`}><Icon className={`h-3.5 w-3.5 ${c.iconColor}`} /> {title}</span>
               <span className="text-slate-400">{isOnline ? 'TOTAL' : 'OFF'}</span>

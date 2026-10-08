@@ -17,7 +17,7 @@ export const STATUS_LABEL_TEMPLATES = [
       const g = isOnline ? (game || '') : '';
 
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
+        <div className="w-full h-full p-3 rounded-none bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
           <div className="flex justify-between items-center text-[10px] font-mono">
             <div className="flex items-center gap-1.5">
               <span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
@@ -241,7 +241,7 @@ export const UPTIME_TEMPLATES = [
       const up = isOnline ? uptimeString : 'Live offline';
 
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-indigo-500/40 flex flex-col justify-between select-none text-left shadow-xl">
+        <div className="w-full h-full p-3 rounded-none bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
           <span className="text-[9px] font-mono text-indigo-300 font-bold uppercase flex items-center gap-1">
             <Clock className="h-3 w-3" /> TEMPO DE LIVE
           </span>
@@ -456,7 +456,7 @@ export const COMMANDS_TEMPLATES = [
     badge: 'Console Grid',
     render: ({ commands = [] }) => {
       return (
-        <div className="w-full h-full p-3 rounded-xl bg-slate-950/90 border border-purple-500/30 flex flex-col justify-between select-none text-left shadow-xl">
+        <div className="w-full h-full p-3 rounded-none bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
           <span className="text-[10px] font-mono font-bold text-purple-300 uppercase pb-1 border-b border-white/10 flex items-center gap-1.5">
             <Terminal className="h-3.5 w-3.5" /> COMANDOS DO CHAT
           </span>
@@ -709,7 +709,7 @@ export const MILESTONES_TEMPLATES = [
     badge: 'Console Trophy',
     render: ({ milestones = [] }) => {
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-indigo-500/40 flex flex-col justify-between select-none text-left shadow-xl">
+        <div className="w-full h-full p-3 rounded-none bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
           <span className="text-[10px] font-mono font-bold text-indigo-300 uppercase pb-1 border-b border-white/10">CONQUISTAS DA STREAM</span>
           <div className="space-y-1.5 my-auto">
             {milestones.length === 0 ? (
@@ -932,7 +932,7 @@ export const RULES_TEMPLATES = [
     badge: 'Shield Card',
     render: ({ rules = [] }) => {
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-amber-500/40 flex flex-col justify-between select-none text-left shadow-xl">
+        <div className="w-full h-full p-3 rounded-none bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
           <span className="text-[10px] font-mono font-bold text-amber-400 uppercase pb-1 border-b border-white/10 flex items-center gap-1.5">
             <Scroll className="h-3.5 w-3.5 text-amber-500" /> REGRAS DO CANAL
           </span>
@@ -1147,7 +1147,7 @@ export const SCHEDULE_TEMPLATES = [
     badge: 'Weekly Grid',
     render: ({ schedule = [] }) => {
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-teal-500/40 flex flex-col justify-between select-none text-left shadow-xl">
+        <div className="w-full h-full p-3 rounded-none bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
           <div className="text-[10px] font-mono font-bold text-teal-300 uppercase pb-1 border-b border-white/10 flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" /> AGENDA DA SEMANA
           </div>
@@ -1384,7 +1384,7 @@ export const SCHEDULE_TICKER_TEMPLATES = [
       const txt = newsText || '★ Nenhum aviso configurado no momento ★';
 
       return (
-        <div className="w-full h-full px-3 rounded-xl bg-slate-950/95 border border-indigo-500/40 shadow-xl flex items-center select-none overflow-hidden text-left">
+        <div className="w-full h-full px-3 rounded-none bg-slate-950/95 shadow-xl flex items-center select-none overflow-hidden text-left">
           <span className="text-[9px] font-mono font-bold text-indigo-300 uppercase pr-3 border-r border-white/10 shrink-0 flex items-center gap-1">
             <LayoutGrid className="h-3 w-3" /> AVISOS
           </span>
@@ -1556,7 +1556,7 @@ export const MODERATOR_FEED_TEMPLATES = [
     badge: 'Audit Feed',
     render: ({ modLogs = [], isOnline = false }) => {
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 border border-rose-500/40 flex flex-col justify-between select-none text-left shadow-xl">
+        <div className="w-full h-full p-3 rounded-none bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
           <span className="text-[10px] font-mono font-bold text-rose-300 uppercase pb-1 border-b border-white/10 flex items-center gap-1.5">
             <ShieldAlert className="h-3.5 w-3.5 text-rose-400" /> LOGS DE MODERAÇÃO
           </span>

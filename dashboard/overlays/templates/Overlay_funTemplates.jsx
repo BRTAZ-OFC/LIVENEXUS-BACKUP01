@@ -32,7 +32,7 @@ export const WORD_CLOUD_TEMPLATES = [
       const words = getChatWords(messages).slice(0, 6);
 
       return (
-        <div className="w-full h-full p-3 rounded-2xl bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
+        <div className="w-full h-full p-3 rounded-none bg-slate-950/90 flex flex-col justify-between select-none text-left shadow-xl">
           <span className="text-[10px] font-mono font-bold text-purple-300 uppercase pb-1 border-b border-white/10 flex items-center gap-1.5">
             <Sparkles className="h-3.5 w-3.5" /> NUVEM DE PALAVRAS DO CHAT
           </span>
@@ -342,7 +342,7 @@ export const EMOTE_SHOWER_TEMPLATES = [
     defaultHeight: 300,
     badge: 'Rain Fall',
     render: ({ isOnline = false }) => (
-      <div className="w-full h-full p-3 rounded-2xl bg-black/40 border border-dashed border-purple-500/0 flex flex-col items-center justify-center select-none text-center">
+      <div className="w-full h-full p-3 rounded-none bg-black/40 flex flex-col items-center justify-center select-none text-center">
         <Smile className="h-10 w-10 text-purple-400 mb-2 animate-bounce" />
         <span className="text-xs font-bold text-white">Área de Chuva de Emotes</span>
         <span className="text-[9px] text-slate-400 font-mono mt-1">{isOnline ? 'Emotes do chat caem aqui em tempo real' : 'Live não conectada'}</span>

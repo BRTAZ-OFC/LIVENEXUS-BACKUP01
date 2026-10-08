@@ -1,30 +1,20 @@
-// Gerenciador de histórico de faixas tocadas em tempo de execução.
+// Gerenciador de histórico de faixas tocadas com persistência via Cache_Biblioteca.
 import { playerEvents } from './Library_playerEvents';
-import { authClient } from '../login/authClient.js';
-
-function getCurrentUserId() {
-  try {
-    return authClient.getUser()?.id || 'anonymous';
-  } catch {
-    return 'anonymous';
-  }
-}
-
-const MAX_ITEMS = 50;
+import { Cache_Biblioteca, getActiveUserId } from './cache/Cache_Biblioteca';
 
 class HistoryManager {
   constructor() {
-    this.userId = getCurrentUserId();
-    this.items = [];
+    this.userId = getActiveUserId();
+    this.inMemoryFallback = [];
   }
 
   getHistory() {
-    const currentUserId = getCurrentUserId();
-    if (currentUserId !== this.userId) {
+    const currentUserId = getActiveUserId();
+    if (currentUserId) {
       this.userId = currentUserId;
-      this.items = [];
+      return Cache_Biblioteca.getHistory(currentUserId);
     }
-    return [...this.items];
+    return [...this.inMemoryFallback];
   }
 
   async add(track) {
@@ -32,33 +22,50 @@ class HistoryManager {
     const key = track.videoId || track.id;
     if (!key) return;
 
-    const currentUserId = getCurrentUserId();
-    if (currentUserId !== this.userId) {
+    const currentUserId = getActiveUserId();
+    let updated = [];
+
+    if (currentUserId) {
       this.userId = currentUserId;
-      this.items = [];
+      updated = Cache_Biblioteca.addHistory(track, currentUserId);
+    } else {
+      const filtered = this.inMemoryFallback.filter(item => (item.videoId || item.id) !== key);
+      filtered.unshift({
+        ...track,
+        playedAt: Date.now(),
+      });
+      this.inMemoryFallback = filtered;
+      updated = [...this.inMemoryFallback];
     }
 
-    this.items = this.getHistory().filter(item => (item.videoId || item.id) !== key);
-    const entry = {
-      ...track,
-      playedAt: Date.now(),
-    };
-    this.items.unshift(entry);
-    if (this.items.length > MAX_ITEMS) {
-      this.items = this.items.slice(0, MAX_ITEMS);
-    }
-
-    playerEvents.emit('history_changed', this.getHistory());
+    playerEvents.emit('history_changed', updated);
+    return updated;
   }
 
   async remove(trackId) {
     if (!trackId) return;
-    this.items = this.getHistory().filter(item => (item.videoId || item.id) !== trackId);
-    playerEvents.emit('history_changed', this.getHistory());
+    const currentUserId = getActiveUserId();
+    let updated = [];
+
+    if (currentUserId) {
+      this.userId = currentUserId;
+      updated = Cache_Biblioteca.removeHistory(trackId, currentUserId);
+    } else {
+      this.inMemoryFallback = this.inMemoryFallback.filter(item => (item.videoId || item.id) !== trackId);
+      updated = [...this.inMemoryFallback];
+    }
+
+    playerEvents.emit('history_changed', updated);
+    return updated;
   }
 
   async clear() {
-    this.items = [];
+    const currentUserId = getActiveUserId();
+    if (currentUserId) {
+      this.userId = currentUserId;
+      Cache_Biblioteca.clearHistory(currentUserId);
+    }
+    this.inMemoryFallback = [];
     playerEvents.emit('history_changed', []);
   }
 }

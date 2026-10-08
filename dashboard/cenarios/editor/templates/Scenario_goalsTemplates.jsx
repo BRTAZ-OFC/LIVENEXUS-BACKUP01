@@ -50,7 +50,7 @@ function createGoalTemplates({ title, icon: Icon, defaultColor = 'purple', defau
         const pct = Math.min(100, Math.round((cur / tgt) * 100));
 
         return (
-          <div className={`w-full h-full p-3 rounded-2xl bg-slate-950/90 shadow-xl flex flex-col justify-between select-none text-left`}>
+          <div className={`w-full h-full p-3 rounded-none bg-slate-950/90 shadow-xl flex flex-col justify-between select-none text-left`}>
             <div className="flex justify-between items-center text-[10px] font-mono">
               <span className={`font-bold ${c.textAcc} flex items-center gap-1`}>
                 <Icon className={`h-3.5 w-3.5 ${c.iconColor}`} /> {title}
