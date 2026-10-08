@@ -117,7 +117,7 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#090d16',
-          borderRadius: '9999px',
+          borderRadius: '0px',
           boxShadow: '0 0 15px rgba(239, 68, 68, 0.6)'
         }}
       >
@@ -145,7 +145,7 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#0a0f1d',
-          borderRadius: '16px',
+          borderRadius: '0px',
           boxShadow: '0 0 15px rgba(59, 130, 246, 0.6)'
         }}
       >
@@ -194,7 +194,7 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#0a0f1d',
-          borderRadius: '16px',
+          borderRadius: '0px',
           boxShadow: '0 0 15px rgba(168, 85, 247, 0.6)'
         }}
       >
@@ -317,7 +317,7 @@ export function NowPlayingWidget({ config = {}, elementKey }) {
         style={{
           fontFamily: config.fontFamily || 'Inter, sans-serif',
           background: '#090d16',
-          borderRadius: '9999px',
+          borderRadius: '0px',
           boxShadow: '0 0 15px rgba(249, 115, 22, 0.6)'
         }}
       >

@@ -95,7 +95,7 @@ export default function TwitchChatBox({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-end overflow-hidden transition-all text-left select-none"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
       }}
     >
       <div 

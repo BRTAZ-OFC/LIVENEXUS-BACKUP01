@@ -41,7 +41,7 @@ export function TwitchWordCloud({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-start text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -110,7 +110,7 @@ export function TwitchEmoteShower({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-end text-left relative overflow-hidden"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >

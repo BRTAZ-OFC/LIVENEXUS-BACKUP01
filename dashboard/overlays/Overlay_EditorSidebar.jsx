@@ -1879,18 +1879,21 @@ export default function OverlayEditorSidebar({
                       <div className="grid grid-cols-2 gap-1.5">
                         <button
                           type="button"
-                          onClick={() => onUpdateInstance(selectedInst.id, {
-                            config: { 
-                              ...selectedInst.config, 
-                              showBorder: false,
-                              borderWidth: `${Math.max(1, selectedInst.config?.effBorderThickness || parseInt(selectedInst.config?.borderWidth) || 1)}px`,
-                              effBorderThickness: Math.max(1, selectedInst.config?.effBorderThickness || parseInt(selectedInst.config?.borderWidth) || 1),
-                              borderRadius: `${Math.max(0.5, parseFloat(selectedInst.config?.borderRadius) || 1)}px`,
-                              effBorderRadius: Math.max(0.5, parseFloat(selectedInst.config?.borderRadius) || 1),
-                              effBorderActiveType: 'none',
-                              borderColor: selectedInst.config?.borderColor || '#ffffff',
-                            }
-                          })}
+                          onClick={() => {
+                            const curThickness = selectedInst.config?.effBorderThickness !== undefined ? selectedInst.config.effBorderThickness : (parseInt(selectedInst.config?.borderWidth) || 0);
+                            onUpdateInstance(selectedInst.id, {
+                              config: { 
+                                ...selectedInst.config, 
+                                showBorder: false,
+                                borderWidth: `${Math.max(0, curThickness)}px`,
+                                effBorderThickness: Math.max(0, curThickness),
+                                borderRadius: '0px',
+                                effBorderRadius: 0,
+                                effBorderActiveType: 'none',
+                                borderColor: selectedInst.config?.borderColor || '#ffffff',
+                              }
+                            });
+                          }}
                           className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all ${
                             !selectedInst.config?.showBorder
                               ? 'bg-rose-600/30 border-rose-500/50 text-white'
@@ -1995,30 +1998,30 @@ export default function OverlayEditorSidebar({
                               </select>
                             </div>
                           </div>
+
+                          {/* Controle de Arredondamento exclusivo para Com Borda */}
+                          <div className="space-y-1 pt-1">
+                            <div className="flex justify-between items-center text-[10px] text-slate-300 font-mono">
+                              <span>Arredondamento</span>
+                              <span>{parseFloat(selectedInst.config?.borderRadius) ? `${Math.max(0.5, parseFloat(selectedInst.config?.borderRadius))}px` : '1px'}</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0.5"
+                              step="0.5"
+                              max="32"
+                              value={Math.max(0.5, parseFloat(selectedInst.config?.borderRadius) || 1)}
+                              onChange={(e) => {
+                                const val = Math.max(0.5, parseFloat(e.target.value) || 0.5);
+                                onUpdateInstance(selectedInst.id, {
+                                  config: { ...selectedInst.config, borderRadius: `${val}px`, effBorderRadius: val }
+                                });
+                              }}
+                              className="w-full accent-purple-600 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer"
+                            />
+                          </div>
                         </div>
                       )}
-
-                      {/* Controle de Arredondamento para Com Borda e Sem Borda (Mínimo 0.5px, Padrão 1px, Nunca 0) */}
-                      <div className="space-y-1 pt-1">
-                        <div className="flex justify-between items-center text-[10px] text-slate-300 font-mono">
-                          <span>Arredondamento</span>
-                          <span>{parseFloat(selectedInst.config?.borderRadius) ? `${Math.max(0.5, parseFloat(selectedInst.config?.borderRadius))}px` : '1px'}</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="0.5"
-                          step="0.5"
-                          max="32"
-                          value={Math.max(0.5, parseFloat(selectedInst.config?.borderRadius) || 1)}
-                          onChange={(e) => {
-                            const val = Math.max(0.5, parseFloat(e.target.value) || 0.5);
-                            onUpdateInstance(selectedInst.id, {
-                              config: { ...selectedInst.config, borderRadius: `${val}px`, effBorderRadius: val }
-                            });
-                          }}
-                          className="w-full accent-purple-600 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer"
-                        />
-                      </div>
                     </div>
 
                     {/* REQUISITO 1: EFEITOS - BOTÕES PEQUENOS E COMPACTOS (SEM SELECTS) */}

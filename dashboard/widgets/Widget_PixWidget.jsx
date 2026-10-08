@@ -136,7 +136,7 @@ export default function PixWidget({ config = {}, instanceId }) {
       style={{
         fontFamily: config.fontFamily || 'Inter, sans-serif',
         background: config.backgroundColor || 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
-        borderRadius: config.borderRadius || '12px'
+        borderRadius: config.borderRadius || '0px'
       }}
     >
       {/* Cabeçalho */}

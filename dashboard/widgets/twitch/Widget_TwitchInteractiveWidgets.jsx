@@ -31,7 +31,7 @@ export function TwitchChatterLeaderboard({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-start text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -125,7 +125,7 @@ export function TwitchPoll({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-start text-left min-h-full"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -222,7 +222,7 @@ export function TwitchRaffle({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-center text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -328,7 +328,7 @@ export function TwitchSubTrain({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-center text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >

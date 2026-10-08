@@ -6,7 +6,7 @@ import { useUserLibrary } from '@dashboard/biblioteca/Library_useUserLibrary';
 // infinito — ao chegar ao fim do conjunto duplicado, a última faixa vira a
 // primeira e o fluxo continua sem solução de continuidade. Pausa no hover.
 // Setas avançam um card. Usado SOMENTE na home (início da galeria).
-export default function MusicCarousel({ title, items, onActivate, onAdd, variant = 'default' }) {
+export default function MusicCarousel({ title, subtitle, icon: Icon, items, onActivate, onAdd, variant = 'default' }) {
   const { isSaved } = useUserLibrary();
   const featured = variant === 'featured';
   const cardW = featured ? 176 : 144;
@@ -52,7 +52,17 @@ export default function MusicCarousel({ title, items, onActivate, onAdd, variant
     <section className="space-y-2">
       {title && (
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-sm font-semibold text-white">{title}</h3>
+          <div className="flex items-center gap-2">
+            {Icon ? (
+              <div className="w-8 h-8 rounded-lg bg-[#FF9E9E]/15 flex items-center justify-center">
+                <Icon className="w-4 h-4 text-[#FF9E9E]" />
+              </div>
+            ) : null}
+            <div>
+              <h3 className={`font-bold text-white leading-tight ${featured ? 'text-base' : 'text-sm font-semibold'}`}>{title}</h3>
+              {subtitle && <p className="text-[11px] text-[#B3B3B3]">{subtitle}</p>}
+            </div>
+          </div>
           <div className="flex items-center gap-1">
             <span className="text-[11px] text-[#B3B3B3] mr-1">{itemsArr.length}</span>
             <button onClick={() => shift(-1)} className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-[#B3B3B3] hover:text-white" title="Anterior">

@@ -22,7 +22,7 @@ export function TwitchLatestSub({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-center text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -62,7 +62,7 @@ export function TwitchLatestCheer({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-center text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -102,7 +102,7 @@ export function TwitchLatestRaid({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-center text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -144,7 +144,7 @@ export function TwitchTopCheer({ config = {} }) {
       className="w-full h-full p-4 flex flex-col justify-center text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -186,7 +186,7 @@ export function TwitchSubCounter({ config = {} }) {
       className="w-full h-full p-4 flex items-center gap-3.5 text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >
@@ -224,7 +224,7 @@ export function TwitchBitsCounter({ config = {} }) {
       className="w-full h-full p-4 flex items-center gap-3.5 text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >

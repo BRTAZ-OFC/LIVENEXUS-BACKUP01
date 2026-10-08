@@ -382,18 +382,15 @@ export default function MusicGallery({ externalQuery, onSearch, filter }) {
         {!browseLoading && (
           <>
             {browse?.community?.length > 0 && (
-              <section className="space-y-2">
-                <div className="flex items-center gap-2 px-1">
-                  <div className="w-8 h-8 rounded-lg bg-[#FF9E9E]/15 flex items-center justify-center">
-                    <Users className="w-4 h-4 text-[#FF9E9E]" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-white leading-tight">Playlist da Comunidade</h3>
-                    <p className="text-[11px] text-[#B3B3B3]">Playlists criadas pela comunidade — toque e descubra</p>
-                  </div>
-                </div>
-                <MusicCarousel items={browse?.community} onActivate={handleActivate} onAdd={handleAdd} variant="featured" />
-              </section>
+              <MusicCarousel
+                title="Playlist da Comunidade"
+                subtitle="Playlists criadas pela comunidade — toque e descubra"
+                icon={Users}
+                items={browse?.community}
+                onActivate={handleActivate}
+                onAdd={handleAdd}
+                variant="featured"
+              />
             )}
             <MusicCarousel title="Músicas" items={browse?.songs} onActivate={handleActivate} onAdd={handleAdd} />
             <MusicCarousel title="Artistas" items={browse?.artists} onActivate={handleActivate} onAdd={handleAdd} />

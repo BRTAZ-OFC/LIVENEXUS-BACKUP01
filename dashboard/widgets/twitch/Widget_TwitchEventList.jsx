@@ -46,7 +46,7 @@ export default function TwitchEventList({ config = {} }) {
       className="w-full h-full p-3.5 flex flex-col justify-start overflow-hidden text-left"
       style={{
         background: config.backgroundColor || 'rgba(0, 0, 0, 0.45)',
-        borderRadius: config.borderRadius || '12px',
+        borderRadius: config.borderRadius || '0px',
         fontFamily: config.fontFamily || 'Inter, sans-serif',
       }}
     >

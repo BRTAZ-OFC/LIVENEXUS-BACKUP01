@@ -59,7 +59,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       defaultMode: 'split',
       backgroundColor: 'rgba(2, 6, 23, 0.9)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -74,7 +74,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 70,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.65)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -91,7 +91,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       fontSize: '13px',
       textColor: '#ffffff',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -119,7 +119,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 460,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -136,7 +136,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       fontSize: '12px',
       textColor: '#ffffff',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -166,7 +166,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       startValue: 0,
       targetValue: 50,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -183,7 +183,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       startValue: 0,
       targetValue: 2500,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -200,7 +200,7 @@ export const TWITCH_WIDGETS_CATALOG = [
       startValue: 0,
       targetValue: 5,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -218,7 +218,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       placeholder: 'Nenhum inscrito registrado',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -234,7 +234,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       placeholder: 'Nenhum cheer enviado',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -250,7 +250,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       placeholder: 'Sem raids recentes',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -266,7 +266,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       placeholder: 'Nenhum cheer registrado',
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -282,7 +282,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       startValue: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -298,7 +298,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       startValue: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -316,7 +316,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultConfig: {
       minValue: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -331,7 +331,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 140,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -346,7 +346,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 120,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -361,7 +361,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 200,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -378,7 +378,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 400,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -400,7 +400,7 @@ export const TWITCH_WIDGETS_CATALOG = [
         { text: 'Ruim', label: '4' }
       ],
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -415,7 +415,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 240,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -430,7 +430,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 130,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -447,7 +447,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 260,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -462,7 +462,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 300,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -479,7 +479,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 70,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -494,7 +494,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 380,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -509,7 +509,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 260,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -524,7 +524,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 380,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -539,7 +539,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 320,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -554,7 +554,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 60,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
@@ -569,7 +569,7 @@ export const TWITCH_WIDGETS_CATALOG = [
     defaultHeight: 420,
     defaultConfig: {
       backgroundColor: 'rgba(0, 0, 0, 0.45)',
-      borderRadius: '12px',
+      borderRadius: '0px',
       showBorder: false,
       fontFamily: 'Inter, sans-serif'
     }
