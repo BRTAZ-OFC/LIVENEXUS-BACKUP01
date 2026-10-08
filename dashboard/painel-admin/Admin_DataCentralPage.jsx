@@ -288,15 +288,9 @@ export default function DataCentralPage({ initialDetail = null }) {
                 <h2 className="text-sm font-bold text-white uppercase tracking-tight">Logs de Sincronização</h2>
                 <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar space-y-2">
                   <div className="p-3 bg-white/5 rounded-lg border border-white/5 text-[11px] text-slate-400">
-                    <p>[INFO] Visualização selecionada: <strong className="text-violet-300 uppercase">{selectedView === 'db' ? 'Banco de Dados' : 'Armazenamento Local'}</strong></p>
+                    <p>[INFO] Visualização: <strong className="text-violet-300 uppercase">Banco de Dados / Ramais</strong></p>
                     <p className="mt-1">Disponibilidade dos ramais documentais: consulte o resultado de leitura em cada área acima.</p>
                   </div>
-                  {selectedView === 'cache' && (
-                    <div className="p-3 bg-white/5 rounded-lg border border-white/5 text-[11px] text-slate-400">
-                      <p>[CACHE] Timestamp de Criação: <strong className="text-amber-400">{globalCache.timestamp ? new Date(globalCache.timestamp).toLocaleTimeString() : 'Nulo/Limpo'}</strong></p>
-                      <p className="mt-1">A leitura do cache não renova sua validade.</p>
-                    </div>
-                  )}
                   <div className="p-3 bg-white/5 rounded-lg border border-white/5 text-[11px] text-slate-400">
                     <p>[INFO] Persistência D1/SQL não verificada nesta tela.</p>
                   </div>

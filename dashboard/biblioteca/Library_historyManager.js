@@ -1,6 +1,5 @@
-// Gerenciador de histórico de faixas tocadas com persistência via libraryCache e isolamento por userId
+// Gerenciador de histórico de faixas tocadas em tempo de execução (sem cache)
 import { playerEvents } from './Library_playerEvents';
-import { libraryCache as localCache, CACHE_NAMESPACES } from './Library_cache.js';
 import { authClient } from '../login/authClient.js';
 
 function getCurrentUserId() {
@@ -16,29 +15,14 @@ const MAX_ITEMS = 50;
 class HistoryManager {
   constructor() {
     this.userId = getCurrentUserId();
-    this.items = this.loadFromCache();
-  }
-
-  loadFromCache() {
-    try {
-      const cached = localCache.get(this.userId, CACHE_NAMESPACES.LIBRARY_HISTORY);
-      return Array.isArray(cached) ? cached : [];
-    } catch {
-      return [];
-    }
-  }
-
-  saveToCache() {
-    try {
-      localCache.set(this.userId, CACHE_NAMESPACES.LIBRARY_HISTORY, this.items);
-    } catch { /* ignore */ }
+    this.items = [];
   }
 
   getHistory() {
     const currentUserId = getCurrentUserId();
     if (currentUserId !== this.userId) {
       this.userId = currentUserId;
-      this.items = this.loadFromCache();
+      this.items = [];
     }
     return [...this.items];
   }
@@ -51,7 +35,7 @@ class HistoryManager {
     const currentUserId = getCurrentUserId();
     if (currentUserId !== this.userId) {
       this.userId = currentUserId;
-      this.items = this.loadFromCache();
+      this.items = [];
     }
 
     this.items = this.getHistory().filter(item => (item.videoId || item.id) !== key);
@@ -63,7 +47,6 @@ class HistoryManager {
     if (this.items.length > MAX_ITEMS) {
       this.items = this.items.slice(0, MAX_ITEMS);
     }
-    this.saveToCache();
 
     playerEvents.emit('history_changed', this.getHistory());
   }
@@ -71,16 +54,15 @@ class HistoryManager {
   async remove(trackId) {
     if (!trackId) return;
     this.items = this.getHistory().filter(item => (item.videoId || item.id) !== trackId);
-    this.saveToCache();
     playerEvents.emit('history_changed', this.getHistory());
   }
 
   async clear() {
     this.items = [];
-    this.saveToCache();
     playerEvents.emit('history_changed', []);
   }
 }
 
 export const historyManager = new HistoryManager();
+
 

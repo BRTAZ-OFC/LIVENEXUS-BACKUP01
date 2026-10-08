@@ -1,15 +1,4 @@
-// Configurações do player de música — persistidas via libraryCache unificado com isolamento por userId.
-import { libraryCache as localCache } from './Library_cache.js';
-import { authClient } from '../login/authClient.js';
-
-function getCurrentUserId() {
-  try {
-    return authClient.getUserDataCache()?.id || 'anonymous';
-  } catch {
-    return 'anonymous';
-  }
-}
-
+// Configurações do player de música — sem cache, estado em tempo de execução.
 export const DEFAULT_MUSIC_SETTINGS = {
   volume: 80,
   repeat: 'off', // 'off' | 'one' | 'all'
@@ -26,26 +15,22 @@ export const DEFAULT_MUSIC_SETTINGS = {
   },
 };
 
+let currentSettings = { ...DEFAULT_MUSIC_SETTINGS };
+
 export function loadMusicSettings() {
-  try {
-    const userId = getCurrentUserId();
-    const cached = localCache.get(userId, 'music_settings');
-    if (!cached || typeof cached !== 'object') return { ...DEFAULT_MUSIC_SETTINGS };
-    return {
-      ...DEFAULT_MUSIC_SETTINGS,
-      ...cached,
-      overlay: { ...DEFAULT_MUSIC_SETTINGS.overlay, ...(cached.overlay || {}) },
-    };
-  } catch {
-    return { ...DEFAULT_MUSIC_SETTINGS };
-  }
+  return {
+    ...DEFAULT_MUSIC_SETTINGS,
+    ...currentSettings,
+    overlay: { ...DEFAULT_MUSIC_SETTINGS.overlay, ...(currentSettings.overlay || {}) },
+  };
 }
 
 export function saveMusicSettings(settings) {
-  try {
-    const userId = getCurrentUserId();
-    localCache.set(userId, 'music_settings', settings);
-  } catch { /* ignore */ }
+  currentSettings = {
+    ...DEFAULT_MUSIC_SETTINGS,
+    ...settings,
+    overlay: { ...DEFAULT_MUSIC_SETTINGS.overlay, ...(settings?.overlay || {}) },
+  };
 }
 
 export function updateMusicSettings(patch) {

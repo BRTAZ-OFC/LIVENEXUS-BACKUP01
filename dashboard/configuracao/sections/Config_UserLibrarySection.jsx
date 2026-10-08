@@ -5,7 +5,6 @@ import {
   Library, Plus, Edit3, Trash2, Check, X, RefreshCw, 
   Music, Play, Pause, ListPlus, Link2, Volume2, Sparkles, Disc, ListMusic 
 } from 'lucide-react';
-import { localCache } from '@dashboard/configuracao/Config_localCache';
 import { playTrack, play, pause } from '@dashboard/biblioteca/Library_youtubePlayer';
 import { queueManager } from '@dashboard/biblioteca/Library_queueManager';
 import { useMusicPlayer } from '@dashboard/biblioteca/Library_useMusicPlayer';
@@ -263,13 +262,7 @@ export default function UserLibrarySection() {
   const { libraryBranch, userId } = useNewUserDataCentral();
   const { track: currentPlayingTrack, isPlaying } = useMusicPlayer();
 
-  const [libraryData, setLibraryData] = useState(() => {
-    if (userId) {
-      const cached = localCache.get(userId, 'library');
-      if (cached && typeof cached === 'object') return normalizeLibraryCategories(cached);
-    }
-    return { songs: [], albums: [], artists: [], playlists: [] };
-  });
+  const [libraryData, setLibraryData] = useState({ songs: [], albums: [], artists: [], playlists: [] });
 
   const [filter, setFilter] = useState('all'); // all | songs | albums | artists | playlists
   const [loading, setLoading] = useState(false);
@@ -293,20 +286,16 @@ export default function UserLibrarySection() {
 
   const loadLibrary = useCallback(async () => {
     if (!userId) return;
-    const cached = localCache.get(userId, 'library');
-    if (cached) setLibraryData(normalizeLibraryCategories(cached));
-
-    setLoading(!cached);
+    setLoading(true);
     setError('');
     try {
       const data = await libraryBranch('GET');
       if (data && typeof data === 'object') {
         const normalized = normalizeLibraryCategories(data);
         setLibraryData(normalized);
-        localCache.set(userId, 'library', normalized);
       }
     } catch (err) {
-      if (!cached) setError(err.message || 'Erro ao carregar biblioteca salva.');
+      setError(err.message || 'Erro ao carregar biblioteca salva.');
     } finally {
       setLoading(false);
     }

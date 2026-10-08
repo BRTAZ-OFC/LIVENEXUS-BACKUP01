@@ -172,7 +172,6 @@ export async function uploadUserImage(file) {
   };
 
   images = [image, ...images.filter(i => (String(i.mediaId) !== mediaId && String(i.id) !== mediaId))];
-  persistToStorage();
   emit();
   return image;
 }

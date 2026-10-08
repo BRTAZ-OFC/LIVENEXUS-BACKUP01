@@ -486,7 +486,6 @@ export default function ScenarioEditorWorkspace({ cenario, userId }) {
     const finalHeight = height || defaultDims.height || 240;
 
     const mergedConfig = {
-      showBorder: true,
       effBorderThickness: 1,
       borderWidth: '1px',
       borderRadius: '1px',

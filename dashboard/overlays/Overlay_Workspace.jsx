@@ -591,7 +591,6 @@ export default function OverlaysWorkspace({ selectedOverlayId }) {
     }
 
     const mergedConfig = {
-      showBorder: true,
       effBorderThickness: 1,
       borderWidth: '1px',
       borderRadius: '1px',

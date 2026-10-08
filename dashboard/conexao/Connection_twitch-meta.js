@@ -37,9 +37,6 @@ function corsFor(request) {
   const origin = request.headers.get('Origin') || '';
   return isAllowedOrigin(origin) ? { 'Access-Control-Allow-Origin': origin, 'Vary': 'Origin' } : { 'Vary': 'Origin' };
 }
-function cacheKey(path) {
-  return new Request('https://twitch-meta.internal' + path, { method: 'GET' });
-}
 
 // Normaliza login Twitch: aceita "xqc", "@xqc", "https://twitch.tv/xqc", "https://www.twitch.tv/xqc".
 // Valida caracteres de username Twitch (a-z0-9_, 4-25 chars). Retorna null se inválido.
@@ -53,22 +50,6 @@ function normalizeLogin(input) {
   return login;
 }
 
-async function getCache(path, ttl) {
-  try {
-    const cached = await caches.default.match(cacheKey(path));
-    if (!cached) return null;
-    const { data, cachedAt } = await cached.json();
-    if (Date.now() - cachedAt < ttl) return { data, cachedAt };
-  } catch {}
-  return null;
-}
-async function putCache(path, data) {
-  try {
-    const body = JSON.stringify({ data, cachedAt: Date.now() });
-    await caches.default.put(cacheKey(path), new Response(body, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=120' } }));
-  } catch {}
-}
-
 // soft rate limit (in-memory por isolate)
 const rlCounters = new Map();
 function rateLimit(key, limit, windowMs) {
@@ -80,7 +61,7 @@ function rateLimit(key, limit, windowMs) {
   return true;
 }
 
-// --- App access token (client credentials) — cache em memória do isolate ---
+// --- App access token (client credentials) ---
 let tokenCache = { token: null, expiresAt: 0 };
 const TOKEN_REFRESH_MARGIN = 60_000; // renova 60s antes de expirar
 
@@ -144,15 +125,11 @@ async function handleMeta(request, env, corsH) {
   const body = await request.json().catch(() => ({}));
   const login = normalizeLogin(body.login);
   if (!login) return json({ error: 'Canal inválido.' }, 400, corsH);
-  const path = `/twitch/meta/${login}`;
-  const hit = await getCache(path, META_TTL);
-  if (hit) return json({ ...hit.data, _cache: 'HIT' }, 200, corsH);
   const res = await fetchHelix(login, env);
   if (res.error === 'token') return json({ error: 'Erro ao obter token de acesso da Twitch.' }, 502, corsH);
   if (res.error === 'helix') return json({ error: 'Erro ao consultar a Twitch.' }, 502, corsH);
   const meta = buildMeta(res.data);
-  await putCache(path, meta);
-  return json({ ...meta, _cache: 'MISS' }, 200, corsH);
+  return json(meta, 200, corsH);
 }
 
 export default {

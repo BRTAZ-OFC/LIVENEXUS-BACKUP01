@@ -1,25 +1,12 @@
 // Last.fm — tags do artista (gênero/estilo real), via r.jina.ai sem chave.
 // Best-effort: algumas páginas não trazem a seção de tags; retorna [] se falhar.
-import { libraryCache, CACHE_NAMESPACES } from './Library_cache.js';
 
 const JINA = 'https://r.jina.ai/';
 const TIMEOUT = 10000;
 
-// Busca de tags do artista unificada exclusivamente no libraryCache (chave: nome normalizado).
+// Busca de tags do artista diretamente na fonte oficial sem cache.
 export async function fetchArtistTagsCached(artist) {
-  const key = (artist || '').toLowerCase().trim();
-  if (!key) return [];
-  
-  const cached = libraryCache.get('global', CACHE_NAMESPACES.MUSIC_TAGS, key);
-  if (Array.isArray(cached) && cached.length > 0) {
-    return cached;
-  }
-
-  const tags = await fetchArtistTags(artist);
-  if (Array.isArray(tags) && tags.length > 0) {
-    libraryCache.set('global', CACHE_NAMESPACES.MUSIC_TAGS, tags, key);
-  }
-  return tags;
+  return fetchArtistTags(artist);
 }
 
 export async function fetchArtistTags(artist) {

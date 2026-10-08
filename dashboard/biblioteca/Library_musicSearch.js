@@ -1,14 +1,11 @@
 // Busca no YouTube e YouTube Music via InnerTube API.
 // Dados estruturados nativos obtidos via InnerTube (sem Jina, sem scraping).
-import { libraryCache, CACHE_NAMESPACES } from './Library_cache.js';
-
 const SEARCH_TIMEOUT = 12000;
 
 // Re-exporta parseMusicUrl do MusicUrlManager (substitui parseYouTubeUrl)
 export { parseMusicUrl as parseYouTubeUrl } from './Library_musicUrlManager.js';
 export { parseMusicUrl } from './Library_musicUrlManager.js';
 
-// Cache de busca unificado no libraryCache
 const inFlightSearches = new Map();
 
 let activeSearchSessionId = 0;
@@ -29,19 +26,6 @@ export function notifySearchProgress(term, results) {
       console.warn('[musicSearch] progress listener error:', e);
     }
   }
-}
-
-function cacheKey(query, filter, continuation) {
-  const normQuery = (query || '').trim().toLowerCase();
-  return `${normQuery}::${filter || ''}::${continuation || ''}`;
-}
-
-function getCached(key) {
-  return libraryCache.get('global', CACHE_NAMESPACES.LIBRARY_SEARCH, key);
-}
-
-function setCached(key, val) {
-  libraryCache.set('global', CACHE_NAMESPACES.LIBRARY_SEARCH, val, key);
 }
 
 function formatSearchItem(it) {
@@ -102,10 +86,6 @@ function formatSearchItem(it) {
 }
 
 async function fetchSearch(query, filter, continuation) {
-  const key = cacheKey(query, filter, continuation);
-  const cached = getCached(key);
-  if (cached) return cached;
-
   if (continuation) {
     if (filter === 'youtube') {
       try {
@@ -119,9 +99,7 @@ async function fetchSearch(query, filter, continuation) {
             source: 'YouTube',
             duration: parseDurationStr(it.durationStr),
           })).filter(Boolean);
-          const result = { results: items, continuation: data.continuation || '' };
-          setCached(key, result);
-          return result;
+          return { results: items, continuation: data.continuation || '' };
         }
       } catch (err) {
         console.warn('[musicSearch] fetchSearch youtube continuation falhou:', err?.message || err);
@@ -142,9 +120,7 @@ async function fetchSearch(query, filter, continuation) {
         const data = await res.json();
         if (data.ok) {
           const items = (data.items || []).map((it) => formatSearchItem(it)).filter(Boolean);
-          const result = { results: items, continuation: data.continuation || '' };
-          setCached(key, result);
-          return result;
+          return { results: items, continuation: data.continuation || '' };
         }
       }
     } catch (err) {
@@ -171,9 +147,7 @@ async function fetchSearch(query, filter, continuation) {
   else if (filter === 'playlists') filtered = allResults.filter((t) => t && (t.type === 'playlist' || t.type === 'community_playlist' || t.type === 'mix' || t.playlistId));
   else if (filter === 'youtube') filtered = allResults.filter((t) => t && t.source === 'YouTube' && t.type !== 'community_playlist' && t.type !== 'playlist');
 
-  const result = { results: filtered, continuation: '' };
-  setCached(key, result);
-  return result;
+  return { results: filtered, continuation: '' };
 }
 
 // Consultas únicas mantidas para compatibilidade
@@ -281,28 +255,8 @@ async function runProgressiveContinuations(term, globalMap, continuations, sessi
             }
           }
 
-          // Atualiza cache em memória com os resultados progressivamente acumulados
-          const accumulated = Array.from(globalMap.values());
-          setCached(cacheKey(term, '', ''), { results: accumulated, continuation: '' });
-
-          setCached(cacheKey(term, 'artists', ''), {
-            results: accumulated.filter((t) => t && t.type === 'artist'),
-            continuation: '',
-          });
-          setCached(cacheKey(term, 'albums', ''), {
-            results: accumulated.filter((t) => t && t.type === 'album'),
-            continuation: '',
-          });
-          setCached(cacheKey(term, 'playlists', ''), {
-            results: accumulated.filter((t) => t && (t.type === 'playlist' || t.type === 'community_playlist' || t.type === 'mix' || t.playlistId)),
-            continuation: '',
-          });
-          setCached(cacheKey(term, 'youtube', ''), {
-            results: accumulated.filter((t) => t && t.source === 'YouTube' && t.type !== 'community_playlist' && t.type !== 'playlist'),
-            continuation: '',
-          });
-
           // Notifica os ouvintes da interface para acréscimo progressivo
+          const accumulated = Array.from(globalMap.values());
           notifySearchProgress(term, accumulated);
         } else {
           emptyCount += 1;

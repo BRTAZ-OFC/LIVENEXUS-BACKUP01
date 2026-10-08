@@ -33,9 +33,6 @@ function corsFor(request) {
   const origin = request.headers.get('Origin') || '';
   return isAllowedOrigin(origin) ? { 'Access-Control-Allow-Origin': origin, 'Vary': 'Origin' } : { 'Vary': 'Origin' };
 }
-function cacheKey(path) {
-  return new Request('https://channel-meta.internal' + path, { method: 'GET' });
-}
 
 function normalizeSlug(input) {
   const v = (input || '').trim().toLowerCase();
@@ -55,22 +52,6 @@ async function fetchKick(slug) {
     } catch {}
   }
   return null;
-}
-
-async function getCache(path, ttl) {
-  try {
-    const cached = await caches.default.match(cacheKey(path));
-    if (!cached) return null;
-    const { data, cachedAt } = await cached.json();
-    if (Date.now() - cachedAt < ttl) return { data, cachedAt };
-  } catch {}
-  return null;
-}
-async function putCache(path, data) {
-  try {
-    const body = JSON.stringify({ data, cachedAt: Date.now() });
-    await caches.default.put(cacheKey(path), new Response(body, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=120' } }));
-  } catch {}
 }
 
 // soft rate limit (in-memory por isolate)
@@ -121,14 +102,10 @@ async function handleResolve(request, corsH) {
   const body = await request.json().catch(() => ({}));
   const slug = normalizeSlug(body.slug);
   if (!slug) return json({ error: 'Canal inválido.' }, 400, corsH);
-  const path = `/kick/resolve/${slug}`;
-  const hit = await getCache(path, RESOLVE_TTL);
-  if (hit) return json({ chatroomId: hit.data.chatroomId, _cache: 'HIT' }, 200, corsH);
   const data = await fetchKick(slug);
   if (!data || !data.chatroom?.id) return json({ error: 'Não foi possível obter o chatroom ID do canal.' }, 404, corsH);
   const chatroomId = data.chatroom.id;
-  await putCache(path, { chatroomId });
-  return json({ chatroomId, _cache: 'MISS' }, 200, corsH);
+  return json({ chatroomId }, 200, corsH);
 }
 
 async function handleMeta(request, corsH) {
@@ -137,14 +114,10 @@ async function handleMeta(request, corsH) {
   const body = await request.json().catch(() => ({}));
   const slug = normalizeSlug(body.slug);
   if (!slug) return json({ error: 'Canal inválido.' }, 400, corsH);
-  const path = `/kick/meta/${slug}`;
-  const hit = await getCache(path, META_TTL);
-  if (hit) return json({ ...hit.data, _cache: 'HIT' }, 200, corsH);
   const data = await fetchKick(slug);
   if (!data) return json({ error: 'Canal não encontrado.' }, 404, corsH);
   const meta = buildMeta(data);
-  await putCache(path, meta);
-  return json({ ...meta, _cache: 'MISS' }, 200, corsH);
+  return json(meta, 200, corsH);
 }
 
 // ─── /lab-kick-viewer-token — TESTE ISOLADO (Camimho A) ─────────────────────
