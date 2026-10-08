@@ -3,7 +3,7 @@
 // Consulta uma vez no mount (sem polling).
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getReviewsOnce } from '@dashboard/painel-admin/Admin_reviewsBootstrap';
+import { reviewRepository } from '@dashboard/configuracao/Config_liveNexusDataAdapter';
 import StarRating from '@dashboard/componentes/StarRating';
 import LiveNexusLogo from '@dashboard/componentes/LiveNexusLogo';
 import { ArrowLeft, Loader2, MessageSquare } from 'lucide-react';
@@ -17,8 +17,7 @@ export default function AllReviews() {
     (async () => {
       try {
         setError(null);
-        // Reaproveita o bootstrap da Home (cache de sessão). Sem nova chamada se já carregado.
-        const list = await getReviewsOnce();
+        const list = await reviewRepository.list('-created_date', 500);
         setReviews(Array.isArray(list) ? list : []);
       } catch (e) {
         console.error('AllReviews load failed:', e);

@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { reviewRepository } from '@dashboard/configuracao/Config_liveNexusDataAdapter';
-import { getReviewsOnce, prependReview } from '@dashboard/painel-admin/Admin_reviewsBootstrap';
 import StarRating from '@dashboard/componentes/StarRating';
 import { Loader2, Send, MessageSquare } from 'lucide-react';
 
@@ -17,9 +16,8 @@ export default function ReviewsSection() {
 
   const loadReviews = async () => {
     try {
-      // Bootstrap único (compartilhado com /avaliacoes). Slice local para 6 mais recentes.
-      const list = await getReviewsOnce();
-      setReviews(Array.isArray(list) ? list.slice(0, 6) : []);
+      const list = await reviewRepository.list('-created_date', 6);
+      setReviews(Array.isArray(list) ? list : []);
     } catch (e) {
       console.error('Reviews load failed:', e);
     } finally {
@@ -44,8 +42,6 @@ export default function ReviewsSection() {
         message: form.message.trim(),
         rating: form.rating,
       });
-      // Escrita → resposta → atualiza estado local + cache de sessão. Sem refetch.
-      prependReview(created);
       setReviews(prev => [created, ...prev].slice(0, 6));
       setForm({ name: '', email: '', message: '', rating: 0 });
     } catch (e) {

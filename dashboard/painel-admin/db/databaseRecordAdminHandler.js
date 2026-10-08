@@ -56,11 +56,21 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
             const next = items.filter(item => String(item.id) !== String(recordId));
             if (next.length !== items.length) {
               db[userId] = next;
+              if (db[userId].length === 0) {
+                delete db[userId];
+              }
               found = true;
               break;
             }
           }
         }
+        // Limpar qualquer outra entrada vazia
+        for (const [uId, items] of Object.entries(db)) {
+          if (!Array.isArray(items) || items.length === 0) {
+            delete db[uId];
+          }
+        }
+
         if (!found) {
           res.statusCode = 404;
           return res.end(JSON.stringify({ ok: false, error: 'Registro não encontrado.' }));
@@ -80,12 +90,23 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
               const next = db[userId][category].filter(item => String(item.id) !== String(recordId));
               if (next.length !== db[userId][category].length) {
                 db[userId][category] = next;
+                const totalLeft = (db[userId].songs?.length || 0) + (db[userId].albums?.length || 0) + (db[userId].artists?.length || 0) + (db[userId].playlists?.length || 0);
+                if (totalLeft === 0) {
+                  delete db[userId];
+                }
                 found = true;
                 break;
               }
             }
           }
         }
+        for (const [uId, data] of Object.entries(db)) {
+          const total = (data.songs?.length || 0) + (data.albums?.length || 0) + (data.artists?.length || 0) + (data.playlists?.length || 0);
+          if (total === 0) {
+            delete db[uId];
+          }
+        }
+
         if (!found) {
           res.statusCode = 404;
           return res.end(JSON.stringify({ ok: false, error: 'Registro não encontrado.' }));

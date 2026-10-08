@@ -15,7 +15,6 @@ import {
   ArrowLeft,
   Trash2,
   Edit3,
-  HardDrive,
   Search,
   AlertCircle,
   Layers,
@@ -45,8 +44,6 @@ export default function DataCentralPage({ initialDetail = null }) {
     rtcSession, 
     isLoading, 
     refreshAll,
-    globalCache,
-    clearCache,
     saveSession,
     deleteSession,
     saveReview,
@@ -55,7 +52,6 @@ export default function DataCentralPage({ initialDetail = null }) {
     deleteContact
   } = useNewUserDataCentral();
 
-  const [selectedView, setSelectedView] = useState('db'); // 'db' | 'cache'
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeDetail, setActiveDetail] = useState(initialDetail); // null = visão geral | 'sessions' | 'reviews' | 'contacts'
   const [activeDocument, setActiveDocument] = useState(null);
@@ -106,9 +102,9 @@ export default function DataCentralPage({ initialDetail = null }) {
     }
   };
 
-  const displaySessions = selectedView === 'db' ? sessions : (globalCache.sessions || []);
-  const displayReviews = selectedView === 'db' ? reviews : (globalCache.reviews || []);
-  const displayContacts = selectedView === 'db' ? contacts : (globalCache.contacts || []);
+  const displaySessions = sessions;
+  const displayReviews = reviews;
+  const displayContacts = contacts;
 
   const stats = [
     { 
@@ -188,7 +184,6 @@ export default function DataCentralPage({ initialDetail = null }) {
           </div>
 
           <div className="flex items-center gap-3">
-            {selectedView === 'db' ? (
               <button 
                 onClick={() => refreshAll(true)}
                 disabled={isLoading}
@@ -199,17 +194,6 @@ export default function DataCentralPage({ initialDetail = null }) {
                 <RefreshCw size={14} className={isLoading ? 'animate-spin text-blue-400' : ''} />
                 Sincronizar Banco
               </button>
-            ) : (
-              <button 
-                onClick={clearCache}
-                className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition cursor-pointer shadow-sm"
-                id="clear-cache-btn"
-                title="Limpar todos os dados em cache"
-              >
-                <Trash2 size={14} />
-                Limpar Cache
-              </button>
-            )}
           </div>
         </header>
 
@@ -706,44 +690,19 @@ export default function DataCentralPage({ initialDetail = null }) {
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Origem dos Dados</span>
             </div>
             <div className="flex flex-col space-y-2">
-              <button 
-                onClick={() => setSelectedView('db')}
-                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left text-xs font-medium transition cursor-pointer ${
-                  selectedView === 'db' 
-                    ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30 shadow-sm' 
-                    : 'text-slate-400 hover:bg-white/5 border border-transparent'
-                }`}
-                id="select-db-view-btn"
+              <div 
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left text-xs font-medium bg-blue-500/15 text-blue-400 border border-blue-500/30 shadow-sm"
               >
                 <Database size={15} />
-                Banco de Dados
-              </button>
-
-              <button 
-                onClick={() => setSelectedView('cache')}
-                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left text-xs font-medium transition cursor-pointer ${
-                  selectedView === 'cache' 
-                    ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-sm' 
-                    : 'text-slate-400 hover:bg-white/5 border border-transparent'
-                }`}
-                id="select-cache-view-btn"
-              >
-                <HardDrive size={15} />
-                Armazenamento Local
-              </button>
+                Banco de Dados (Oficial)
+              </div>
             </div>
 
             <div className="pt-4 border-t border-white/5 text-[11px] text-slate-500 space-y-2">
               <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">Informação de Origem</p>
-              {selectedView === 'db' ? (
-                <p className="leading-relaxed">
-                  Origem selecionada para os cartões de resumo. A disponibilidade dos Johnsons é indicada em cada área documental.
-                </p>
-              ) : (
-                <p className="leading-relaxed">
-                  Cartões de resumo exibidos a partir do cache global da Central; esta seleção não modifica os Johnsons.
-                </p>
-              )}
+              <p className="leading-relaxed">
+                Origem oficial conectada diretamente aos Johnsons e arquivos de persistência.
+              </p>
             </div>
           </div>
         ) : (
@@ -753,33 +712,12 @@ export default function DataCentralPage({ initialDetail = null }) {
               <button type="button" key={key} title={title} aria-label={title} onClick={() => { setActiveDocument(key === 'reviews' ? null : key); setActiveDetail(key === 'reviews' ? 'reviews' : null); setIsSidebarOpen(true); }}
                 className={`p-2 rounded-lg ${(activeDocument === key || (key === 'reviews' && activeDetail === 'reviews')) ? 'bg-violet-500/15 text-violet-300' : 'text-slate-400 hover:bg-white/5'}`}><Icon size={16} /></button>
             ))}
-            <button 
-              onClick={() => {
-                setSelectedView('db');
-                setIsSidebarOpen(true);
-              }}
-              className={`p-2 rounded-lg transition cursor-pointer ${
-                selectedView === 'db' ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-white/5 border border-transparent'
-              }`}
+            <div 
+              className="p-2 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30"
               title="Banco de Dados"
-              id="collapsed-select-db-view-btn"
             >
               <Database size={16} />
-            </button>
-
-            <button 
-              onClick={() => {
-                setSelectedView('cache');
-                setIsSidebarOpen(true);
-              }}
-              className={`p-2 rounded-lg transition cursor-pointer ${
-                selectedView === 'cache' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:bg-white/5 border border-transparent'
-              }`}
-              title="Armazenamento Local"
-              id="collapsed-select-cache-view-btn"
-            >
-              <HardDrive size={16} />
-            </button>
+            </div>
           </div>
         )}
       </div>

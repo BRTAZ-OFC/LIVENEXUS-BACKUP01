@@ -18,15 +18,7 @@ import { connectGalleryBranch } from '@dashboard/painel-admin/Gallery_mediaStora
 
 const NewUserDataCentralContext = createContext(null);
 
-// Cache global único em memória para todo o frontend distribuído pela Central
-export const globalCache = {
-  sessions: null,
-  reviews: null,
-  contacts: null,
-  timestamp: null,
-};
 
-const CACHE_TTL = 300000; // 5 minutos de validade do cache
 
 export function NewUserDataCentralProvider({ children }) {
   const { user, isAuthenticated } = useAuth();
@@ -127,18 +119,7 @@ export function NewUserDataCentralProvider({ children }) {
     }
   }, [isAuthenticated, vodsBranch, messagesBranch, reviewsBranch]);
 
-  // Limpa o cache global por completo
-  const clearCache = useCallback(() => {
-    globalCache.sessions = null;
-    globalCache.reviews = null;
-    globalCache.contacts = null;
-    globalCache.timestamp = null;
 
-    setSessions([]);
-    setReviews([]);
-    setReviewsError('');
-    setContacts([]);
-  }, []);
 
   useEffect(() => {
     refreshAll();
@@ -211,9 +192,6 @@ export function NewUserDataCentralProvider({ children }) {
     rtcSession: { isRunning: false, runtimeId, stats: null },
     isLoading,
     
-    // Cache e Ações
-    globalCache,
-    clearCache,
     refreshAll,
     updateFilters,
 
