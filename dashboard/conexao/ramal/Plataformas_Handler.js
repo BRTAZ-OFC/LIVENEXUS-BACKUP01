@@ -34,27 +34,25 @@ export async function handlePlataformasRequest(req, res) {
       return respond(res, 200, { ok: true, ...(id ? { plataforma: result } : { plataformas: result }) });
     }
 
-    if (req.method === 'POST' && !id) {
+    if (req.method === 'POST' || req.method === 'PATCH') {
       const body = await bodyOf(req);
-      const existing = await PlataformasJohnson.list(userId);
-      const found = existing.find(i => i.platform?.toLowerCase() === body.platform?.toLowerCase());
+      const existingList = await PlataformasJohnson.list(userId);
+      const existingRecord = existingList[0];
+
       let saved;
-      if (found) {
-        saved = await PlataformasJohnson.update(userId, found.id, body);
+      if (existingRecord) {
+        saved = await PlataformasJohnson.update(userId, existingRecord.id, body);
       } else {
         saved = await PlataformasJohnson.create(userId, body);
       }
-      return respond(res, 201, { ok: true, plataforma: saved, plataformas: saved });
+      return respond(res, req.method === 'POST' ? 201 : 200, { ok: true, plataforma: saved, plataformas: saved });
     }
 
-    if (req.method === 'PATCH' && id) {
-      const updated = await PlataformasJohnson.update(userId, id, await bodyOf(req));
-      return updated ? respond(res, 200, { ok: true, plataforma: updated, plataformas: updated }) : respond(res, 404, { ok: false, error: 'Plataforma não encontrada.' });
-    }
-
-    if (req.method === 'DELETE' && id) {
-      const deleted = await PlataformasJohnson.delete(userId, id);
-      return deleted ? respond(res, 200, { ok: true }) : respond(res, 404, { ok: false, error: 'Plataforma não encontrada.' });
+    if (req.method === 'DELETE') {
+      const existingList = await PlataformasJohnson.list(userId);
+      if (existingList.length === 0) return respond(res, 404, { ok: false, error: 'Plataforma não encontrada.' });
+      await PlataformasJohnson.delete(userId, existingList[0].id);
+      return respond(res, 200, { ok: true });
     }
 
     return respond(res, 405, { ok: false, error: 'Método não permitido.' });
