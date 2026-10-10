@@ -31,7 +31,8 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
     rtcIdentity: path.resolve(cwd, 'dashboard/configuracao/rtc_registry.json'),
     templates: path.resolve(cwd, 'dashboard/Imagem/template/templates.json'),
     reviews: path.resolve(cwd, 'dashboard/painel-admin/reviews.json'),
-    contacts: path.resolve(cwd, 'dashboard/configuracao/messages.json')
+    contacts: path.resolve(cwd, 'dashboard/configuracao/messages.json'),
+    plataformas: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/conect-plataform.json')
   };
 
   try {
@@ -45,7 +46,7 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
     // EXCLUIR REGISTRO (DELETE)
     // ----------------------------------------------------
     if (method === 'DELETE') {
-      if (['cenarios', 'overlays'].includes(tableId) || !paths[tableId]) {
+      if (['cenarios', 'overlays', 'plataformas'].includes(tableId) || !paths[tableId]) {
         const filePath = paths[tableId] || path.resolve(cwd, `dashboard/painel-admin/db/data/${tableId}.json`);
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '{}');
         const db = JSON.parse(dataRaw || '{}');
@@ -171,7 +172,7 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
     // DUPLICAR REGISTRO (POST)
     // ----------------------------------------------------
     if (method === 'POST') {
-      if (['cenarios', 'overlays'].includes(tableId) || !paths[tableId]) {
+      if (['cenarios', 'overlays', 'plataformas'].includes(tableId) || !paths[tableId]) {
         const filePath = paths[tableId] || path.resolve(cwd, `dashboard/painel-admin/db/data/${tableId}.json`);
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '{}');
         const db = JSON.parse(dataRaw || '{}');
@@ -305,7 +306,7 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
         return res.end(JSON.stringify({ ok: false, error: 'updatedRecord é obrigatório.' }));
       }
 
-      if (['cenarios', 'overlays'].includes(tableId) || !paths[tableId]) {
+      if (['cenarios', 'overlays', 'plataformas'].includes(tableId) || !paths[tableId]) {
         const filePath = paths[tableId] || path.resolve(cwd, `dashboard/painel-admin/db/data/${tableId}.json`);
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '{}');
         const db = JSON.parse(dataRaw || '{}');

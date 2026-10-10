@@ -58,6 +58,11 @@ export async function handleDatabaseInspectRequest(req, res) {
   const cenariosDb = await readJson(cenariosPath, 'array_list');
   tables.cenarios = { name: 'Cenários', records: Object.entries(cenariosDb).flatMap(([u, items]) => items.map(i => ({ userId: u, ...i }))), error: null };
 
+  // 1.1. Conexões de Plataformas
+  const plataformasPath = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/conect-plataform.json');
+  const plataformasDb = await readJson(plataformasPath, 'array_list');
+  tables.plataformas = { name: 'Conexões de Plataformas', records: Object.entries(plataformasDb).flatMap(([u, items]) => items.map(i => ({ userId: u, ...i }))), error: null };
+
   // 2. Overlays
   const overlaysPath = path.resolve(cwd, 'dashboard/overlays/overlays.json');
   const overlaysDb = await readJson(overlaysPath, 'array_list');

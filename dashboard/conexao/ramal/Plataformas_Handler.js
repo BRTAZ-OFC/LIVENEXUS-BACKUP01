@@ -29,32 +29,32 @@ export async function handlePlataformasRequest(req, res) {
     const id = url.searchParams.get('id');
 
     if (req.method === 'GET') {
-      const items = await PlataformasJohnson.list();
-      // Filtrar por usuário, exceto se admin ou conforme regra
-      const userItems = items.filter(i => i.user_id === userId || req.documentUserRole === 'admin');
-      if (id) {
-        const item = userItems.find(i => i.id === id);
-        if (!item) return respond(res, 404, { ok: false, error: 'Registro não encontrado.' });
-        return respond(res, 200, { ok: true, plataforma: item });
-      }
-      return respond(res, 200, { ok: true, plataformas: userItems });
+      const result = id ? await PlataformasJohnson.get(userId, id) : await PlataformasJohnson.list(userId);
+      if (id && !result) return respond(res, 404, { ok: false, error: 'Plataforma não encontrada.' });
+      return respond(res, 200, { ok: true, ...(id ? { plataforma: result } : { plataformas: result }) });
     }
 
-    if (req.method === 'POST') {
-      const data = await bodyOf(req);
-      const created = await PlataformasJohnson.create({ ...data, user_id: userId });
-      return respond(res, 201, { ok: true, plataformas: created });
+    if (req.method === 'POST' && !id) {
+      const body = await bodyOf(req);
+      const existing = await PlataformasJohnson.list(userId);
+      const found = existing.find(i => i.platform?.toLowerCase() === body.platform?.toLowerCase());
+      let saved;
+      if (found) {
+        saved = await PlataformasJohnson.update(userId, found.id, body);
+      } else {
+        saved = await PlataformasJohnson.create(userId, body);
+      }
+      return respond(res, 201, { ok: true, plataforma: saved, plataformas: saved });
     }
 
     if (req.method === 'PATCH' && id) {
-      const data = await bodyOf(req);
-      const updated = await PlataformasJohnson.update(id, data);
-      return respond(res, 200, { ok: true, plataformas: updated });
+      const updated = await PlataformasJohnson.update(userId, id, await bodyOf(req));
+      return updated ? respond(res, 200, { ok: true, plataforma: updated, plataformas: updated }) : respond(res, 404, { ok: false, error: 'Plataforma não encontrada.' });
     }
 
     if (req.method === 'DELETE' && id) {
-      await PlataformasJohnson.delete(id);
-      return respond(res, 200, { ok: true });
+      const deleted = await PlataformasJohnson.delete(userId, id);
+      return deleted ? respond(res, 200, { ok: true }) : respond(res, 404, { ok: false, error: 'Plataforma não encontrada.' });
     }
 
     return respond(res, 405, { ok: false, error: 'Método não permitido.' });
