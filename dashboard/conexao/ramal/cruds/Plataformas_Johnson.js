@@ -43,6 +43,100 @@ const locked = (fn) => {
   return task;
 };
 
+const consolidateUserRecords = (records, userId) => {
+  if (!Array.isArray(records) || records.length === 0) return null;
+  const consolidated = {
+    id: records[0].id || randomUUID(),
+    user_id: userId,
+    youtube: null,
+    youtube_code: null,
+    twitch: null,
+    twitch_code: null,
+    kick: null,
+    kick_code: null
+  };
+
+  for (const r of records) {
+    if (r.id && !consolidated.id) consolidated.id = r.id;
+    if (r.user_id) consolidated.user_id = r.user_id;
+
+    if (r.youtube) consolidated.youtube = r.youtube;
+    if (r.youtube_code) consolidated.youtube_code = r.youtube_code;
+    if (r.twitch) consolidated.twitch = r.twitch;
+    if (r.twitch_code) consolidated.twitch_code = r.twitch_code;
+    if (r.kick) consolidated.kick = r.kick;
+    if (r.kick_code) consolidated.kick_code = r.kick_code;
+
+    const p = (r.platform || '').toLowerCase();
+    const ch = r.channel_name || r.channel_id || r.channel_handle || r.channel;
+    const cd = r.verification_code || r.bio_link_code || r.code;
+    if (p === 'twitch' && ch) consolidated.twitch = ch;
+    if (p === 'twitch' && cd) consolidated.twitch_code = cd;
+    if ((p === 'youtube' || p === 'yt') && ch) consolidated.youtube = ch;
+    if ((p === 'youtube' || p === 'yt') && cd) consolidated.youtube_code = cd;
+    if (p === 'kick' && ch) consolidated.kick = ch;
+    if (p === 'kick' && cd) consolidated.kick_code = cd;
+
+    for (const [k, v] of Object.entries(r)) {
+      if (v !== undefined && v !== null && consolidated[k] === null) {
+        consolidated[k] = v;
+      }
+    }
+  }
+  consolidated.user_id = userId;
+  return consolidated;
+};
+
+const upsertRecord = (records, userId, data = {}) => {
+  let record = consolidateUserRecords(records, userId) || {
+    id: randomUUID(),
+    user_id: userId,
+    youtube: null,
+    youtube_code: null,
+    twitch: null,
+    twitch_code: null,
+    kick: null,
+    kick_code: null
+  };
+
+  record.user_id = userId;
+  if (!record.id) record.id = randomUUID();
+
+  const platform = (data.platform || '').toLowerCase();
+  const channelVal = data.channel_name || data.channel_id || data.channel_handle || data.channel || '';
+  const codeVal = data.verification_code || data.bio_link_code || data.code || '';
+
+  if (platform === 'twitch') {
+    if (channelVal) record.twitch = channelVal;
+    if (codeVal) record.twitch_code = codeVal;
+    if (data.status) record.twitch_status = data.status;
+  } else if (platform === 'youtube' || platform === 'yt') {
+    if (channelVal) record.youtube = channelVal;
+    if (codeVal) record.youtube_code = codeVal;
+    if (data.status) record.youtube_status = data.status;
+  } else if (platform === 'kick') {
+    if (channelVal) record.kick = channelVal;
+    if (codeVal) record.kick_code = codeVal;
+    if (data.status) record.kick_status = data.status;
+  } else {
+    if (data.twitch !== undefined) record.twitch = data.twitch;
+    if (data.twitch_code !== undefined) record.twitch_code = data.twitch_code;
+    if (data.youtube !== undefined) record.youtube = data.youtube;
+    if (data.youtube_code !== undefined) record.youtube_code = data.youtube_code;
+    if (data.kick !== undefined) record.kick = data.kick;
+    if (data.kick_code !== undefined) record.kick_code = data.kick_code;
+  }
+
+  for (const [k, v] of Object.entries(data)) {
+    if (['id', 'user_id', 'platform', 'channel_name', 'channel_id', 'channel_handle', 'verification_code', 'bio_link_code'].includes(k)) continue;
+    if (v !== undefined) {
+      record[k] = v;
+    }
+  }
+
+  return record;
+};
+
 export const PlataformasJohnson = {
   async list(userId) {
     const db = await read();
@@ -51,8 +145,8 @@ export const PlataformasJohnson = {
     if (!records) return [];
     if (Array.isArray(records)) {
       if (records.length === 0) return [];
-      // Ensure exactly one consolidated record per user
-      return [records[0]];
+      const consolidated = consolidateUserRecords(records, userId);
+      return consolidated ? [consolidated] : [];
     }
     return [records];
   },
@@ -68,48 +162,8 @@ export const PlataformasJohnson = {
     return locked(async () => {
       const db = await read();
       const uKey = key(userId);
-      let records = db[uKey] || [];
-      if (!Array.isArray(records)) records = [];
-
-      let record = records[0] || {
-        id: randomUUID(),
-        user_id: userId,
-        youtube: null,
-        youtube_code: null,
-        twitch: null,
-        twitch_code: null,
-        kick: null,
-        kick_code: null
-      };
-
-      record.user_id = userId;
-      if (!record.id) record.id = randomUUID();
-
-      const platform = (data.platform || '').toLowerCase();
-      const channelVal = data.channel_name || data.channel_id || data.channel_handle || data.channel || '';
-      const codeVal = data.verification_code || data.bio_link_code || data.code || '';
-
-      if (platform === 'twitch') {
-        if (channelVal) record.twitch = channelVal;
-        if (codeVal) record.twitch_code = codeVal;
-        if (data.status) record.twitch_status = data.status;
-      } else if (platform === 'youtube' || platform === 'yt') {
-        if (channelVal) record.youtube = channelVal;
-        if (codeVal) record.youtube_code = codeVal;
-        if (data.status) record.youtube_status = data.status;
-      } else if (platform === 'kick') {
-        if (channelVal) record.kick = channelVal;
-        if (codeVal) record.kick_code = codeVal;
-        if (data.status) record.kick_status = data.status;
-      } else {
-        if (data.twitch !== undefined) record.twitch = data.twitch;
-        if (data.twitch_code !== undefined) record.twitch_code = data.twitch_code;
-        if (data.youtube !== undefined) record.youtube = data.youtube;
-        if (data.youtube_code !== undefined) record.youtube_code = data.youtube_code;
-        if (data.kick !== undefined) record.kick = data.kick;
-        if (data.kick_code !== undefined) record.kick_code = data.kick_code;
-      }
-
+      const records = db[uKey] || [];
+      const record = upsertRecord(records, userId, data);
       db[uKey] = [record];
       await write(db);
       return record;
@@ -120,43 +174,11 @@ export const PlataformasJohnson = {
     return locked(async () => {
       const db = await read();
       const uKey = key(userId);
-      const records = db[uKey];
-      if (!Array.isArray(records) || records.length === 0) {
-        // If updating when none exists, create/upsert
-        return this.create(userId, changes);
-      }
-
-      let record = records[0];
+      const records = db[uKey] || [];
+      const record = upsertRecord(records, userId, changes);
       if (id && String(record.id) !== String(id)) {
         record.id = id;
       }
-
-      const platform = (changes.platform || '').toLowerCase();
-      const channelVal = changes.channel_name || changes.channel_id || changes.channel_handle || changes.channel;
-      const codeVal = changes.verification_code || changes.bio_link_code || changes.code;
-
-      if (platform === 'twitch') {
-        if (channelVal !== undefined) record.twitch = channelVal;
-        if (codeVal !== undefined) record.twitch_code = codeVal;
-        if (changes.status) record.twitch_status = changes.status;
-      } else if (platform === 'youtube' || platform === 'yt') {
-        if (channelVal !== undefined) record.youtube = channelVal;
-        if (codeVal !== undefined) record.youtube_code = codeVal;
-        if (changes.status) record.youtube_status = changes.status;
-      } else if (platform === 'kick') {
-        if (channelVal !== undefined) record.kick = channelVal;
-        if (codeVal !== undefined) record.kick_code = codeVal;
-        if (changes.status) record.kick_status = changes.status;
-      }
-
-      for (const [k, v] of Object.entries(changes)) {
-        if (['id', 'user_id', 'platform', 'channel_name', 'channel_id', 'channel_handle', 'verification_code', 'bio_link_code'].includes(k)) continue;
-        if (v !== undefined) {
-          record[k] = v;
-        }
-      }
-
-      record.user_id = userId;
       db[uKey] = [record];
       await write(db);
       return record;
@@ -180,7 +202,7 @@ export const PlataformasJohnson = {
     return locked(async () => {
       const db = await read();
       const uKey = key(userId);
-      const single = Array.isArray(items) ? (items[0] || null) : items;
+      const single = Array.isArray(items) ? consolidateUserRecords(items, userId) : items;
       if (!single) {
         delete db[uKey];
       } else {
