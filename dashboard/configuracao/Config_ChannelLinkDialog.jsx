@@ -70,41 +70,79 @@ export default function ChannelLinkDialog({ open, onOpenChange, platform, onVeri
       setError('Informe o nome do canal.');
       return;
     }
+    
+    // 1. Gera e exibe o código IMEDIATAMENTE utilizando o gerador local
+    const generatedCode = GerarCodigoVinculo.gerar();
+    setCode(generatedCode);
+    setResolvedId(norm);
+    setStep('pending');
+
+    // 2. Registra o desafio no verificador (em background)
     setLoading(true);
     try {
-      const generatedCode = GerarCodigoVinculo.gerar();
       const r = await channelVerify.challenge(platform, channelInput, generatedCode);
-      setChallengeId(r.challengeId);
-      setChallengeKey(r.challengeKey);
-      setCode(generatedCode);
-      setResolvedId(r.channelIdentifier);
-      setStep('pending');
-    } catch (e) { setError(e.message || 'Não foi possível gerar o código.'); }
-    finally { setLoading(false); }
+      if (r?.challengeId) setChallengeId(r.challengeId);
+      if (r?.challengeKey) setChallengeKey(r.challengeKey);
+      if (r?.channelIdentifier) setResolvedId(r.channelIdentifier);
+    } catch (e) {
+      console.warn('Registro de desafio falhou (tentando novamente no validate)', e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function reemit() {
-    setError(''); setLoading(true);
+    setError(''); 
+    const generatedCode = GerarCodigoVinculo.gerar();
+    setCode(generatedCode);
+    setCopied(false);
+    setLoading(true);
+
+    // Registra reemissão/novo desafio no verificador (em background)
     try {
-      const generatedCode = GerarCodigoVinculo.gerar();
-      const r = await channelVerify.reemit(challengeKey, generatedCode);
-      setChallengeId(r.challengeId);
-      setCode(generatedCode);
-      setCopied(false);
-    } catch (e) { setError(e.message || 'Não foi possível gerar novo código.'); }
-    finally { setLoading(false); }
+      if (challengeKey) {
+        const r = await channelVerify.reemit(challengeKey, generatedCode);
+        if (r?.challengeId) setChallengeId(r.challengeId);
+        if (r?.challengeKey) setChallengeKey(r.challengeKey);
+      } else {
+        const r = await channelVerify.challenge(platform, resolvedId || channelInput, generatedCode);
+        if (r?.challengeId) setChallengeId(r.challengeId);
+        if (r?.challengeKey) setChallengeKey(r.challengeKey);
+      }
+    } catch (e) {
+      console.warn('Reemissão de desafio falhou', e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function validate() {
-    setError(''); setStep('verifying'); setLoading(true);
+    setError(''); 
+    setStep('verifying'); 
+    setLoading(true);
     try {
-      const r = await channelVerify.verify(platform, challengeId);
+      let activeChallengeId = challengeId;
+
+      // Se o desafio ainda não foi registrado (falha na rede), registra agora com o mesmo código
+      if (!activeChallengeId) {
+        const rChal = await channelVerify.challenge(platform, resolvedId || channelInput, code);
+        activeChallengeId = rChal?.challengeId;
+        if (rChal?.challengeKey) setChallengeKey(rChal.challengeKey);
+        if (rChal?.channelIdentifier) setResolvedId(rChal.channelIdentifier);
+        setChallengeId(activeChallengeId);
+      }
+
+      if (!activeChallengeId) {
+        throw new Error('Não foi possível conectar ao verificador para iniciar a validação.');
+      }
+
+      const r = await channelVerify.verify(platform, activeChallengeId);
       setStep('verified');
       onVerified && onVerified({
         platform,
-        channelIdentifier: r.channelIdentifier,
-        channelUrl: channelUrl(platform, r.channelIdentifier),
-        verifiedAt: r.verifiedAt,
+        channelIdentifier: r.channelIdentifier || resolvedId,
+        channelUrl: channelUrl(platform, r.channelIdentifier || resolvedId),
+        verifiedAt: r.verifiedAt || Date.now(),
         verificationProof: r.verificationProof,
         challengeKey,
       });
