@@ -4,7 +4,7 @@ export default function PageNotFound({}) {
     const location = useLocation();
     const pageName = location.pathname.substring(1);
 
-    // DESATIVADO — base44.auth.me() removido para estancar consumo de créditos.
+    // Sessão padrão para exibição da página 404.
     const authData = { user: null, isAuthenticated: false };
     const isFetched = true;
     

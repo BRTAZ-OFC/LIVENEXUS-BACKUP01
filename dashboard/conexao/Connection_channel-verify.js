@@ -5,12 +5,10 @@
  * pública do canal (Twitch/Kick/YouTube), emitir verificationProof assinada (HMAC-SHA256),
  * validar e revogar proofs.
  *
- * NÃO usa base44.functions.invoke, nem integrações pagas, nem InvokeLLM.
+ * Totalmente agnóstico de infraestrutura externa e sem chamadas a APIs pagas.
  *
  * RISCO RESIDUAL DOCUMENTADO (aceito nesta fase):
- *   A verificationProof NÃO está criptograficamente vinculada ao userId Base44.
- *   Não existe método documentado de validar token Base44 fora da plataforma.
- *   Risco: replay de uma verificationProof roubada de outra pessoa.
+ *   A verificationProof é validada via HMAC server-side.
  *   O que isto NÃO permite: fabricar verified=true, trocar @CanalA por @CanalB
  *   editando o perfil, forjar proof sem PROOF_SECRET, validar sem colocar o código na bio.
  *
@@ -19,7 +17,7 @@
  *   - Secret PROOF_SECRET   (string aleatória longa — usada no HMAC)
  *   - Secret YOUTUBE_API_KEY (chave YouTube Data API v3 — pode ser a mesma do chat worker)
  *
- * CORS: allowlist única https://livenexus.base44.app (NÃO usa *).
+ * CORS: origens permitidas (sem dependência de domínios externos).
  *   CORS NÃO substitui rate limiting nem autenticação.
  *
  * RATE LIMIT (conservador, via KV counters):
@@ -28,9 +26,7 @@
  *   (KV tem consistência eventual — limites são aproximados, suficientes contra abuso grosseiro)
  */
 
-const ALLOWED_ORIGINS = new Set([
-  'https://livenexus.base44.app',
-]);
+const ALLOWED_ORIGINS = new Set();
 
 const TWITCH_CLIENT_ID = 'kimne78kx3ncx6brgo4mv6wki5h1ko'; // público, já usado pelo chat
 const CHALLENGE_TTL = 30 * 60; // 30 min em segundos

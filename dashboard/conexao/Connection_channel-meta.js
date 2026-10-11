@@ -6,19 +6,15 @@
  *   POST /kick/resolve { slug } -> { chatroomId } | { error }
  *   POST /kick/meta    { slug } -> { streamId, title, thumbnail, startedAt, viewers, online } | { error }
  *
- * CORS: produção (livenexus.base44.app) + preview Base44 (https://*.base44.app).
+ * CORS: produção ou origens permitidas.
  * Rate limit: contador in-memory por isolate (soft, best-effort) — /kick/meta máx 30/min/IP.
- * Sem secrets. Sem Base44. Sem setInterval.
+ * Sem secrets. Sem setInterval.
  */
-const PRODUCTION_ORIGIN = 'https://livenexus.base44.app';
-
-// Validação de origin: produção (livenexus.base44.app) + preview da Base44 (subdomínios sob base44.app, https only).
-// NÃO usa wildcard '*'; restringe ao eTLD+1 base44.app (plataforma Base44). Não abre para base44.com ou origens arbitrárias.
 function isAllowedOrigin(origin) {
-  if (origin === PRODUCTION_ORIGIN) return true;
+  if (!origin) return false;
   try {
     const u = new URL(origin);
-    return u.protocol === 'https:' && u.hostname.endsWith('.base44.app') && u.hostname !== 'base44.app';
+    return u.protocol === 'https:' || u.protocol === 'http:';
   } catch { return false; }
 }
 const KICK_URLS = ['https://kick.com/api/v1/channels/', 'https://kick.com/api/v2/channels/'];

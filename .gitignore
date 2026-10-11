@@ -30,4 +30,3 @@ dist-ssr
 .env
 .vite
 .wrangler/
-base44/.app.jsonc

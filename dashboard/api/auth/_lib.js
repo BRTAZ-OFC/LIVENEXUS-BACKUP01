@@ -1,12 +1,5 @@
-// Shared utilities for auth Pages Functions (Cloudflare Pages + D1)
+// NOTE: Auth utilities for Cloudflare Pages Functions and local dev server (Cloudflare Pages + D1)
 // PBKDF2 password hashing via Web Crypto, session management via D1.
-//
-// NOTE (lab): In the official GitHub repo this file lives at functions/api/auth/_lib.js
-// and is served by Cloudflare Pages Functions with a D1 binding (env.DB).
-// In this Base44 lab the functions/ path is reserved by the Base44 backend bundler,
-// so the Cloudflare Pages Functions are mirrored under cloudflare-pages/functions/
-// to preserve the original code without converting to Base44 Functions.
-// The D1 binding (env.DB) is NOT available in the Base44 preview environment.
 
 export const SESSION_COOKIE = 'lnx_session';
 const SESSION_DURATION_DAYS = 7;

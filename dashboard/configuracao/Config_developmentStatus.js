@@ -37,7 +37,7 @@ export const ROADMAP = [
   { id: 'last-lives', name: 'Últimas Lives (localStorage)', status: 'completed', category: 'infra', detail: 'Histórico cap 4 por streamId+platform' },
   { id: 'multiplatform', name: 'Multiplataforma simultânea', status: 'completed', category: 'infra', detail: 'Twitch + Kick em paralelo' },
   { id: 'spa-persistence', name: 'Persistência SPA (StreamingProvider)', status: 'completed', category: 'infra', detail: 'Provider sobrevive à troca de seções' },
-  { id: 'auth-base44', name: 'Auth Base44 + Google OAuth', status: 'completed', category: 'auth', detail: 'Login/Register/Forgot/Reset + Google' },
+  { id: 'auth-native', name: 'Autenticação Nativa + Google OAuth', status: 'completed', category: 'auth', detail: 'Login/Register/Forgot/Reset + Google' },
   { id: 'viewers-tk', name: 'Viewer counts (Twitch/Kick)', status: 'completed', category: 'platform', detail: 'Meta polling adaptativo' },
   { id: 'conn-twitch', name: 'Conexão anônima Twitch (IRC/WSS)', status: 'completed', category: 'platform', detail: 'Client-side, sem backend' },
   { id: 'conn-kick', name: 'Conexão Kick (Pusher) client-side', status: 'completed', category: 'platform', detail: 'Pusher nativo + resolve chatroom via Worker' },
@@ -49,7 +49,7 @@ export const ROADMAP = [
 
   // === PLANEJADO ===
   { id: 'bs-11', name: 'Browser Source Etapa 11 e posteriores', status: 'planned', category: 'browser-source', detail: 'Próximas etapas do overlay' },
-  { id: 'bs-transport', name: 'Transporte independente para Browser Source', status: 'planned', category: 'browser-source', detail: 'SSE/HTTP local sem Base44 runtime' },
+  { id: 'bs-transport', name: 'Transporte independente para Browser Source', status: 'planned', category: 'browser-source', detail: 'SSE/HTTP local independente' },
   { id: 'bs-render', name: 'Renderização real de overlays/widgets', status: 'planned', category: 'browser-source', detail: 'Overlay funcional para OBS/PRISM' },
   { id: 'command-engine', name: 'Command Engine', status: 'planned', category: 'command', detail: 'Comandos de chat acionáveis' },
   { id: 'widgets', name: 'Widgets interativos', status: 'planned', category: 'interactive', detail: 'Votação, bingo, roleta, etc' },

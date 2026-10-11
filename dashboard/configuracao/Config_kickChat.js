@@ -1,6 +1,6 @@
 // Conexão ao chat do Kick: Pusher DIRETO no navegador + resolução de chatroomId via
 // API v2 do Kick (CORS permissivo, frontend puro). Viewer count via poll da mesma API.
-// Sem Worker, sem Base44; sem créditos.
+// Sem Worker; client-side direto.
 // connectKick(channel, onMessage, onStatus, onMeta) -> { disconnect }
 // onMeta: { viewers } | { meta } | { offline }
 //   meta: { streamId, title, thumbnailUrl, channelName, startedAt, streamUrl }

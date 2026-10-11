@@ -1,8 +1,5 @@
 // Cliente do Worker channel-verify (SEPARADO do youtubechat).
-// NÃO usa base44.functions.invoke nem integrações pagas.
-//
-// RISCO RESIDUAL: a verificationProof não está vinculada ao userId Base44.
-// Ver docs no Worker (cloudflare-worker/channel-verify.js).
+// Comunicação direta com o Worker via fetch.
 
 // >>> TROQUE pelo URL do seu Worker channel-verify após o deploy <<<
 const WORKER_URL = 'https://channel-verify.radiotweet.workers.dev';

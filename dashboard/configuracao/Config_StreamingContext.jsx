@@ -264,7 +264,7 @@ export function StreamingProvider({ children }) {
       });
       const cleanChannels = {};
       for (const pName of PLATFORMS) if (linked[pName]?.status === 'verified') cleanChannels[pName] = merged[pName];
-      // DESATIVADO — base44.auth.updateMe() removido do mount.
+      // Auth profile check removido do mount.
       // Limpa pending-channels localmente sem sincronizar com o backend.
       if (pending.length) {
         try { localStorage.removeItem('livenexus:pending-channels'); } catch {}

@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Mic2, MessagesSquare, SlidersHorizontal, Radio } from 'lucide-react';
 
-const OVERVIEW_IMAGE = 'https://media.base44.com/images/public/6a99b71b385351878a56dd38/79ae704bb_live.png';
+const OVERVIEW_IMAGE = '/assets/livenexus-overview.png';
 const AUTO_MS = 6000;
 
 const FEATURE_SLIDES = [

@@ -143,8 +143,6 @@ export default function MusicSearch() {
   }
 
   // Toca uma música: envia ao PLAYER OFICIAL.
-  // ZERO CREDITS: getRelatedTracks removido — era uma segunda busca (base44.functions.invoke)
-  // disparada automaticamente a cada track play, consumindo 0.1-0.2 Integration Credits.
   async function handlePlayTrack(track) {
     queueManager.setQueue([track], 0);
     await playTrack(track);

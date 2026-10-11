@@ -26,6 +26,4 @@ export const liveNexus = {
   data: liveNexusDataAdapter
 };
 
-// Aliases para máxima compatibilidade interna
-export const base44 = liveNexus;
 export default liveNexus;

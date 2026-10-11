@@ -7,20 +7,16 @@
  *
  * Fonte: Twitch Helix oficial (GET /helix/streams?user_login=).
  * App access token: obtido server-side via client_credentials sob demanda.
- * CORS: produção (livenexus.base44.app) + preview Base44 (https://*.base44.app).
+ * CORS: produção ou origens permitidas.
  * Rate limit: contador in-memory por isolate (soft, best-effort) — /twitch/meta máx 30/min/IP.
  * Secrets: env.TWITCH_CLIENT_ID e env.TWITCH_CLIENT_SECRET (NUNCA hardcoded, NUNCA retornados).
- * Sem Base44. Sem setInterval.
+ * Sem setInterval.
  */
-const PRODUCTION_ORIGIN = 'https://livenexus.base44.app';
-
-// Validação de origin: produção (livenexus.base44.app) + preview da Base44 (subdomínios sob base44.app, https only).
-// NÃO usa wildcard '*'; restringe ao eTLD+1 base44.app (plataforma Base44). Não abre para base44.com ou origens arbitrárias.
 function isAllowedOrigin(origin) {
-  if (origin === PRODUCTION_ORIGIN) return true;
+  if (!origin) return false;
   try {
     const u = new URL(origin);
-    return u.protocol === 'https:' && u.hostname.endsWith('.base44.app') && u.hostname !== 'base44.app';
+    return u.protocol === 'https:' || u.protocol === 'http:';
   } catch { return false; }
 }
 

@@ -657,46 +657,30 @@ export default function DataCentralPage({ initialDetail = null }) {
                 const platformItems = [];
                 displayPlataformas.forEach((rec, recIdx) => {
                   const uId = rec.user_id || rec.userId || 'user';
-                  if (rec.youtube) {
-                    platformItems.push({
-                      ...rec,
-                      uniqueKey: `${rec.id || recIdx}-youtube`,
-                      displayPlatform: 'YouTube',
-                      channel_name: rec.youtube,
-                      verification_code: rec.youtube_code,
-                      status: rec.youtube_status || 'verified'
-                    });
-                  }
-                  if (rec.twitch) {
-                    platformItems.push({
-                      ...rec,
-                      uniqueKey: `${rec.id || recIdx}-twitch`,
-                      displayPlatform: 'Twitch',
-                      channel_name: rec.twitch,
-                      verification_code: rec.twitch_code,
-                      status: rec.twitch_status || 'verified'
-                    });
-                  }
-                  if (rec.kick) {
-                    platformItems.push({
-                      ...rec,
-                      uniqueKey: `${rec.id || recIdx}-kick`,
-                      displayPlatform: 'Kick',
-                      channel_name: rec.kick,
-                      verification_code: rec.kick_code,
-                      status: rec.kick_status || 'verified'
-                    });
-                  }
-                  if (!rec.youtube && !rec.twitch && !rec.kick) {
-                    platformItems.push({
-                      ...rec,
-                      uniqueKey: `${rec.id || recIdx}-empty`,
-                      displayPlatform: 'Nenhuma',
-                      channel_name: 'Nenhum canal',
-                      verification_code: null,
-                      status: 'pending'
-                    });
-                  }
+                  platformItems.push({
+                    ...rec,
+                    uniqueKey: `${rec.id || recIdx}-youtube`,
+                    displayPlatform: 'YouTube',
+                    channel_name: rec.youtube || null,
+                    verification_code: rec.youtube_code || null,
+                    status: rec.youtube_status || null
+                  });
+                  platformItems.push({
+                    ...rec,
+                    uniqueKey: `${rec.id || recIdx}-twitch`,
+                    displayPlatform: 'Twitch',
+                    channel_name: rec.twitch || null,
+                    verification_code: rec.twitch_code || null,
+                    status: rec.twitch_status || null
+                  });
+                  platformItems.push({
+                    ...rec,
+                    uniqueKey: `${rec.id || recIdx}-kick`,
+                    displayPlatform: 'Kick',
+                    channel_name: rec.kick || null,
+                    verification_code: rec.kick_code || null,
+                    status: rec.kick_status || null
+                  });
                 });
 
                 const list = platformItems.filter(p => 
@@ -734,16 +718,17 @@ export default function DataCentralPage({ initialDetail = null }) {
                               <span className="text-xs font-mono text-slate-400">ID: {plat.id || '—'} (User: {plat.user_id || plat.userId || '—'})</span>
                             </div>
                             <h3 className="text-base font-bold text-white mt-1">
-                              {plat.channel_name || 'Canal sem nome'}
+                              {plat.channel_name || 'Não conectado'}
                             </h3>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-3">
                             <span className={`px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border ${
                               plat.status === 'verified' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 
-                              plat.status === 'unlinked' ? 'bg-red-500/10 text-red-300 border-red-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                              plat.status === 'unlinked' ? 'bg-red-500/10 text-red-300 border-red-500/20' : 
+                              plat.status ? 'bg-amber-500/10 text-amber-300 border-amber-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
                             }`}>
-                              Status: {plat.status || 'verified'}
+                              Status: {plat.status || '—'}
                             </span>
                             <span className="text-xs font-mono text-slate-400">{formatDate(plat.created_at)}</span>
 
