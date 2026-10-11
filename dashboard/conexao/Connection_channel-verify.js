@@ -79,11 +79,18 @@ function genCode() {
 }
 
 // normalização server-side (autoridade — o frontend não decide o formato canônico)
-function normalizeTwitchKick(input) {
+function normalizeTwitch(input) {
   let v = (input || '').trim();
-  const m = v.match(/(?:twitch\.tv|kick\.com)\/([A-Za-z0-9_]+)/i);
+  const m = v.match(/(?:twitch\.tv)\/([A-Za-z0-9_]+)/i);
   if (m) v = m[1];
   v = v.replace(/^@/, '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+  return v;
+}
+function normalizeKick(input) {
+  let v = (input || '').trim();
+  const m = v.match(/(?:kick\.com)\/([A-Za-z0-9_-]+)/i);
+  if (m) v = m[1];
+  v = v.replace(/^@/, '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
   return v;
 }
 function normalizeYouTube(input) {
@@ -218,7 +225,7 @@ async function handleChallenge(request, env, corsH) {
 
   const norm = platform === 'youtube'
     ? normalizeYouTube(channelIdentifier)
-    : normalizeTwitchKick(channelIdentifier);
+    : (platform === 'twitch' ? normalizeTwitch(channelIdentifier) : normalizeKick(channelIdentifier));
   if (!norm) return json({ error: 'Canal inválido.' }, 400, corsH);
 
   const challengeId = genId('ch_');
