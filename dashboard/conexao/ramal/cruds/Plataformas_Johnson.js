@@ -270,7 +270,6 @@ export const PlataformasJohnson = {
       } else {
         db[uKey] = [{
           id: single.id || randomUUID(),
-          user_id: userId,
           youtube: single.youtube ?? null,
           youtube_code: single.youtube_code ?? null,
           twitch: single.twitch ?? null,

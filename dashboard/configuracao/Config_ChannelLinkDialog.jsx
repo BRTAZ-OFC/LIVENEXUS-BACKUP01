@@ -6,6 +6,7 @@ import { Label } from '@dashboard/componentes/ui/label';
 import { Copy, Check, Loader2, ExternalLink, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react';
 import { channelVerify } from '@dashboard/configuracao/Config_channelVerify';
 import { normalizeChannelInput, channelUrl, placeholderFor, hintFor } from '@dashboard/configuracao/Config_channelCode';
+import { GerarCodigoVinculo } from '@dashboard/configuracao/gerar_cod/GerarCodigoVinculo';
 
 const tutorials = {
   Twitch: [
@@ -71,7 +72,7 @@ export default function ChannelLinkDialog({ open, onOpenChange, platform, onVeri
     }
     setLoading(true);
     try {
-      const r = await channelVerify.challenge(platform, channelInput);
+      const r = await GerarCodigoVinculo.gerar({ platform, channelIdentifier: channelInput });
       setChallengeId(r.challengeId);
       setChallengeKey(r.challengeKey);
       setCode(r.verificationCode);
@@ -84,7 +85,7 @@ export default function ChannelLinkDialog({ open, onOpenChange, platform, onVeri
   async function reemit() {
     setError(''); setLoading(true);
     try {
-      const r = await channelVerify.reemit(challengeKey);
+      const r = await GerarCodigoVinculo.reemitir(challengeKey);
       setChallengeId(r.challengeId);
       setCode(r.verificationCode);
       setCopied(false);
