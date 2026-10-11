@@ -857,7 +857,7 @@ export function StreamingProvider({ children }) {
         body: JSON.stringify({ channels: { [data.platform]: entry } }),
       });
       // Salvar na tabela / JSON de plataformas para o Painel Admin
-      await fetch('/api/plataformas', {
+      const platRes = await fetch('/api/plataformas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -872,6 +872,10 @@ export function StreamingProvider({ children }) {
           verified_at: data.verifiedAt || new Date().toISOString()
         }),
       });
+      const platJson = await platRes.json().catch(() => ({}));
+      if (!platRes.ok || !platJson.ok) {
+        throw new Error(platJson.error || 'Falha na persistência da conexão de plataforma.');
+      }
       console.log('[LIVENEXUS-RENEW] VERIFIED_CHANNEL_SAVED', { platform: data.platform, channelIdentifier: data.channelIdentifier, ts: new Date().toISOString() });
     } catch (e) {
       console.error('[LIVENEXUS] VERIFIED_CHANNEL_ERROR', e);

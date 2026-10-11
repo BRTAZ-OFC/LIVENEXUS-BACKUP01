@@ -654,10 +654,54 @@ export default function DataCentralPage({ initialDetail = null }) {
 
               {/* ----------------- PLATAFORMAS ----------------- */}
               {activeDetail === 'plataformas' && (() => {
-                const list = displayPlataformas.filter(p => 
+                const platformItems = [];
+                displayPlataformas.forEach((rec, recIdx) => {
+                  const uId = rec.user_id || rec.userId || 'user';
+                  if (rec.youtube) {
+                    platformItems.push({
+                      ...rec,
+                      uniqueKey: `${rec.id || recIdx}-youtube`,
+                      displayPlatform: 'YouTube',
+                      channel_name: rec.youtube,
+                      verification_code: rec.youtube_code,
+                      status: rec.youtube_status || 'verified'
+                    });
+                  }
+                  if (rec.twitch) {
+                    platformItems.push({
+                      ...rec,
+                      uniqueKey: `${rec.id || recIdx}-twitch`,
+                      displayPlatform: 'Twitch',
+                      channel_name: rec.twitch,
+                      verification_code: rec.twitch_code,
+                      status: rec.twitch_status || 'verified'
+                    });
+                  }
+                  if (rec.kick) {
+                    platformItems.push({
+                      ...rec,
+                      uniqueKey: `${rec.id || recIdx}-kick`,
+                      displayPlatform: 'Kick',
+                      channel_name: rec.kick,
+                      verification_code: rec.kick_code,
+                      status: rec.kick_status || 'verified'
+                    });
+                  }
+                  if (!rec.youtube && !rec.twitch && !rec.kick) {
+                    platformItems.push({
+                      ...rec,
+                      uniqueKey: `${rec.id || recIdx}-empty`,
+                      displayPlatform: 'Nenhuma',
+                      channel_name: 'Nenhum canal',
+                      verification_code: null,
+                      status: 'pending'
+                    });
+                  }
+                });
+
+                const list = platformItems.filter(p => 
                   (p.channel_name || '').toLowerCase().includes(term) || 
-                  (p.channel_handle || '').toLowerCase().includes(term) ||
-                  (p.platform || '').toLowerCase().includes(term)
+                  (p.displayPlatform || '').toLowerCase().includes(term)
                 );
 
                 if (displayPlataformas.length === 0) {
@@ -680,14 +724,14 @@ export default function DataCentralPage({ initialDetail = null }) {
                 return (
                   <div className="space-y-4">
                     {list.map((plat, idx) => (
-                      <div key={plat.id || idx} className="bg-white/5 border border-white/5 rounded-xl p-5 space-y-4">
+                      <div key={plat.uniqueKey || idx} className="bg-white/5 border border-white/5 rounded-xl p-5 space-y-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs uppercase font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
-                                Plataforma #{idx + 1}
+                                {plat.displayPlatform}
                               </span>
-                              <span className="text-xs font-mono text-slate-400">ID: {plat.id || '—'}</span>
+                              <span className="text-xs font-mono text-slate-400">ID: {plat.id || '—'} (User: {plat.user_id || plat.userId || '—'})</span>
                             </div>
                             <h3 className="text-base font-bold text-white mt-1">
                               {plat.channel_name || 'Canal sem nome'}
@@ -699,7 +743,7 @@ export default function DataCentralPage({ initialDetail = null }) {
                               plat.status === 'verified' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 
                               plat.status === 'unlinked' ? 'bg-red-500/10 text-red-300 border-red-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
                             }`}>
-                              Status: {plat.status || 'pending'}
+                              Status: {plat.status || 'verified'}
                             </span>
                             <span className="text-xs font-mono text-slate-400">{formatDate(plat.created_at)}</span>
 
@@ -728,21 +772,17 @@ export default function DataCentralPage({ initialDetail = null }) {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
                           <div className="p-3 bg-black/40 rounded-lg border border-white/5">
                             <p className="text-[10px] uppercase font-bold text-slate-500">Plataforma</p>
-                            <p className="text-white font-medium mt-0.5 capitalize">{plat.platform || '—'}</p>
+                            <p className="text-white font-medium mt-0.5 capitalize">{plat.displayPlatform}</p>
                           </div>
                           <div className="p-3 bg-black/40 rounded-lg border border-white/5">
-                            <p className="text-[10px] uppercase font-bold text-slate-500">Channel Handle</p>
-                            <p className="text-slate-300 font-mono mt-0.5">{plat.channel_handle || '—'}</p>
+                            <p className="text-[10px] uppercase font-bold text-slate-500">Canal</p>
+                            <p className="text-slate-300 font-mono mt-0.5">{plat.channel_name || '—'}</p>
                           </div>
                           <div className="p-3 bg-black/40 rounded-lg border border-white/5">
-                            <p className="text-[10px] uppercase font-bold text-slate-500">Channel ID</p>
-                            <p className="text-slate-300 font-mono mt-0.5 truncate">{plat.channel_id || '—'}</p>
-                          </div>
-                          <div className="p-3 bg-black/40 rounded-lg border border-white/5">
-                            <p className="text-[10px] uppercase font-bold text-slate-500">Verificação</p>
+                            <p className="text-[10px] uppercase font-bold text-slate-500">Código de Verificação</p>
                             <p className="text-white font-medium mt-0.5 truncate">{plat.verification_code || '—'}</p>
                           </div>
                         </div>

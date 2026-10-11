@@ -45,46 +45,96 @@ const locked = (fn) => {
 
 const consolidateUserRecords = (records, userId) => {
   if (!Array.isArray(records) || records.length === 0) return null;
-  const consolidated = {
-    id: records[0].id || randomUUID(),
-    user_id: userId,
-    youtube: null,
-    youtube_code: null,
-    twitch: null,
-    twitch_code: null,
-    kick: null,
-    kick_code: null
-  };
+  
+  let recordId = null;
+  let ytChannel = null;
+  let ytCode = null;
+  let twChannel = null;
+  let twCode = null;
+  let kcChannel = null;
+  let kcCode = null;
+  const extras = {};
 
   for (const r of records) {
-    if (r.id && !consolidated.id) consolidated.id = r.id;
-    if (r.user_id) consolidated.user_id = r.user_id;
+    if (!r || typeof r !== 'object') continue;
 
-    if (r.youtube) consolidated.youtube = r.youtube;
-    if (r.youtube_code) consolidated.youtube_code = r.youtube_code;
-    if (r.twitch) consolidated.twitch = r.twitch;
-    if (r.twitch_code) consolidated.twitch_code = r.twitch_code;
-    if (r.kick) consolidated.kick = r.kick;
-    if (r.kick_code) consolidated.kick_code = r.kick_code;
+    if (r.id) {
+      if (recordId && String(recordId) !== String(r.id)) {
+        throw new Error(`Conflito de identificador (id) detectado para o usuário ${userId}`);
+      }
+      recordId = r.id;
+    }
 
-    const p = (r.platform || '').toLowerCase();
-    const ch = r.channel_name || r.channel_id || r.channel_handle || r.channel;
-    const cd = r.verification_code || r.bio_link_code || r.code;
-    if (p === 'twitch' && ch) consolidated.twitch = ch;
-    if (p === 'twitch' && cd) consolidated.twitch_code = cd;
-    if ((p === 'youtube' || p === 'yt') && ch) consolidated.youtube = ch;
-    if ((p === 'youtube' || p === 'yt') && cd) consolidated.youtube_code = cd;
-    if (p === 'kick' && ch) consolidated.kick = ch;
-    if (p === 'kick' && cd) consolidated.kick_code = cd;
+    const rYt = r.youtube || (((r.platform || '').toLowerCase() === 'youtube' || (r.platform || '').toLowerCase() === 'yt') ? (r.channel_name || r.channel_id || r.channel_handle || r.channel) : null);
+    const rYtCode = r.youtube_code || (((r.platform || '').toLowerCase() === 'youtube' || (r.platform || '').toLowerCase() === 'yt') ? (r.verification_code || r.bio_link_code || r.code) : null);
+
+    if (rYt) {
+      if (ytChannel && ytChannel !== rYt) {
+        throw new Error(`Conflito detectado: múltiplos valores para o canal YouTube do usuário ${userId}`);
+      }
+      ytChannel = rYt;
+    }
+    if (rYtCode) {
+      if (ytCode && ytCode !== rYtCode) {
+        throw new Error(`Conflito detectado: múltiplos valores para o código YouTube do usuário ${userId}`);
+      }
+      ytCode = rYtCode;
+    }
+
+    const rTw = r.twitch || ((r.platform || '').toLowerCase() === 'twitch' ? (r.channel_name || r.channel_id || r.channel_handle || r.channel) : null);
+    const rTwCode = r.twitch_code || ((r.platform || '').toLowerCase() === 'twitch' ? (r.verification_code || r.bio_link_code || r.code) : null);
+
+    if (rTw) {
+      if (twChannel && twChannel !== rTw) {
+        throw new Error(`Conflito detectado: múltiplos valores para o canal Twitch do usuário ${userId}`);
+      }
+      twChannel = rTw;
+    }
+    if (rTwCode) {
+      if (twCode && twCode !== rTwCode) {
+        throw new Error(`Conflito detectado: múltiplos valores para o código Twitch do usuário ${userId}`);
+      }
+      twCode = rTwCode;
+    }
+
+    const rKc = r.kick || ((r.platform || '').toLowerCase() === 'kick' ? (r.channel_name || r.channel_id || r.channel_handle || r.channel) : null);
+    const rKcCode = r.kick_code || ((r.platform || '').toLowerCase() === 'kick' ? (r.verification_code || r.bio_link_code || r.code) : null);
+
+    if (rKc) {
+      if (kcChannel && kcChannel !== rKc) {
+        throw new Error(`Conflito detectado: múltiplos valores para o canal Kick do usuário ${userId}`);
+      }
+      kcChannel = rKc;
+    }
+    if (rKcCode) {
+      if (kcCode && kcCode !== rKcCode) {
+        throw new Error(`Conflito detectado: múltiplos valores para o código Kick do usuário ${userId}`);
+      }
+      kcCode = rKcCode;
+    }
 
     for (const [k, v] of Object.entries(r)) {
-      if (v !== undefined && v !== null && consolidated[k] === null) {
-        consolidated[k] = v;
+      if (['id', 'user_id', 'youtube', 'youtube_code', 'twitch', 'twitch_code', 'kick', 'kick_code', 'platform', 'channel_name', 'channel_id', 'channel_handle', 'channel', 'verification_code', 'bio_link_code', 'code'].includes(k)) continue;
+      if (v !== undefined && v !== null) {
+        if (extras[k] !== undefined && extras[k] !== v) {
+          throw new Error(`Conflito detectado no campo ${k} para o usuário ${userId}`);
+        }
+        extras[k] = v;
       }
     }
   }
-  consolidated.user_id = userId;
-  return consolidated;
+
+  return {
+    id: recordId || randomUUID(),
+    user_id: userId,
+    youtube: ytChannel,
+    youtube_code: ytCode,
+    twitch: twChannel,
+    twitch_code: twCode,
+    kick: kcChannel,
+    kick_code: kcCode,
+    ...extras
+  };
 };
 
 const upsertRecord = (records, userId, data = {}) => {
@@ -175,8 +225,19 @@ export const PlataformasJohnson = {
       const db = await read();
       const uKey = key(userId);
       const records = db[uKey] || [];
+      const consolidated = consolidateUserRecords(records, userId);
+
+      if (id && consolidated && consolidated.id && String(consolidated.id) !== String(id)) {
+        throw new Error('Não é permitido alterar o identificador (id) principal do registro.');
+      }
+      if (changes.id && consolidated && consolidated.id && String(changes.id) !== String(consolidated.id)) {
+        delete changes.id;
+      }
+
       const record = upsertRecord(records, userId, changes);
-      if (id && String(record.id) !== String(id)) {
+      if (consolidated && consolidated.id) {
+        record.id = consolidated.id;
+      } else if (id) {
         record.id = id;
       }
       db[uKey] = [record];
@@ -202,6 +263,7 @@ export const PlataformasJohnson = {
     return locked(async () => {
       const db = await read();
       const uKey = key(userId);
+      // Validate/consolidate before replacing (will throw if conflicts exist)
       const single = Array.isArray(items) ? consolidateUserRecords(items, userId) : items;
       if (!single) {
         delete db[uKey];

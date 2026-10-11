@@ -2,6 +2,25 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { reviewsJohnson } from '../../conexao/ramal/cruds/Review_Johnson.js';
 import { messagesJohnson } from '../../conexao/ramal/cruds/Config_MessagesJohnson.js';
+import { PlataformasJohnson } from '../../conexao/ramal/cruds/Plataformas_Johnson.js';
+
+async function findPlataformaUserId(recordId) {
+  const filePath = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/conect-plataform.json');
+  const raw = await fs.readFile(filePath, 'utf8').catch(() => '{}');
+  let db = {};
+  try { db = JSON.parse(raw || '{}'); } catch { db = {}; }
+  for (const [userId, items] of Object.entries(db)) {
+    if (Array.isArray(items)) {
+      if (items.some(item => String(item.id) === String(recordId))) {
+        return userId;
+      }
+    }
+  }
+  if (db[recordId]) {
+    return recordId;
+  }
+  return null;
+}
 
 export async function handleDatabaseRecordAdminRequest(req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -46,7 +65,21 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
     // EXCLUIR REGISTRO (DELETE)
     // ----------------------------------------------------
     if (method === 'DELETE') {
-      if (['cenarios', 'overlays', 'plataformas'].includes(tableId) || !paths[tableId]) {
+      if (tableId === 'plataformas') {
+        const userId = await findPlataformaUserId(recordId);
+        if (!userId) {
+          res.statusCode = 404;
+          return res.end(JSON.stringify({ ok: false, error: 'Registro não encontrado.' }));
+        }
+        const success = await PlataformasJohnson.delete(userId, recordId);
+        if (!success) {
+          res.statusCode = 404;
+          return res.end(JSON.stringify({ ok: false, error: 'Registro não encontrado.' }));
+        }
+        return res.end(JSON.stringify({ ok: true }));
+      }
+
+      if (['cenarios', 'overlays'].includes(tableId) || !paths[tableId]) {
         const filePath = paths[tableId] || path.resolve(cwd, `dashboard/painel-admin/db/data/${tableId}.json`);
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '{}');
         const db = JSON.parse(dataRaw || '{}');
@@ -172,7 +205,12 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
     // DUPLICAR REGISTRO (POST)
     // ----------------------------------------------------
     if (method === 'POST') {
-      if (['cenarios', 'overlays', 'plataformas'].includes(tableId) || !paths[tableId]) {
+      if (tableId === 'plataformas') {
+        res.statusCode = 400;
+        return res.end(JSON.stringify({ ok: false, error: 'Conexões de plataformas possuem apenas um registro por usuário e não podem ser duplicadas.' }));
+      }
+
+      if (['cenarios', 'overlays'].includes(tableId) || !paths[tableId]) {
         const filePath = paths[tableId] || path.resolve(cwd, `dashboard/painel-admin/db/data/${tableId}.json`);
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '{}');
         const db = JSON.parse(dataRaw || '{}');
@@ -306,7 +344,17 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
         return res.end(JSON.stringify({ ok: false, error: 'updatedRecord é obrigatório.' }));
       }
 
-      if (['cenarios', 'overlays', 'plataformas'].includes(tableId) || !paths[tableId]) {
+      if (tableId === 'plataformas') {
+        const userId = await findPlataformaUserId(recordId);
+        if (!userId) {
+          res.statusCode = 404;
+          return res.end(JSON.stringify({ ok: false, error: 'Registro não encontrado.' }));
+        }
+        const updated = await PlataformasJohnson.update(userId, recordId, updatedRecord);
+        return res.end(JSON.stringify({ ok: true, record: updated }));
+      }
+
+      if (['cenarios', 'overlays'].includes(tableId) || !paths[tableId]) {
         const filePath = paths[tableId] || path.resolve(cwd, `dashboard/painel-admin/db/data/${tableId}.json`);
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '{}');
         const db = JSON.parse(dataRaw || '{}');
