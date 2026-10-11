@@ -21,10 +21,17 @@ async function post(path, body) {
 }
 
 export const channelVerify = {
-  challenge: async (platform, channelIdentifier) => {
-    return await post('/challenge', { platform: platform.toLowerCase(), channelIdentifier });
+  challenge: async (platform, channelIdentifier, verificationCode) => {
+    return await post('/challenge', {
+      platform: platform.toLowerCase(),
+      channelIdentifier,
+      ...(verificationCode ? { verificationCode } : {}),
+    });
   },
-  reemit: (challengeKey) => post('/challenge/reemit', { challengeKey }),
+  reemit: (challengeKey, verificationCode) => post('/challenge/reemit', {
+    challengeKey,
+    ...(verificationCode ? { verificationCode } : {}),
+  }),
   verify: async (platform, challengeId) => {
     return await post('/verify/' + platform.toLowerCase(), { challengeId });
   },

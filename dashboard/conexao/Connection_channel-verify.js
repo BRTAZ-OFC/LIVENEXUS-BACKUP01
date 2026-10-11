@@ -185,7 +185,9 @@ async function handleChallenge(request, env, corsH) {
 
   const challengeId = genId('ch_');
   const challengeKey = genId('ck_');
-  const verificationCode = genCode();
+  const verificationCode = (body.verificationCode && typeof body.verificationCode === 'string' && body.verificationCode.startsWith('LNX-'))
+    ? body.verificationCode.trim()
+    : genCode();
   const now = Date.now();
   const challenge = {
     challengeKey,
@@ -204,7 +206,8 @@ async function handleChallenge(request, env, corsH) {
 }
 
 async function handleReemit(request, env, corsH) {
-  const { challengeKey } = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({}));
+  const { challengeKey } = body;
   if (!challengeKey) return json({ error: 'Tentativa não encontrada.' }, 404, corsH);
   const oldId = await env.KV.get(`ac:${challengeKey}`);
   if (!oldId) return json({ error: 'Tentativa não encontrada ou expirada.' }, 404, corsH);
@@ -215,7 +218,9 @@ async function handleReemit(request, env, corsH) {
   await env.KV.delete(`ch:${oldId}`);
 
   const challengeId = genId('ch_');
-  const verificationCode = genCode();
+  const verificationCode = (body.verificationCode && typeof body.verificationCode === 'string' && body.verificationCode.startsWith('LNX-'))
+    ? body.verificationCode.trim()
+    : genCode();
   const now = Date.now();
   const challenge = {
     challengeKey,

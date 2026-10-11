@@ -73,10 +73,10 @@ export default function ChannelLinkDialog({ open, onOpenChange, platform, onVeri
     setLoading(true);
     try {
       const generatedCode = GerarCodigoVinculo.gerar();
-      const r = await channelVerify.challenge(platform, channelInput);
+      const r = await channelVerify.challenge(platform, channelInput, generatedCode);
       setChallengeId(r.challengeId);
       setChallengeKey(r.challengeKey);
-      setCode(r.verificationCode || generatedCode);
+      setCode(generatedCode);
       setResolvedId(r.channelIdentifier);
       setStep('pending');
     } catch (e) { setError(e.message || 'Não foi possível gerar o código.'); }
@@ -87,9 +87,9 @@ export default function ChannelLinkDialog({ open, onOpenChange, platform, onVeri
     setError(''); setLoading(true);
     try {
       const generatedCode = GerarCodigoVinculo.gerar();
-      const r = await channelVerify.reemit(challengeKey);
+      const r = await channelVerify.reemit(challengeKey, generatedCode);
       setChallengeId(r.challengeId);
-      setCode(r.verificationCode || generatedCode);
+      setCode(generatedCode);
       setCopied(false);
     } catch (e) { setError(e.message || 'Não foi possível gerar novo código.'); }
     finally { setLoading(false); }
