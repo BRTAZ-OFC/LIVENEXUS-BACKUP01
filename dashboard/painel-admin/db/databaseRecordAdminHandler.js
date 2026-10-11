@@ -170,8 +170,8 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
         return res.end(JSON.stringify({ ok: true }));
       }
 
-      if (tableId === 'templates') {
-        const filePath = paths.templates;
+      if (tableId === 'templates' || tableId === 'galeria') {
+        const filePath = paths[tableId];
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '[]');
         const list = JSON.parse(dataRaw || '[]');
         const next = list.filter(item => String(item.id) !== String(recordId));
@@ -282,8 +282,8 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
         return res.end(JSON.stringify({ ok: true, record: duplicated }));
       }
 
-      if (tableId === 'templates') {
-        const filePath = paths.templates;
+      if (tableId === 'templates' || tableId === 'galeria') {
+        const filePath = paths[tableId];
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '[]');
         const list = JSON.parse(dataRaw || '[]');
         const found = list.find(item => String(item.id) === String(recordId));
@@ -424,8 +424,8 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
         return res.end(JSON.stringify({ ok: true }));
       }
 
-      if (tableId === 'templates') {
-        const filePath = paths.templates;
+      if (tableId === 'templates' || tableId === 'galeria') {
+        const filePath = paths[tableId];
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '[]');
         const list = JSON.parse(dataRaw || '[]');
         const idx = list.findIndex(item => String(item.id) === String(recordId));

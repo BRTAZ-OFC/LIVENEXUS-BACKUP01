@@ -16,6 +16,7 @@ export default function ProfileSection() {
   const [galleryOpen, setGalleryOpen] = useState(false);
 
   // Estados da troca de senha
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passSaving, setPassSaving] = useState(false);
@@ -216,7 +217,7 @@ export default function ProfileSection() {
             )}
           </div>
 
-          {/* Botões Editar / Salvar Nome */}
+          {/* Botões Editar / Alterar Senha / Excluir Conta */}
           <div className="shrink-0">
             {editing ? (
               <div className="flex gap-2">
@@ -235,91 +236,114 @@ export default function ProfileSection() {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => setEditing(true)}
-                className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/10"
-              >
-                <Pencil size={14} /> Editar perfil
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setEditing(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/10"
+                >
+                  <Pencil size={14} /> Editar perfil
+                </button>
+                <button
+                  onClick={() => {
+                    setPassError('');
+                    setPassSuccess('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    setShowPasswordModal(true);
+                  }}
+                  className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/10"
+                >
+                  <KeyRound size={14} /> Alterar senha
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/20"
+                >
+                  <Trash2 size={14} /> Excluir conta
+                </button>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Alterar Senha */}
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <KeyRound size={18} className="text-violet-300" />
-          <h3 className="text-lg font-semibold text-white">Alterar Senha</h3>
+      {/* Modal de Alteração de Senha */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <KeyRound size={18} className="text-violet-300" />
+                <h3 className="text-lg font-semibold text-white">Alterar Senha</h3>
+              </div>
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {passError && (
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-400">
+                <AlertCircle size={14} />
+                <span>{passError}</span>
+              </div>
+            )}
+
+            {passSuccess && (
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-400">
+                <Check size={14} />
+                <span>{passSuccess}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Nova Senha</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Digite a nova senha"
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3.5 py-2.5 text-sm text-white outline-none focus:border-violet-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Confirmar Nova Senha</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Confirme a nova senha"
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3.5 py-2.5 text-sm text-white outline-none focus:border-violet-500"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  disabled={passSaving || !newPassword || newPassword !== confirmPassword}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-violet-500 disabled:opacity-50"
+                >
+                  {passSaving ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />}
+                  Atualizar Senha
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="rounded-xl bg-white/5 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10"
+                >
+                  Fechar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        {passError && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-400">
-            <AlertCircle size={14} />
-            <span>{passError}</span>
-          </div>
-        )}
-
-        {passSuccess && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-400">
-            <Check size={14} />
-            <span>{passSuccess}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Nova Senha</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              placeholder="Digite a nova senha"
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-3.5 py-2.5 text-sm text-white outline-none focus:border-violet-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Confirmar Nova Senha</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              placeholder="Confirme a nova senha"
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-3.5 py-2.5 text-sm text-white outline-none focus:border-violet-500"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={passSaving || !newPassword || newPassword !== confirmPassword}
-            className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-medium text-white transition hover:bg-violet-500 disabled:opacity-50"
-          >
-            {passSaving ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
-            Atualizar Senha
-          </button>
-        </form>
-      </div>
-
-      {/* Zona de Perigo: Deletar Conta */}
-      <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <Trash2 size={18} className="text-red-400" />
-          <h3 className="text-lg font-semibold text-white">Zona de Perigo</h3>
-        </div>
-        <p className="text-sm text-slate-400 mb-4">
-          Ao deletar sua conta, todos os seus dados, cenários, overlays e biblioteca serão removidos permanentemente. Esta ação não pode ser desfeita.
-        </p>
-        <button
-          onClick={() => setShowDeleteConfirm(true)}
-          className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-xs font-medium text-red-400 transition hover:bg-red-500/20"
-        >
-          <Trash2 size={14} />
-          Deletar Minha Conta
-        </button>
-      </div>
+      )}
 
       {/* Modal de Confirmação de Deleção */}
       {showDeleteConfirm && (
