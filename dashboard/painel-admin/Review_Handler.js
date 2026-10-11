@@ -25,20 +25,21 @@ export async function handleReviewsRequest(req, res) {
     const id = url.searchParams.get('id');
     
     if (req.method === 'POST' && !id) return respond(res, 201, { ok: true, review: await reviewsJohnson.create(await bodyOf(req)) });
-
-    const userId = getAuthorizedUserId(req);
-    if (!userId) return respond(res, 401, { ok: false, error: 'Autenticação necessária.' });
     
+    // Permitir GET sem autenticação
     const isAdmin = String(req.documentUserRole || '').toLowerCase() === 'admin';
-    
     if (req.method === 'GET') {
       const result = id ? await reviewsJohnson.get(id, isAdmin) : await reviewsJohnson.list(Number(url.searchParams.get('limit')) || 500, isAdmin);
       if (id && !result) return respond(res, 404, { ok: false, error: 'Avaliação não encontrada.' });
       return respond(res, 200, { ok: true, ...(id ? { review: result } : { reviews: result }) });
     }
+
+    const userId = getAuthorizedUserId(req);
+    if (!userId) return respond(res, 401, { ok: false, error: 'Autenticação necessária.' });
     
     if (!isAdmin) return respond(res, 403, { ok: false, error: 'Acesso administrativo necessário.' });
     
+    // Operações protegidas que restam: PATCH e DELETE (com id)
     if (req.method === 'PATCH' && id) {
       const review = await reviewsJohnson.update(id, await bodyOf(req));
       return review ? respond(res, 200, { ok: true, review }) : respond(res, 404, { ok: false, error: 'Avaliação não encontrada.' });
