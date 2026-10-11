@@ -1,4 +1,5 @@
-// Provider global de streaming + TTS. Montado UMA vez acima das telas internas
+
+ // Provider global de streaming + TTS. Montado UMA vez acima das telas internas
 // autenticadas (layout route em App.jsx). Sobrevive à troca de activeSection e
 // entre telas do painel; só desmonta no logout / redirect de auth / saída da rota.
 //
@@ -236,41 +237,152 @@ export function StreamingProvider({ children }) {
     return () => { document.removeEventListener('visibilitychange', onVis); window.removeEventListener('online', onVis); window.removeEventListener('offline', onVis); };
   }, []);
 
-  // Carrega e valida canais vinculados (proof é a autoridade). Sem polling.
+  // Recupera canais vinculados do JSON/CRUD ao carregar a página.
   useEffect(() => {
     (async () => {
-      let pending = [];
-      try { const raw = localStorage.getItem('livenexus:pending-channels'); pending = raw ? JSON.parse(raw) : []; } catch {}
-      const merged = {};
-      for (const p of pending) if (p?.platform && !merged[p.platform]) merged[p.platform] = p;
       const linked = {};
-      let changed = false;
-      for (const pName of PLATFORMS) {
-        const entry = merged[pName];
-        if (entry?.verificationProof) {
-          try {
-            const v = await channelVerify.validateProof(entry.verificationProof);
-            if (v.valid) {
-              linked[pName] = { status: 'verified', channelIdentifier: v.channelIdentifier, verificationProof: entry.verificationProof, verifiedAt: v.verifiedAt, challengeKey: entry.challengeKey, channelUrl: entry.channelUrl };
-            } else { changed = true; linked[pName] = { status: 'invalid' }; }
-          } catch { linked[pName] = { status: 'invalid' }; }
+      const merged = {};
+
+      try {
+        const res = await fetch('/api/plataformas', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          throw new Error(`Erro HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        const source =
+          data.plataformas ??
+          data.records ??
+          data.items ??
+          data.data ??
+          data;
+
+        const rows = Array.isArray(source)
+          ? source
+          : source && typeof source === 'object'
+            ? [source]
+            : [];
+
+        for (const row of rows) {
+          if (!row || typeof row !== 'object') continue;
+
+          // Formato com uma plataforma por registro.
+          const platform = PLATFORMS.find(
+            p => p.toLowerCase() === String(row.platform || '').toLowerCase()
+          );
+
+          if (platform && String(row.status || '').toLowerCase() === 'verified') {
+            const channelIdentifier =
+              row.channelIdentifier ||
+              row.channel_handle ||
+              row.channel_name ||
+              row.channel_id;
+
+            if (channelIdentifier) {
+              merged[platform] = {
+                status: 'verified',
+                channelIdentifier,
+                verificationProof: row.verificationProof || row.verification_code || '',
+                verifiedAt: row.verifiedAt || row.verified_at || null,
+                challengeKey: row.challengeKey || row.bio_link_code || '',
+                channelUrl: row.channelUrl || null,
+              };
+            }
+          }
+
+          // Formato CRUD com colunas Twitch, Kick e YouTube.
+          for (const p of PLATFORMS) {
+            const key = p.toLowerCase();
+            const channelIdentifier = row[key];
+            const status = row[`${key}_status`] || row.status;
+
+            if (
+              channelIdentifier &&
+              String(status || '').toLowerCase() === 'verified' &&
+              !merged[p]
+            ) {
+              merged[p] = {
+                status: 'verified',
+                channelIdentifier,
+                verificationProof:
+                  row[`${key}_code`] ||
+                  row[`${key}_verification_code`] ||
+                  '',
+                verifiedAt: row[`${key}_verified_at`] || row.verified_at || null,
+                challengeKey: row[`${key}_bio_link_code`] || '',
+                channelUrl: null,
+              };
+            }
+          }
+        }
+      } catch (e) {
+        console.error('[LIVENEXUS] Falha ao carregar canais do CRUD:', e);
+      }
+
+      // Compatibilidade com vinculações pendentes antigas.
+      let pending = [];
+      try {
+        const raw = localStorage.getItem('livenexus:pending-channels');
+        const parsed = raw ? JSON.parse(raw) : [];
+        pending = Array.isArray(parsed) ? parsed : [];
+      } catch {}
+
+      for (const entry of pending) {
+        if (!entry?.platform || merged[entry.platform]) continue;
+        if (!PLATFORMS.includes(entry.platform)) continue;
+        if (!entry.verificationProof) continue;
+
+        try {
+          const result = await channelVerify.validateProof(entry.verificationProof);
+
+          if (result.valid) {
+            merged[entry.platform] = {
+              status: 'verified',
+              channelIdentifier: result.channelIdentifier,
+              verificationProof: entry.verificationProof,
+              verifiedAt: result.verifiedAt,
+              challengeKey: entry.challengeKey,
+              channelUrl: entry.channelUrl,
+            };
+          }
+        } catch (e) {
+          console.error('[LIVENEXUS] Falha ao validar canal pendente:', e);
         }
       }
+
+      for (const platform of PLATFORMS) {
+        if (merged[platform]?.status === 'verified') {
+          linked[platform] = merged[platform];
+        }
+      }
+
       setLinkedChannels(linked);
-      setConnections(v => {
-        const next = { ...v };
-        for (const pName of PLATFORMS) if (linked[pName]?.status === 'verified') next[pName] = { ...next[pName], channel: linked[pName].channelIdentifier };
+
+      setConnections(prev => {
+        const next = { ...prev };
+
+        for (const platform of PLATFORMS) {
+          if (linked[platform]) {
+            next[platform] = {
+              ...next[platform],
+              channel: linked[platform].channelIdentifier,
+              error: '',
+            };
+          }
+        }
+
         return next;
       });
-      const cleanChannels = {};
-      for (const pName of PLATFORMS) if (linked[pName]?.status === 'verified') cleanChannels[pName] = merged[pName];
-      // Auth profile check removido do mount.
-      // Limpa pending-channels localmente sem sincronizar com o backend.
-      if (pending.length) {
-        try { localStorage.removeItem('livenexus:pending-channels'); } catch {}
-      }
+
+      console.log('[LIVENEXUS] Canais recuperados do CRUD:', Object.keys(linked));
     })();
   }, []);
+
 
   // FASE 2B: speak() agora delega ao ttsScheduler em vez de chamar speechSynthesis.speak() diretamente.
   // A utterance só é criada e entregue ao browser quando o scheduler a seleciona (máx 1 por vez).
@@ -489,7 +601,8 @@ export function StreamingProvider({ children }) {
     if (!isLab) recordFilter({ messageId: item.id, platform, author: item.author, decision: finalDecision, reason: blocked ? finalDecision : null, trigger: result.trigger }); else if (labCollector) recordFilterInto(labCollector, { messageId: item.id, platform, author: item.author, decision: finalDecision, reason: blocked ? finalDecision : null, trigger: result.trigger });
     if (!labEvent) {
       setMessages(v => [{ ...item, blocked, blockReason: blocked ? finalDecision : null, ttsAllowed: !blocked }, ...v].slice(0, 500));
-      setSpeakerCounts(c => ({ ...c, [item.author]: (c[item.author] || 0) + 1 }));
+    setSpeakerCounts(c => ({ ...c, [item.author]: (c[item.author] || 0) + 1 }));
+
     }
     if (!isLab) setTtsTelemetry(t => ({ ...t, received: t.received + 1, filtered: blocked ? t.filtered + 1 : t.filtered, admitted: blocked ? t.admitted : t.admitted + 1, congestionState, discardReasons: discardReason ? { ...t.discardReasons, [discardReason]: (t.discardReasons[discardReason] || 0) + 1 } : t.discardReasons }));
     // Lab (telemetry:false) NÃO incrementa backlog/TTS diagnostics de produção.
@@ -538,6 +651,7 @@ export function StreamingProvider({ children }) {
         // VOD confirmado — envia para a área do usuário com dados reais + [Salvar][Descartar].
         setPastLives(prev => {
           if (prev.some(l => l.streamId === meta.streamId && l.platform === platform)) return prev;
+
           const entry = {
             platform,
             title: vodData.title || meta.title || 'Transmissão',
@@ -906,7 +1020,7 @@ export function StreamingProvider({ children }) {
     const s = sockets.current[platform];
     if (s?.disconnect) { s.disconnect(); console.log('[LIVENEXUS-RENEW] RENEW_SOCKET_DISCONNECTED', { platform, via: 'disconnect', ts: new Date().toISOString() }); }
     else if (s?.close) { s.close(); console.log('[LIVENEXUS-RENEW] RENEW_SOCKET_DISCONNECTED', { platform, via: 'close', ts: new Date().toISOString() }); }
-    else { console.log('[LIVENEXUS-RENEW] RENEW_SOCKET_REF_NULL', { platform, ts: new Date().toISOString() }); }
+    else { console.log('[LIVENEXUS-RENEW] RENEW_REF_NULL', { platform, ts: new Date().toISOString() }); }
     sockets.current[platform] = null;
     console.log('[LIVENEXUS-RENEW] RENEW_STATE_AFTER_CLEAR', { platform, connectedRef: connectedRef.current[platform], socketRef: sockets.current[platform], connChannel: '', connStatus: 'idle', ts: new Date().toISOString() });
   };
@@ -1063,3 +1177,4 @@ export const useStreaming = () => {
 if (import.meta.hot) {
   import.meta.hot.accept();
 }
+
