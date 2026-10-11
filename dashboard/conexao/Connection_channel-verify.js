@@ -149,15 +149,28 @@ async function fetchKickBio(slug) {
   });
   if (!r.ok) return null;
   const j = await r.json();
-  return j?.user?.bio ?? null;
+  if (!j || !j.id) return null;
+  return j?.user?.bio ?? j?.bio ?? '';
 }
-async function fetchYouTubeBio(handle, key) {
-  if (!key) return null;
-  const u = `https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${encodeURIComponent(handle)}&key=${key}`;
-  const r = await fetch(u);
-  if (!r.ok) return null;
-  const j = await r.json();
-  return j?.items?.[0]?.snippet?.description ?? null;
+
+async function fetchYouTubeBio(handle) {
+  try {
+    const cleanHandle = handle.startsWith('@') ? handle : `@${handle}`;
+    const r = await fetch(`https://www.youtube.com/${encodeURIComponent(cleanHandle)}/about`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+      },
+    });
+    if (!r.ok) return null;
+    const html = await r.text();
+    // Extrai a descrição do metadado OG
+    const ogMatch = html.match(/<meta\s+property="og:description"\s+content="([^"]*)"/i);
+    if (ogMatch && ogMatch[1]) return ogMatch[1];
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 // match do código completo (case-insensitive seguro). Match parcial NÃO valida.
@@ -255,7 +268,7 @@ async function handleVerify(platform, request, env, corsH) {
   try {
     if (platform === 'twitch') bio = await fetchTwitchBio(ch.channelIdentifier);
     else if (platform === 'kick') bio = await fetchKickBio(ch.channelIdentifier);
-    else bio = await fetchYouTubeBio(ch.channelIdentifier, env.YOUTUBE_API_KEY);
+    else bio = await fetchYouTubeBio(ch.channelIdentifier);
   } catch {
     bio = null;
   }
