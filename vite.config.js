@@ -443,35 +443,6 @@ function documentaryDomainsPlugin() {
       const { handlePlataformasRequest } = await import('./dashboard/conexao/ramal/Plataformas_Handler.js');
       return handlePlataformasRequest(req, res);
     }
-    if (pathname.startsWith('/api/channel-verify')) {
-      try {
-        const subpath = pathname.replace(/^\/api\/channel-verify/, '') || '/';
-        const urlStr = `http://${req.headers.host || 'localhost:3000'}${subpath}${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`;
-        const chunks = [];
-        for await (const chunk of req) chunks.push(chunk);
-        const bodyBuf = chunks.length ? Buffer.concat(chunks) : null;
-        const fetchReq = new Request(urlStr, {
-          method: req.method,
-          headers: req.headers,
-          body: (req.method === 'POST' || req.method === 'PUT') && bodyBuf ? bodyBuf : undefined,
-        });
-        const mod = await import('./dashboard/conexao/Connection_channel-verify.js');
-        const env = {
-          KV: null,
-          PROOF_SECRET: process.env.PROOF_SECRET || 'lnx_proof_secret_local',
-          YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY || '',
-        };
-        const workerRes = await mod.default.fetch(fetchReq, env);
-        res.statusCode = workerRes.status;
-        workerRes.headers.forEach((val, key) => res.setHeader(key, val));
-        const resText = await workerRes.text();
-        return res.end(resText);
-      } catch (err) {
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'application/json');
-        return res.end(JSON.stringify({ error: err.message || 'Erro no verificador local.' }));
-      }
-    }
     next();
   }
   return {
