@@ -7,9 +7,9 @@ const __dirname = path.dirname(__filename);
 
 // Pasta de destino especificada: /dashboard/Imagem/
 const UPLOAD_DIR = path.resolve(__dirname, '../../Imagem');
-const GALLERY_JSON_PATH = path.join(UPLOAD_DIR, 'galeria.json');
+const GALLERY_JSON_PATH = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/galeria.json');
 
-const ALLOWED_EXTENSIONS = new Set(['.png', '.gif']);
+const ALLOWED_EXTENSIONS = new Set(['.png', '.gif', '.jpg', '.jpeg', '.webp']);
 
 // Helper para ler galeria.json e validar integridade (remove registros órfãos sem arquivo físico)
 async function readGalleryJson(validateIntegrity = true) {

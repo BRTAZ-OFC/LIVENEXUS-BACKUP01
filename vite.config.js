@@ -315,7 +315,7 @@ function imageUploadPlugin() {
           return next();
         }
         try {
-          const { handleImageUploadRequest } = await import('./dashboard/painel-admin/lab/imageUploadHandler.js');
+          const { handleImageUploadRequest } = await import('./dashboard/conexao/imageUploadHandler.js');
           await handleImageUploadRequest(req, res, next);
         } catch (err) {
           res.statusCode = 500;
@@ -332,7 +332,7 @@ function imageUploadPlugin() {
           return next();
         }
         try {
-          const { handleImageUploadRequest } = await import('./dashboard/painel-admin/lab/imageUploadHandler.js');
+          const { handleImageUploadRequest } = await import('./dashboard/conexao/imageUploadHandler.js');
           await handleImageUploadRequest(req, res, next);
         } catch (err) {
           res.statusCode = 500;
@@ -347,7 +347,7 @@ function imageUploadPlugin() {
 function userGalleryPlugin() {
   async function handleGallery(req, res, next) {
     if (!req.url.startsWith('/api/admin/lab/user-gallery')) return next();
-    const { handleUserGalleryRequest } = await import('./dashboard/painel-admin/lab/userGalleryHandler.js');
+    const { handleUserGalleryRequest } = await import('./dashboard/conexao/userGalleryHandler.js');
     await handleUserGalleryRequest(req, res);
   }
   return {
@@ -376,7 +376,7 @@ function documentaryDomainsPlugin() {
   async function handle(req, res, next) {
     const pathname = req.url.split('?')[0];
     if (pathname === '/api/admin/lab/rtc/signal') {
-      const { handleSignalingRequest } = await import('./dashboard/painel-admin/lab/rtc/signalingHandler.js');
+      const { handleSignalingRequest } = await import('./dashboard/conexao/rtc/signalingHandler.js');
       return handleSignalingRequest(req, res);
     }
     if (pathname === '/api/rtc-identity') {

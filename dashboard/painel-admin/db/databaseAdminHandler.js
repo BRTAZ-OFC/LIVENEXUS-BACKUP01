@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const getPaths = () => ({
-  schemas: path.resolve(process.cwd(), 'dashboard/painel-admin/db/schemas.json'),
-  dataDir: path.resolve(process.cwd(), 'dashboard/painel-admin/db/data')
+  schemas: path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/schemas.json'),
+  dataDir: path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json')
 });
 
 export async function handleDatabaseAdminRequest(req, res) {

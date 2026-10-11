@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const getPaths = (id) => ({
-    schema: path.resolve(process.cwd(), 'dashboard/painel-admin/db/schemas.json'),
-    data: path.resolve(process.cwd(), `dashboard/painel-admin/db/data/${id}.json`)
+    schema: path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/schemas.json'),
+    data: path.resolve(process.cwd(), `dashboard/conexao/ramal/cruds/json/${id}.json`)
 });
 
 export const createGenericJohnson = (id) => ({

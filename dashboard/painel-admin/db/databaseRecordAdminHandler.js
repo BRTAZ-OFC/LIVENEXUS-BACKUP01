@@ -42,16 +42,17 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
 
   const cwd = process.cwd();
   
-  // Mapeamento dos caminhos físicos dos arquivos das tabelas
+  // Mapeamento dos caminhos físicos dos arquivos das tabelas centralizadas
   const paths = {
-    cenarios: path.resolve(cwd, 'dashboard/painel-admin/db/cenarios.json'),
-    overlays: path.resolve(cwd, 'dashboard/overlays/overlays.json'),
-    biblioteca: path.resolve(cwd, 'dashboard/biblioteca/biblioteca.json'),
-    rtcIdentity: path.resolve(cwd, 'dashboard/configuracao/rtc_registry.json'),
-    templates: path.resolve(cwd, 'dashboard/Imagem/template/templates.json'),
-    reviews: path.resolve(cwd, 'dashboard/painel-admin/reviews.json'),
-    contacts: path.resolve(cwd, 'dashboard/configuracao/messages.json'),
-    plataformas: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/conect-plataform.json')
+    cenarios: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/cenarios.json'),
+    overlays: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/overlays.json'),
+    biblioteca: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/biblioteca.json'),
+    rtcIdentity: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/rtc_registry.json'),
+    templates: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/templates.json'),
+    reviews: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/reviews.json'),
+    contacts: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/messages.json'),
+    plataformas: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/conect-plataform.json'),
+    galeria: path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/galeria.json')
   };
 
   try {
@@ -80,7 +81,7 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
       }
 
       if (['cenarios', 'overlays'].includes(tableId) || !paths[tableId]) {
-        const filePath = paths[tableId] || path.resolve(cwd, `dashboard/painel-admin/db/data/${tableId}.json`);
+        const filePath = paths[tableId] || path.resolve(cwd, `dashboard/conexao/ramal/cruds/json/${tableId}.json`);
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '{}');
         const db = JSON.parse(dataRaw || '{}');
         
@@ -211,7 +212,7 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
       }
 
       if (['cenarios', 'overlays'].includes(tableId) || !paths[tableId]) {
-        const filePath = paths[tableId] || path.resolve(cwd, `dashboard/painel-admin/db/data/${tableId}.json`);
+        const filePath = paths[tableId] || path.resolve(cwd, `dashboard/conexao/ramal/cruds/json/${tableId}.json`);
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '{}');
         const db = JSON.parse(dataRaw || '{}');
         
@@ -355,7 +356,7 @@ export async function handleDatabaseRecordAdminRequest(req, res) {
       }
 
       if (['cenarios', 'overlays'].includes(tableId) || !paths[tableId]) {
-        const filePath = paths[tableId] || path.resolve(cwd, `dashboard/painel-admin/db/data/${tableId}.json`);
+        const filePath = paths[tableId] || path.resolve(cwd, `dashboard/conexao/ramal/cruds/json/${tableId}.json`);
         const dataRaw = await fs.readFile(filePath, 'utf8').catch(() => '{}');
         const db = JSON.parse(dataRaw || '{}');
         

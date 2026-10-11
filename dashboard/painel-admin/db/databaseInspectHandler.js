@@ -54,7 +54,7 @@ export async function handleDatabaseInspectRequest(req, res) {
   }
 
   // 1. Cenários
-  const cenariosPath = path.resolve(cwd, 'dashboard/painel-admin/db/cenarios.json');
+  const cenariosPath = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/cenarios.json');
   const cenariosDb = await readJson(cenariosPath, 'array_list');
   tables.cenarios = { name: 'Cenários', records: Object.entries(cenariosDb).flatMap(([u, items]) => items.map(i => ({ userId: u, ...i }))), error: null };
 
@@ -64,30 +64,34 @@ export async function handleDatabaseInspectRequest(req, res) {
   tables.plataformas = { name: 'Conexões de Plataformas', records: Object.entries(plataformasDb).flatMap(([u, items]) => items.map(i => ({ userId: u, ...i }))), error: null };
 
   // 2. Overlays
-  const overlaysPath = path.resolve(cwd, 'dashboard/overlays/overlays.json');
+  const overlaysPath = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/overlays.json');
   const overlaysDb = await readJson(overlaysPath, 'array_list');
   tables.overlays = { name: 'Overlays', records: Object.entries(overlaysDb).flatMap(([u, items]) => items.map(i => ({ userId: u, ...i }))), error: null };
 
   // 3. Biblioteca
-  const libPath = path.resolve(cwd, 'dashboard/biblioteca/biblioteca.json');
+  const libPath = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/biblioteca.json');
   const libDb = await readJson(libPath, 'library');
   tables.biblioteca = { name: 'Biblioteca', records: Object.entries(libDb).flatMap(([u, data]) => Object.values(data).flat().map(i => ({ userId: u, ...i }))), error: null };
 
   // 4. RTC Identity
-  const rtcPath = path.resolve(cwd, 'dashboard/configuracao/rtc_registry.json');
+  const rtcPath = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/rtc_registry.json');
   const rtcDb = await readJson(rtcPath, 'rtc');
   tables.rtcIdentity = { name: 'RTC Identity', records: Object.entries(rtcDb).map(([u, v]) => ({ userId: u, ...v })), error: null };
 
-  // 5. Templates (dashboard/Imagem/template/templates.json)
-  const templData = await fs.readFile(path.resolve(cwd, 'dashboard/Imagem/template/templates.json'), 'utf8').catch(() => '[]');
+  // 5. Templates
+  const templData = await fs.readFile(path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/templates.json'), 'utf8').catch(() => '[]');
   tables.templates = { name: 'Templates', records: JSON.parse(templData || '[]'), error: null };
 
+  // 5.1. Galeria
+  const galeriaData = await fs.readFile(path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/galeria.json'), 'utf8').catch(() => '[]');
+  tables.galeria = { name: 'Galeria Geral', records: JSON.parse(galeriaData || '[]'), error: null };
+
   // 6. User Created CRUDs
-  const schemasData = await fs.readFile(path.resolve(cwd, 'dashboard/painel-admin/db/schemas.json'), 'utf8').catch(() => '{}');
+  const schemasData = await fs.readFile(path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/schemas.json'), 'utf8').catch(() => '{}');
   const schemas = JSON.parse(schemasData || '{}');
   for (const [id, schema] of Object.entries(schemas)) {
     try {
-      const dataPath = path.resolve(cwd, `dashboard/painel-admin/db/data/${id}.json`);
+      const dataPath = path.resolve(cwd, `dashboard/conexao/ramal/cruds/json/${id}.json`);
       const rawData = await fs.readFile(dataPath, 'utf8').catch(() => '{}');
       const data = JSON.parse(rawData || '{}');
       const cleanCustom = {};

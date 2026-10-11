@@ -26,8 +26,8 @@ export async function handleDatabaseCreateRequest(req, res) {
     }
 
     const cwd = process.cwd();
-    const schemasPath = path.resolve(cwd, 'dashboard/painel-admin/db/schemas.json');
-    const dataDir = path.resolve(cwd, 'dashboard/painel-admin/db/data');
+    const schemasPath = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/schemas.json');
+    const dataDir = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json');
     const dataPath = path.join(dataDir, `${id}.json`);
 
     // 1. Update schemas

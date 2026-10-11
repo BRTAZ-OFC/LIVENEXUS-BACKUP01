@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const directory = path.resolve(process.cwd(), 'dashboard/Imagem/user_galleries');
+const directory = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/user_galleries');
 const userFile = (userId) => {
   if (typeof userId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(userId)) throw new Error('Usuário inválido.');
   return path.join(directory, `${userId}.json`);

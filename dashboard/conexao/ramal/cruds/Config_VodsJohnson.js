@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-const directory = path.resolve(process.cwd(), 'dashboard/configuracao/vods');
+const directory = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/vods');
 const pending = new Map();
 function fileFor(userId) {
   if (typeof userId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(userId)) throw new Error('Usuário inválido.');

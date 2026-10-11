@@ -6,8 +6,8 @@ import { getAuthorizedUserId } from '../../api/auth/accessValidator.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// O caminho absoluto para o banco de dados JSON de cenários
-const CENARIOS_FILE_PATH = path.resolve(__dirname, './cenarios.json');
+// O caminho absoluto para o banco de dados JSON centralizado de cenários
+const CENARIOS_FILE_PATH = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/cenarios.json');
 
 export async function readCenarios(userId) {
   try {
@@ -138,7 +138,7 @@ export async function handleCenariosRequest(req, res) {
           } else {
             const fsPromises = await import('node:fs/promises');
             const pathModule = await import('node:path');
-            const file = pathModule.resolve(process.cwd(), 'dashboard/overlays/overlays.json');
+            const file = pathModule.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/overlays.json');
             try {
               const dataText = await fsPromises.readFile(file, 'utf8');
               const dbOverlays = JSON.parse(dataText || '{}');
@@ -213,7 +213,7 @@ export async function handleCenariosRequest(req, res) {
         try {
           const fsPromises = await import('node:fs/promises');
           const pathModule = await import('node:path');
-          const file = pathModule.resolve(process.cwd(), 'dashboard/overlays/overlays.json');
+          const file = pathModule.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/overlays.json');
           const dataText = await fsPromises.readFile(file, 'utf8');
           const dbOverlays = JSON.parse(dataText || '{}');
           let fallbackOverlay = null;

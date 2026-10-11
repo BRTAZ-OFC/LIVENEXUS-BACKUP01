@@ -760,7 +760,7 @@ export default function ScenarioEditorWorkspace({ cenario, userId }) {
         </div>
       </div>
 
-      <div className="flex-1 relative flex overflow-hidden">
+      <div className="flex-1 relative flex overflow-hidden pb-16">
         <ScenarioEditorVisualizer
           instances={activeSub.instances}
           selectedInstanceId={selectedInstanceId}
@@ -798,6 +798,7 @@ export default function ScenarioEditorWorkspace({ cenario, userId }) {
           onRedo={handleRedo}
         />
       </div>
+
     </div>
   );
 }

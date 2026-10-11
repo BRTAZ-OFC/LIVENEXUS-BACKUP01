@@ -5,7 +5,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Mic2, MessagesSquare, SlidersHorizontal, Radio } from 'lucide-react';
 
-const OVERVIEW_IMAGE = '/assets/livenexus-overview.png';
+import overviewImage from '@dashboard/Imagem/111111.png';
+
+const OVERVIEW_IMAGE = overviewImage || '/dashboard/Imagem/111111.png';
 const AUTO_MS = 6000;
 
 const FEATURE_SLIDES = [
@@ -52,7 +54,7 @@ export default function HeroCarousel() {
       <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-2xl sm:aspect-[16/10]">
         {/* Slide 1 — imagem de apresentação (proporção preservada) */}
         <div className={`absolute inset-0 transition-opacity duration-700 ease-out ${index === 0 ? 'opacity-100' : 'opacity-0'}`}>
-          <img src={OVERVIEW_IMAGE} alt="LiveNexus — apresentação geral" className="h-full w-full object-contain" />
+          <img src={OVERVIEW_IMAGE} alt="LiveNexus — apresentação geral" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
         </div>
         {/* Slides 2+ — recursos (limpos: ícone + título + descrição) */}
         {FEATURE_SLIDES.map((slide, i) => {

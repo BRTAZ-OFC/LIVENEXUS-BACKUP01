@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const file = path.resolve(process.cwd(), 'dashboard/configuracao/rtc_registry.json');
+const file = path.resolve(process.cwd(), 'dashboard/conexao/ramal/cruds/json/rtc_registry.json');
 let pending = Promise.resolve();
 
 const locked = (fn) => {

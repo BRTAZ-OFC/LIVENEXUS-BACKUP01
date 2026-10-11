@@ -19,10 +19,10 @@ export async function handleAdminDocumentUsersRequest(req, res) {
 
   try {
     const cwd = process.cwd();
-    const cenariosFile = path.resolve(cwd, 'dashboard/painel-admin/db/cenarios.json');
-    const overlaysFile = path.resolve(cwd, 'dashboard/overlays/overlays.json');
-    const bibliotecaFile = path.resolve(cwd, 'dashboard/biblioteca/biblioteca.json');
-    const galleryDir = path.resolve(cwd, 'dashboard/Imagem/user_galleries');
+    const cenariosFile = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/cenarios.json');
+    const overlaysFile = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/overlays.json');
+    const bibliotecaFile = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/biblioteca.json');
+    const galleryDir = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/user_galleries');
 
     // 1. Ler arquivos JSON documentais
     const [cenariosDb, overlaysDb, bibliotecaDb, galleryFiles] = await Promise.all([

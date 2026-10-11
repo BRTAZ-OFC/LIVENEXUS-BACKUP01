@@ -39,9 +39,11 @@ export async function onRequestPost(context) {
     // 3. Executar a limpeza dos dados Johnson/JSON pertencentes a esse usuário
     const cwd = process.cwd();
     const jsonFiles = [
-      path.resolve(cwd, 'dashboard/painel-admin/db/cenarios.json'),
-      path.resolve(cwd, 'dashboard/overlays/overlays.json'),
-      path.resolve(cwd, 'dashboard/biblioteca/biblioteca.json')
+      path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/cenarios.json'),
+      path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/overlays.json'),
+      path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/biblioteca.json'),
+      path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/conect-plataform.json'),
+      path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/rtc_registry.json')
     ];
 
     for (const filePath of jsonFiles) {
@@ -57,13 +59,11 @@ export async function onRequestPost(context) {
       }
     }
 
-    // 4. Remover arquivo da galeria do usuário
-    const galleryFile = path.resolve(cwd, `dashboard/Imagem/user_galleries/${userId}.json`);
-    try {
-      await fs.unlink(galleryFile).catch(() => {});
-    } catch (err) {
-      // Ignora se o arquivo não existir
-    }
+    // 4. Remover arquivo da galeria e vods do usuário
+    const galleryFile = path.resolve(cwd, `dashboard/conexao/ramal/cruds/json/user_galleries/${userId}.json`);
+    const vodsFile = path.resolve(cwd, `dashboard/conexao/ramal/cruds/json/vods/${userId}.json`);
+    await fs.unlink(galleryFile).catch(() => {});
+    await fs.unlink(vodsFile).catch(() => {});
 
     // 5. Limpar a sessão/cookie no final
     const secure = request.url.startsWith('https://');

@@ -897,6 +897,7 @@ export default function OverlaysWorkspace({ selectedOverlayId }) {
           historyFutureCount={history.future.length}
         />
       </div>
+
     </div>
   );
 }

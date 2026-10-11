@@ -1,13 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { galleryJohnson } from '../../conexao/ramal/cruds/Gallery_Johnson.js';
-import { getAuthorizedUserId } from '../../api/auth/accessValidator.js';
+import { galleryJohnson } from './ramal/cruds/Gallery_Johnson.js';
+import { getAuthorizedUserId } from '../api/auth/accessValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const GALLERY_DIR = path.resolve(__dirname, '../../Imagem');
+const GALLERY_DIR = path.resolve(__dirname, '../Imagem');
 
 export async function handleUserGalleryRequest(req, res) {
   res.setHeader('Content-Type', 'application/json');

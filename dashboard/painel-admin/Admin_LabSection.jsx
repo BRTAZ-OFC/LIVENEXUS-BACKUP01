@@ -1,68 +1,12 @@
 import { useState } from 'react';
-import { FlaskConical, ChevronRight, ChevronLeft, Sparkles, Box, Shield, Layers, RadioTower, Radio, Volume2, HelpCircle, Keyboard, Library } from 'lucide-react';
+import { FlaskConical, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
 import { useAutoScroll } from '@dashboard/componentes/useAutoScroll';
-import YouTubeTest1Section from './lab/Admin_YouTubeTest1Section';
-import AdminRtcTestLabSection from './lab/rtc/Admin_RtcTestLabSection';
-import AdminWebSpeechVoicesTest from './lab/tts-neural/Admin_WebSpeechVoicesTest';
-import AdminGlobalShortcutsTest from './lab/global-shortcuts/Admin_GlobalShortcutsTest';
-import LabTestIdsLibrarySection from './lab/test-ids/Lab_TestIdsLibrarySection';
-import LabPhotoshop3Section from './lab/photoshop3/LabPhotoshop3Section';
 
-const LAB_TOOLS = [
-  {
-    id: 'test-ids-library',
-    name: 'Teste Biblioteca',
-    category: 'Música & Biblioteca',
-    icon: Library,
-    description: 'Laboratório isolado para teste, identificação e salvamento de IDs de músicas e playlists do YouTube / YouTube Music.',
-  },
-  {
-    id: 'global-shortcuts-test',
-    name: 'Teste Atalhos Globais',
-    category: 'Atalhos & Teclado',
-    icon: Keyboard,
-    description: 'Teste isolado para captura de combinações de teclado com a aplicação sem foco ou minimizada.',
-  },
-  {
-    id: 'webspeech-voices-test',
-    name: 'Mesa de Voz DJ (Web Speech)',
-    category: 'Áudio & TTS',
-    icon: Volume2,
-    description: 'Mesa experimental estilo DJ com equalizador de Pitch, Rate, Volume e detecção de vozes nativas.',
-  },
-  {
-    id: 'sandbox-overview',
-    name: 'Visão Geral do Sandbox',
-    category: 'Ambiente',
-    icon: Box,
-    description: 'Painel de isolamento para desenvolvimento e prototipagem de novos recursos.',
-  },
-  {
-    id: 'teste-rtc',
-    name: 'TESTE RTC',
-    category: 'Comunicação & P2P',
-    icon: Radio,
-    description: 'Laboratório de reconstrução RTC: Prova real WebRTC P2P (Publisher / Consumer) com fluxo do Twitch ChatBox.',
-  },
-  {
-    id: 'youtube-test-1',
-    name: 'Teste YouTube 1',
-    category: 'Conexões & Streaming',
-    icon: RadioTower,
-    description: 'Conexão limpa com live pública sem Data API v3 · Bootstrap 1-shot + tentativa de chat direto pelo Frontend.',
-  },
-  {
-    id: 'lab-photoshop-3',
-    name: 'Photoshop 3',
-    category: 'Ferramentas',
-    icon: Sparkles,
-    description: 'Bancada de testes e Canvas nativo LiveNexus para suporte a texto, imagens, formas, movimentação, redimensionamento e futura árvore de animações.',
-  },
-];
+const LAB_TOOLS = [];
 
 export default function AdminLabSection() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [activeToolId, setActiveToolId] = useState('sandbox-overview');
+  const [activeToolId, setActiveToolId] = useState('');
 
   // Auto-scroll padronizado do LiveNexus nas zonas de borda do drawer (desktop)
   const {
@@ -75,8 +19,6 @@ export default function AdminLabSection() {
     maxSpeed: 6.0,
     checkButtons: false,
   });
-
-  const activeTool = LAB_TOOLS.find((t) => t.id === activeToolId) || LAB_TOOLS[0];
 
   return (
     <div className="relative w-full h-full min-h-[calc(100vh-6rem)] overflow-x-hidden flex flex-col">
@@ -109,53 +51,16 @@ export default function AdminLabSection() {
       </div>
 
       {/* Área Principal da Ferramenta Ativa (NÃO é comprimida pelo drawer) */}
-      <div className="flex-1 w-full min-w-0">
-        {activeToolId === 'global-shortcuts-test' && <AdminGlobalShortcutsTest />}
-        {activeToolId === 'webspeech-voices-test' && <AdminWebSpeechVoicesTest />}
-        {activeToolId === 'sandbox-overview' && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-[#0a0d15] p-6 md:p-8 space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-violet-500/30 bg-violet-500/10 text-violet-300">
-                  <Sparkles size={24} />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-base font-semibold text-white">Ambiente de Testes & Prototipagem</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    O Laboratório opera como um contêiner administrativo isolado. Experimentos desenvolvidos aqui não interferem no fluxo de produção de usuários comuns.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 pt-2">
-                <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-violet-300">
-                    <Shield size={15} />
-                    <span>Isolamento Total</span>
-                  </div>
-                  <p className="text-xs text-slate-400">
-                    Ferramentas no Laboratório têm ciclo de vida temporário. Recursos validados são promovidos para suas respectivas seções definitivas.
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
-                    <HelpCircle size={15} />
-                    <span>Suporte a Experimentos</span>
-                  </div>
-                  <p className="text-xs text-slate-400">
-                    Utilize o menu lateral para alternar entre os utilitários de prototipagem técnica ativos no workspace.
-                  </p>
-                </div>
-              </div>
-            </div>
+      <div className="flex-1 w-full min-w-0 flex items-center justify-center p-8">
+        <div className="text-center space-y-3 max-w-md bg-[#0e121d]/60 border border-white/10 rounded-2xl p-8 shadow-xl">
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-violet-500/10 border border-violet-500/30 text-violet-300 mx-auto">
+            <FlaskConical size={24} />
           </div>
-        )}
-
-        {activeToolId === 'test-ids-library' && <LabTestIdsLibrarySection />}
-        {activeToolId === 'teste-rtc' && <AdminRtcTestLabSection />}
-        {activeToolId === 'youtube-test-1' && <YouTubeTest1Section />}
-        {activeToolId === 'lab-photoshop-3' && <LabPhotoshop3Section />}
+          <h3 className="text-base font-bold text-white">Laboratório Limpo</h3>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            As ferramentas experimentais e protótipos anteriores (incluindo o Photoshop 3) foram removidos conforme solicitado. O ambiente está limpo e pronto para novos experimentos.
+          </p>
+        </div>
       </div>
 
       {/* Drawer deslizante de ferramentas (à direita) */}
