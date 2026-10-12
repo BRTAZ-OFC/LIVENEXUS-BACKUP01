@@ -3,6 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pathToFileURL } from 'url';
 
+import { getCloudflareD1 } from './dashboard/api/auth/cloudflareD1.js';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = process.env.PORT || 3000;
@@ -17,18 +19,45 @@ async function handleDynamicRoute(req, res, handlerPath, method, handlerName) {
     const mod = await import(pathToFileURL(path.resolve(__dirname, handlerPath)).href);
     const handler = mod[handlerName];
     if (!handler) return res.status(405).json({ error: 'Método não permitido.' });
-    
+
+    const db = getCloudflareD1();
+    if (!db) {
+      console.warn('[server.js] Cloudflare D1 não inicializado. Verifique se as variáveis necessárias estão configuradas no ambiente.');
+    }
+
+    const env = {
+      ...process.env,
+      DB: db || null,
+    };
+
+    let body = undefined;
+    if (!['GET', 'HEAD'].includes(req.method)) {
+      if (Buffer.isBuffer(req.body)) {
+        body = req.body;
+      } else if (typeof req.body === 'object') {
+        body = JSON.stringify(req.body);
+      } else if (typeof req.body === 'string') {
+        body = req.body;
+      }
+    }
+
     // Convert Express req to Request object for compatibility with handlers
-    const request = new Request(`http://${req.headers.host}${req.url}`, {
+    const request = new Request(`http://${req.headers.host || 'localhost:3000'}${req.url}`, {
       method: req.method,
       headers: new Headers(req.headers),
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined
+      body
     });
-    
+
     // Call handler
-    const response = await handler({ request, env: process.env });
+    const response = await handler({ request, env });
     res.status(response.status);
     response.headers.forEach((value, key) => res.setHeader(key, value));
+    if (typeof response.headers.getSetCookie === 'function') {
+      const cookies = response.headers.getSetCookie();
+      if (cookies && cookies.length > 0) {
+        res.setHeader('Set-Cookie', cookies);
+      }
+    }
     res.send(Buffer.from(await response.arrayBuffer()));
   } catch (err) {
     res.status(500).json({ error: err.message });
