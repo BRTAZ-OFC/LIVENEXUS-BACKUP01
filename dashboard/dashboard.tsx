@@ -34,6 +34,10 @@ import { useNewUserDataCentral } from '@dashboard/configuracao/DataCentral_NewUs
 import { recordDiagnosticEvent } from '@dashboard/painel-admin/diagnostic/Admin_diagnosticService';
 import { useAutoScroll } from '@dashboard/componentes/useAutoScroll';
 import { useGlobalScenarioShortcuts } from './cenarios/useGlobalScenarioShortcuts';
+import { dispatch, registerHandlers, unregisterHandlers } from '@dashboard/configuracao/actionEngine/Config_actionEngine';
+import { startKeyboardProvider, stopKeyboardProvider } from '@dashboard/configuracao/actionEngine/providers/Config_keyboardProvider';
+
+const TTS_ACTION_IDS = ['tts.toggle', 'tts.clearQueue', 'tts.test', 'tts.skip'];
 
 
 export default function Dashboard() {
@@ -48,6 +52,21 @@ export default function Dashboard() {
 
   // Mantém atalhos de cenário e subcenário ativos em todas as páginas do painel
   useGlobalScenarioShortcuts();
+
+  // Inicialização global do provedor de teclado do ActionEngine e handlers para funcionamento em qualquer tela
+  useEffect(() => {
+    registerHandlers({
+      'tts.toggle': () => s.pauseReading?.(),
+      'tts.clearQueue': () => s.clearMessages?.(),
+      'tts.test': () => s.sendTest?.(),
+      'tts.skip': () => s.skipCurrent?.(),
+    });
+    startKeyboardProvider((actionId, ctx) => dispatch(actionId, ctx));
+    return () => {
+      stopKeyboardProvider();
+      unregisterHandlers(TTS_ACTION_IDS);
+    };
+  }, [s]);
 
   useEffect(() => {
     try {

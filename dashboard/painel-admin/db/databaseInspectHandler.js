@@ -82,9 +82,33 @@ export async function handleDatabaseInspectRequest(req, res) {
   const templData = await fs.readFile(path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/templates.json'), 'utf8').catch(() => '[]');
   tables.templates = { name: 'Templates', records: JSON.parse(templData || '[]'), error: null };
 
-  // 5.1. Galeria
+  // 5.1. Galeria Geral
   const galeriaData = await fs.readFile(path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/galeria.json'), 'utf8').catch(() => '[]');
   tables.galeria = { name: 'Galeria Geral', records: JSON.parse(galeriaData || '[]'), error: null };
+
+  // 5.2. Galeria Pessoal (User Galleries)
+  try {
+    const userGalleriesDir = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/user_galleries');
+    const files = await fs.readdir(userGalleriesDir).catch(() => []);
+    const personalRecords = [];
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        const uId = path.basename(file, '.json');
+        const rawUserGal = await fs.readFile(path.join(userGalleriesDir, file), 'utf8').catch(() => '[]');
+        try {
+          const items = JSON.parse(rawUserGal || '[]');
+          if (Array.isArray(items)) {
+            items.forEach(item => {
+              personalRecords.push({ userId: uId, ...item });
+            });
+          }
+        } catch {}
+      }
+    }
+    tables.userGalleries = { name: 'Galeria Pessoal', records: personalRecords, error: null };
+  } catch (err) {
+    tables.userGalleries = { name: 'Galeria Pessoal', records: [], error: err.message };
+  }
 
   // 6. User Created CRUDs
   const schemasData = await fs.readFile(path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/schemas.json'), 'utf8').catch(() => '{}');
