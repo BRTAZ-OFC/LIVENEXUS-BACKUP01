@@ -3,6 +3,8 @@ import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 import { getCloudflareD1 } from './dashboard/api/auth/cloudflareD1.js';
+import { ensureImagePersistence } from './dashboard/conexao/imageUploadHandler.js';
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -42,11 +44,11 @@ app.use(async (req, res, next) => {
 // ============================================================================
 const shouldSkipImageUpload = (req) => {
   const urlPath = req.url.split('?')[0];
-  if (urlPath.startsWith('/dashboard/Imagem/template/')) return true;
-  if (/\.(jsx?|tsx?|json|css|svg)$/i.test(urlPath)) return true;
+  if (/\.(jsx?|tsx?|json|css)$/i.test(urlPath)) return true;
   if (req.url.includes('?import') || req.url.includes('&import')) return true;
   return false;
 };
+
 
 app.use(async (req, res, next) => {
   if (shouldSkipImageUpload(req)) return next();
@@ -491,12 +493,18 @@ app.all(/^\/api\/channel-verify(\/.*)?$/, async (req, res) => {
 });
 
 // ============================================================================
-// 11. BLOQUEIO DE FALLBACK PARA /api/* (RETORNA JSON 404, NUNCA HTML)
+// 11. BLOQUEIO DE FALLBACK PARA /api/* E /dashboard/Imagem/* (RETORNA JSON 404, NUNCA HTML)
 // ============================================================================
 app.all(/^\/api(\/.*)?$/, (req, res) => {
   res.statusCode = 404;
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify({ ok: false, error: 'Endpoint da API não encontrado.' }));
+});
+
+app.all(/^\/dashboard\/Imagem(\/.*)?$/, (req, res) => {
+  res.statusCode = 404;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify({ ok: false, error: 'Imagem não encontrada.' }));
 });
 
 // ============================================================================
@@ -513,4 +521,7 @@ app.get('/{*splat}', (req, res) => {
 // ============================================================================
 app.listen(port, '0.0.0.0', () => {
   console.log(`Production server running on port ${port}`);
+  ensureImagePersistence().catch((err) => {
+    console.warn('[Startup] Erro ao sincronizar persistência de imagens:', err?.message || err);
+  });
 });

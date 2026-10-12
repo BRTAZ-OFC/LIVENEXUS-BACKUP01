@@ -23,6 +23,7 @@ import {
 import GalleryPicker from '@dashboard/componentes/GalleryPicker';
 import PrebuiltOverlayGalleryModal from './Scenario_PrebuiltOverlayGalleryModal';
 import TemplateEditorGalleryModal from '@dashboard/Imagem/template/Template_EditorGalleryModal';
+import ScenarioUserImageGalleryModal from './Scenario_UserImageGalleryModal';
 import { safeStorage } from '@dashboard/login/safeStorage';
 import { authClient } from '@dashboard/login/authClient';
 import PrebuiltStructuralOverlaysModal from './Scenario_PrebuiltStructuralOverlaysModal';
@@ -567,6 +568,7 @@ export default function OverlayEditorSidebar({
 
   const [elementGalleryOpen, setElementGalleryOpen] = useState(false);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
+  const [userImageGalleryOpen, setUserImageGalleryOpen] = useState(false);
   const [showEffectsGroup, setShowEffectsGroup] = useState(false);
   const [showFontsGroup, setShowFontsGroup] = useState(false);
   const selectedWidget = TWITCH_WIDGETS_CATALOG.find(w => w.id === selectedWidgetId) || null;
@@ -902,6 +904,10 @@ export default function OverlayEditorSidebar({
               <button type="button" onClick={() => setTemplateGalleryOpen(true)}
                 className="w-full rounded-xl border border-violet-500/30 bg-slate-900/80 p-3 text-left text-sm font-semibold text-white hover:border-violet-400 hover:bg-slate-800">
                 Templates
+              </button>
+              <button type="button" onClick={() => setUserImageGalleryOpen(true)}
+                className="w-full rounded-xl border border-violet-500/30 bg-slate-900/80 p-3 text-left text-sm font-semibold text-white hover:border-violet-400 hover:bg-slate-800">
+                Imagens
               </button>
               {/* 1. SEÇÃO PERMANENTE: FONTES DE MÍDIA & RECEPTOR DE REACT */}
               <div className="bg-black/40 border border-white/10 rounded-xl p-3.5 space-y-3">
@@ -5816,6 +5822,24 @@ export default function OverlayEditorSidebar({
         onSelect={item => onAddInstance({ widgetId: 'library-shape', isFullWidget: true,
           name: item.name, width: 360, height: 240,
           defaultConfig: { shapeType: 'rectangle', textColor: 'transparent', bgImage: item.imageUrl, backgroundImage: item.imageUrl } })} />
+
+      <ScenarioUserImageGalleryModal
+        open={userImageGalleryOpen}
+        onClose={() => setUserImageGalleryOpen(false)}
+        onSelect={item => onAddInstance({
+          widgetId: 'library-shape',
+          isFullWidget: true,
+          name: item.title || item.filename || 'Imagem',
+          width: 360,
+          height: 240,
+          defaultConfig: {
+            shapeType: 'rectangle',
+            textColor: 'transparent',
+            bgImage: item.url,
+            backgroundImage: item.url
+          }
+        })}
+      />
 
       <GalleryPicker
         open={elementGalleryOpen}

@@ -3,11 +3,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { galleryJohnson } from './ramal/cruds/Gallery_Johnson.js';
 import { getAuthorizedUserId } from '../api/auth/accessValidator.js';
+import {
+  UPLOAD_DIR as GALLERY_DIR,
+  persistImageBackup,
+  PROTECTED_SYSTEM_FILES
+} from './imageUploadHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const GALLERY_DIR = path.resolve(__dirname, '../Imagem');
 
 export async function handleUserGalleryRequest(req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -16,6 +19,11 @@ export async function handleUserGalleryRequest(req, res) {
   if (!userId) {
     res.statusCode = 401;
     return res.end(JSON.stringify({ ok: false, error: 'Usuário não identificado ou sessão expirada.' }));
+  }
+
+  // Garante que a pasta física unificada existe
+  if (!fs.existsSync(GALLERY_DIR)) {
+    fs.mkdirSync(GALLERY_DIR, { recursive: true });
   }
 
   const urlObj = new URL(req.url, 'http://localhost:3000');
@@ -64,11 +72,13 @@ export async function handleUserGalleryRequest(req, res) {
       const item = await galleryJohnson.get(userId, id);
       const deleted = await galleryJohnson.delete(userId, id);
       if (deleted && item?.filename) {
-        try {
-          const physicalPath = path.join(GALLERY_DIR, item.filename);
-          if (fs.existsSync(physicalPath)) await fs.promises.unlink(physicalPath);
-        } catch (fileErr) {
-          console.warn('Não foi possível remover arquivo físico:', fileErr.message);
+        if (!PROTECTED_SYSTEM_FILES.has(item.filename)) {
+          try {
+            const physicalPath = path.join(GALLERY_DIR, item.filename);
+            if (fs.existsSync(physicalPath)) await fs.promises.unlink(physicalPath);
+          } catch (fileErr) {
+            console.warn('Não foi possível remover arquivo físico:', fileErr.message);
+          }
         }
       }
       res.statusCode = deleted ? 200 : 404;
@@ -89,17 +99,28 @@ export async function handleUserGalleryRequest(req, res) {
           res.statusCode = 400;
           return res.end(JSON.stringify({ ok: false, error: 'este arquivo viola as regras da plataforma, use somente png ou gif!' }));
         }
+
         const fileBuffer = Buffer.from(fileData.replace(/^data:image\/.*;base64,/, ''), 'base64');
         const targetPath = path.join(GALLERY_DIR, cleanBaseName);
 
         await fs.promises.writeFile(targetPath, fileBuffer);
 
+        const recordId = 'img_' + Date.now();
+
+        // Salvar backup persistente para Cloud Run (resistente a reinicializações)
+        await persistImageBackup(cleanBaseName, fileData, {
+          userId,
+          id: recordId,
+          source: 'user-gallery'
+        });
+
         const record = await galleryJohnson.create(userId, {
-          id: 'img_' + Date.now(),
+          id: recordId,
           filename: cleanBaseName,
           title: cleanBaseName.replace(/\.[^/.]+$/, ''),
           url: `/dashboard/Imagem/${cleanBaseName}`,
-          size: fileBuffer.length
+          size: fileBuffer.length,
+          fileData
         });
 
         res.statusCode = 200;
@@ -112,7 +133,7 @@ export async function handleUserGalleryRequest(req, res) {
         const filename = body.filename || item?.filename;
         const deleted = targetId ? await galleryJohnson.delete(userId, targetId) : false;
 
-        if (filename) {
+        if (filename && !PROTECTED_SYSTEM_FILES.has(filename)) {
           try {
             const physicalPath = path.join(GALLERY_DIR, filename);
             if (fs.existsSync(physicalPath)) await fs.promises.unlink(physicalPath);
