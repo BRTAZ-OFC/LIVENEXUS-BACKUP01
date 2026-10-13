@@ -1,1 +1,10 @@
-{}
+{
+  "test_upload_unit.png": {
+    "filename": "test_upload_unit.png",
+    "data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    "updatedAt": "2026-10-13T01:59:39.086Z",
+    "id": "img_test_upload_unit_png",
+    "userId": null,
+    "source": "general-gallery-upload"
+  }
+}

@@ -14,7 +14,9 @@ import {
   CheckCircle2, 
   FileText, 
   Key, 
-  X
+  X,
+  Upload,
+  Loader2
 } from 'lucide-react';
 import { authClient } from '@dashboard/login/authClient';
 
@@ -30,6 +32,49 @@ export default function AdminDatabaseExplorer() {
   const [editingCRUD, setEditingCRUD] = useState(null);
   const [isEditingRecord, setIsEditingRecord] = useState(false);
   const [editRecordJSON, setEditRecordJSON] = useState('');
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const galleryFileInputRef = React.useRef(null);
+
+  const handleGalleryQuickUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setGalleryUploading(true);
+    try {
+      const payloadFiles = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+        if (ext !== '.png' && ext !== '.gif') {
+          alert('este arquivo viola as regras da plataforma, use somente png ou gif!');
+          setGalleryUploading(false);
+          return;
+        }
+        const b64 = await new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => res(reader.result);
+          reader.onerror = rej;
+          reader.readAsDataURL(file);
+        });
+        payloadFiles.push({ filename: file.name, fileData: b64 });
+      }
+      const res = await fetch('/api/admin/general-gallery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: payloadFiles })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        await fetchDatabase();
+      } else {
+        alert(data.error || 'Erro no upload.');
+      }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setGalleryUploading(false);
+      if (galleryFileInputRef.current) galleryFileInputRef.current.value = '';
+    }
+  };
 
   // Sincronizar o estado do formulário com o CRUD que está sendo editado
   useEffect(() => {
@@ -260,6 +305,7 @@ export default function AdminDatabaseExplorer() {
       case 'reviews': return Star;
       case 'contacts': return MessageSquare;
       case 'templates': return ImageIcon;
+      case 'galeria': return ImageIcon;
       case 'userGalleries': return ImageIcon;
       default: return Database;
     }
@@ -422,6 +468,40 @@ export default function AdminDatabaseExplorer() {
 
             {/* Conteúdo / Tabela de Registros */}
             <div className="flex-1 overflow-auto p-4">
+              {activeTableKey === 'galeria' && (
+                <div className="mb-4 p-4 rounded-xl border border-violet-500/30 bg-violet-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-lg bg-violet-600/20 text-violet-300 border border-violet-500/30">
+                      <Upload size={18} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wide">Upload Galeria Geral</h4>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Envie múltiplas imagens (PNG ou GIF) diretamente para <code className="text-violet-300 bg-black/40 px-1 py-0.5 rounded">dashboard/Imagem/</code> com registro no Johnson CRUD.
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <input
+                      ref={galleryFileInputRef}
+                      type="file"
+                      multiple
+                      accept=".png,.gif,image/png,image/gif"
+                      onChange={handleGalleryQuickUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => galleryFileInputRef.current?.click()}
+                      disabled={galleryUploading}
+                      className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+                    >
+                      {galleryUploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                      <span>{galleryUploading ? 'Enviando...' : 'Selecionar Imagens (PNG/GIF)'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
               {currentTable.records.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-[#0b0f19]/40 rounded-xl border border-white/5">
                   <Database className="text-slate-600 mb-2" size={40} />

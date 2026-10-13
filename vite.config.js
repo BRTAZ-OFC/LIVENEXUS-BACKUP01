@@ -311,7 +311,7 @@ function imageUploadPlugin() {
       server.middlewares.use(async (req, res, next) => {
         if (shouldSkip(req)) return next();
         const urlPath = req.url.split('?')[0];
-        if (!urlPath.startsWith('/api/admin/lab/image-upload') && !urlPath.startsWith('/dashboard/Imagem/')) {
+        if (!urlPath.startsWith('/api/admin/lab/image-upload') && !urlPath.startsWith('/dashboard/Imagem/') && !urlPath.startsWith('/api/admin/general-gallery')) {
           return next();
         }
         try {
@@ -328,7 +328,7 @@ function imageUploadPlugin() {
       server.middlewares.use(async (req, res, next) => {
         if (shouldSkip(req)) return next();
         const urlPath = req.url.split('?')[0];
-        if (!urlPath.startsWith('/api/admin/lab/image-upload') && !urlPath.startsWith('/dashboard/Imagem/')) {
+        if (!urlPath.startsWith('/api/admin/lab/image-upload') && !urlPath.startsWith('/dashboard/Imagem/') && !urlPath.startsWith('/api/admin/general-gallery')) {
           return next();
         }
         try {

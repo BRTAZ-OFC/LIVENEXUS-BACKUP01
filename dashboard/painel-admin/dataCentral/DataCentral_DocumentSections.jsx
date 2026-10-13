@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Edit3, RefreshCw, Trash2, Check, X, Plus, Minus, User, UserCheck } from 'lucide-react';
 import { useNewUserDataCentral } from '@dashboard/configuracao/DataCentral_NewUserDataCentral';
 import { removeGalleryImage, hydrateUserGallery } from '@dashboard/painel-admin/Gallery_mediaStorageAdapter';
+import GeneralGallery from '@dashboard/painel-admin/dataCentral/DataCentral_GeneralGallery';
 
 const titles = { scenarios: 'Cenários', overlays: 'Overlays', gallery: 'Galeria', library: 'Biblioteca' };
 const libraryKinds = { songs: 'song', albums: 'album', artists: 'artist', playlists: 'playlist' };
@@ -94,6 +95,7 @@ export default function DocumentSections({ domain, adminMode = true }) {
   const [detailConfirmDelete, setDetailConfirmDelete] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isUsersExpanded, setIsUsersExpanded] = useState(false);
+  const [gallerySubTab, setGallerySubTab] = useState('general');
 
   // Carrega todos os usuários cadastrados no Johnson
   const loadUsers = useCallback(async () => {
@@ -303,8 +305,50 @@ export default function DocumentSections({ domain, adminMode = true }) {
     }
   };
 
+  if (domain === 'gallery' && gallerySubTab === 'general') {
+    return (
+      <div className="space-y-4" id="central-gallery-subnav-container">
+        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+          <button
+            type="button"
+            onClick={() => setGallerySubTab('general')}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-violet-600 text-white shadow-md cursor-pointer"
+          >
+            Galeria Geral
+          </button>
+          <button
+            type="button"
+            onClick={() => setGallerySubTab('personal')}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-white/5 text-slate-400 hover:text-white cursor-pointer"
+          >
+            Galeria Pessoal
+          </button>
+        </div>
+        <GeneralGallery onSwitchToPersonal={() => setGallerySubTab('personal')} />
+      </div>
+    );
+  }
+
   return (
     <section aria-label={titles[domain]} id="central-document-sections" className="space-y-4">
+      {domain === 'gallery' && (
+        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+          <button
+            type="button"
+            onClick={() => setGallerySubTab('general')}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-white/5 text-slate-400 hover:text-white cursor-pointer"
+          >
+            Galeria Geral
+          </button>
+          <button
+            type="button"
+            onClick={() => setGallerySubTab('personal')}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-violet-600 text-white shadow-md cursor-pointer"
+          >
+            Galeria Pessoal
+          </button>
+        </div>
+      )}
       {/* Cabeçalho da Seção */}
       <div className="flex items-center justify-between">
         <div>

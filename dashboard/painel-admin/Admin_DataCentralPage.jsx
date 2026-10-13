@@ -3,6 +3,7 @@ import { useNewUserDataCentral } from '@dashboard/configuracao/DataCentral_NewUs
 import RecordDetailModal from '@dashboard/painel-admin/dataCentral/DataCentral_RecordDetailModal';
 import DocumentSections from '@dashboard/painel-admin/dataCentral/DataCentral_DocumentSections';
 import TemplateGallery from '@dashboard/painel-admin/dataCentral/DataCentral_TemplateGallery';
+import GeneralGallery from '@dashboard/painel-admin/dataCentral/DataCentral_GeneralGallery';
 import { 
   Database, 
   Video, 
@@ -31,7 +32,8 @@ export default function DataCentralPage({ initialDetail = null }) {
   const documentTabs = [
     { key: 'scenarios', title: 'Cenários', icon: Layers },
     { key: 'overlays', title: 'Overlays', icon: Layers },
-    { key: 'gallery', title: 'Galeria', icon: ImageIcon },
+    { key: 'general_gallery', title: 'Galeria Geral', icon: ImageIcon },
+    { key: 'gallery', title: 'Galeria Pessoal', icon: ImageIcon },
     { key: 'library', title: 'Biblioteca', icon: BookOpen },
     { key: 'templates', title: 'Templates', icon: ImageIcon },
     { key: 'reviews', title: 'Avaliações', icon: Star },
@@ -215,7 +217,7 @@ export default function DataCentralPage({ initialDetail = null }) {
               <button type="button" onClick={() => setActiveDocument(null)} className="text-xs text-violet-300 hover:text-white flex items-center gap-1"><ArrowLeft size={14} /> Visão Geral</button>
               <h2 className="text-lg text-white font-semibold">{documentTabs.find(tab => tab.key === activeDocument)?.title}</h2>
             </header>
-            {activeDocument === 'templates' ? <TemplateGallery /> : <DocumentSections domain={activeDocument} adminMode={true} />}
+            {activeDocument === 'templates' ? <TemplateGallery /> : activeDocument === 'general_gallery' ? <GeneralGallery onSwitchToPersonal={() => setActiveDocument('gallery')} /> : <DocumentSections domain={activeDocument} adminMode={true} />}
           </div>
         ) : !activeDetail ? (
           <div className="space-y-6">

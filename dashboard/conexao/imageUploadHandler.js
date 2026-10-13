@@ -1,3 +1,4 @@
+import { generalGalleryJohnson } from './ramal/cruds/Gallery_Johnson.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -320,8 +321,18 @@ export async function handleImageUploadRequest(req, res, next) {
     res.setHeader('Content-Type', 'application/json');
     try {
       const chunks = [];
-      for await (const chunk of req) {
-        chunks.push(chunk);
+      if (req.body) {
+        chunks.push(typeof req.body === "string" ? Buffer.from(req.body) : Buffer.from(JSON.stringify(req.body)));
+      } else if (typeof req[Symbol.asyncIterator] === "function") {
+        for await (const chunk of req) {
+          chunks.push(chunk);
+        }
+      } else if (typeof req.on === "function") {
+        await new Promise((resolve, reject) => {
+          req.on("data", chunk => chunks.push(chunk));
+          req.on("end", resolve);
+          req.on("error", reject);
+        });
       }
       const rawBody = Buffer.concat(chunks).toString('utf-8');
 
@@ -432,70 +443,80 @@ export async function handleImageUploadRequest(req, res, next) {
         }));
       }
 
-      // UPLOAD DE IMAGEM
-      const { filename, fileData } = parsedBody;
+      // UPLOAD DE IMAGEM (Única ou Múltipla)
+      const filesToProcess = Array.isArray(parsedBody.files) && parsedBody.files.length > 0
+        ? parsedBody.files
+        : (parsedBody.filename && parsedBody.fileData ? [{ filename: parsedBody.filename, fileData: parsedBody.fileData }] : []);
 
-      if (!filename || !fileData) {
+      if (filesToProcess.length === 0) {
         res.statusCode = 400;
-        return res.end(JSON.stringify({ ok: false, error: 'Nome do arquivo ou conteúdo da imagem não informado.' }));
+        return res.end(JSON.stringify({ ok: false, error: 'Nenhum arquivo ou conteúdo de imagem informado.' }));
       }
 
-      const cleanBaseName = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
-      const ext = path.extname(cleanBaseName).toLowerCase();
-
-      if (!ALLOWED_UPLOAD_EXTENSIONS.has(ext)) {
-        res.statusCode = 400;
-        return res.end(JSON.stringify({
-          ok: false,
-          error: 'este arquivo viola as regras da plataforma, use somente png ou gif!'
-        }));
+      // Validar todos os arquivos (apenas PNG e GIF)
+      for (const item of filesToProcess) {
+        const { filename, fileData } = item;
+        if (!filename || !fileData) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ ok: false, error: 'Nome do arquivo ou conteúdo da imagem não informado.' }));
+        }
+        const cleanBaseName = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
+        const ext = path.extname(cleanBaseName).toLowerCase();
+        if (!ALLOWED_UPLOAD_EXTENSIONS.has(ext)) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({
+            ok: false,
+            error: 'este arquivo viola as regras da plataforma, use somente png ou gif!'
+          }));
+        }
       }
 
-      const base64Data = fileData.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, '');
-      const fileBuffer = Buffer.from(base64Data, 'base64');
+      const savedRecords = [];
+      for (const item of filesToProcess) {
+        const { filename, fileData } = item;
+        const cleanBaseName = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
+        const base64Data = fileData.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, '');
+        const fileBuffer = Buffer.from(base64Data, 'base64');
 
-      if (fileBuffer.length === 0) {
-        res.statusCode = 400;
-        return res.end(JSON.stringify({ ok: false, error: 'Arquivo vazio ou base64 corrompido.' }));
+        if (fileBuffer.length === 0) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ ok: false, error: 'Arquivo vazio ou base64 corrompido.' }));
+        }
+
+        const targetPath = path.join(UPLOAD_DIR, cleanBaseName);
+        await fs.promises.writeFile(targetPath, fileBuffer);
+
+        const recordId = 'img_' + cleanBaseName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        const cleanReferenceUrl = `/dashboard/Imagem/${cleanBaseName}`;
+
+        await persistImageBackup(cleanBaseName, fileData, {
+          id: recordId,
+          userId: null,
+          source: 'general-gallery-upload'
+        });
+
+        const saved = await generalGalleryJohnson.create({
+          id: recordId,
+          filename: cleanBaseName,
+          url: cleanReferenceUrl,
+          size: fileBuffer.length,
+          uploadedAt: new Date().toISOString()
+        });
+
+        savedRecords.push(saved);
       }
 
-      const targetPath = path.join(UPLOAD_DIR, cleanBaseName);
-      await fs.promises.writeFile(targetPath, fileBuffer);
-
-      const recordId = 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-      const cleanReferenceUrl = `/dashboard/Imagem/${cleanBaseName}`;
-
-      // Salvar backup persistente para resistir a reinicializações no Cloud Run
-      await persistImageBackup(cleanBaseName, fileData, {
-        id: recordId,
-        source: 'lab-image-upload'
-      });
-
-      // Registrar no galeria.json
-      const gallery = await readGalleryJson();
-      const filteredGallery = gallery.filter(item => item.filename !== cleanBaseName);
-
-      const newRecord = {
-        id: recordId,
-        filename: cleanBaseName,
-        url: cleanReferenceUrl,
-        size: fileBuffer.length,
-        uploadedAt: new Date().toISOString()
-      };
-
-      filteredGallery.push(newRecord);
-      await writeGalleryJson(filteredGallery);
+      const updatedGallery = await generalGalleryJohnson.list();
 
       res.statusCode = 200;
       return res.end(JSON.stringify({
         ok: true,
-        message: 'Imagem salva e registrada com sucesso em galeria.json!',
-        filename: cleanBaseName,
-        destination: `/dashboard/Imagem/${cleanBaseName}`,
-        size: fileBuffer.length,
-        uploadedAt: newRecord.uploadedAt,
-        record: newRecord,
-        gallery: filteredGallery
+        message: 'Imagem(ns) salva(s) e registrada(s) com sucesso na Galeria Geral!',
+        filename: savedRecords[0]?.filename,
+        destination: `/dashboard/Imagem/`,
+        records: savedRecords,
+        record: savedRecords[0],
+        gallery: updatedGallery
       }));
     } catch (err) {
       res.statusCode = 500;
