@@ -5,8 +5,12 @@ import { useAuth } from '@dashboard/login/AuthContext';
 import { User, Camera, Save, X, Loader2, Pencil, Trash2, KeyRound, Check, AlertCircle } from 'lucide-react';
 import { useAvatar, setAvatarUrl, removeAvatar } from '@dashboard/configuracao/avatar/Config_avatarStorageAdapter';
 import GalleryPicker from '@dashboard/componentes/GalleryPicker';
+import MetricasOverview from '../metricas/MetricasOverview';
+import { MetricasCrescimento, MetricasAudiencia, MetricasEngajamento } from '../metricas/MetricasSubmenus';
+
 
 export default function ProfileSection() {
+  const [activeTab, setActiveTab] = useState('Visão Geral');
   const { user, updateUser } = useAuth();
   const [editing, setEditing] = useState(false);
   const [displayName, setDisplayName] = useState('');
@@ -266,6 +270,26 @@ export default function ProfileSection() {
           </div>
         </div>
       </div>
+
+      {/* Navegação de Métricas */}
+      <div className="flex items-center gap-1 border-b border-white/10 overflow-x-auto pb-px">
+        {['Visão Geral', 'Crescimento', 'Audiência', 'Engajamento', 'Monetização'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => { /* Navegação para tabs */ }}
+            className={`px-4 py-2 text-sm font-semibold transition ${
+              tab === 'Visão Geral'
+                ? 'text-violet-400 border-b-2 border-violet-500'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Conteúdo Ativo (Visão Geral) */}
+      <MetricasOverview />
 
       {/* Modal de Alteração de Senha */}
       {showPasswordModal && (
