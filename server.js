@@ -264,6 +264,23 @@ app.all(/^\/api\/admin\/lab\/youtube-test1\/bootstrap(\/.*)?$/, async (req, res)
 });
 
 // ============================================================================
+// 6.5. GENERAL GALLERY (/api/gallery/general)
+// ============================================================================
+app.all('/api/gallery/general', async (req, res) => {
+  try {
+    const { galleryGeneralJohnson } = await import('./dashboard/conexao/ramal/cruds/Gallery_Johnson.js');
+    const gallery = await galleryGeneralJohnson.list();
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    return res.end(JSON.stringify({ ok: true, gallery }));
+  } catch (err) {
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    return res.end(JSON.stringify({ ok: false, error: err.message || String(err) }));
+  }
+});
+
+// ============================================================================
 // 7. USER GALLERY LAB (/api/admin/lab/user-gallery)
 // ============================================================================
 app.all(/^\/api\/admin\/lab\/user-gallery(\/.*)?$/, async (req, res) => {

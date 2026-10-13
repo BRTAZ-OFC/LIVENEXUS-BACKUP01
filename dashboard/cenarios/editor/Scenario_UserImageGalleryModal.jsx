@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Image as ImageIcon, Check } from 'lucide-react';
+import { X, Image as ImageIcon, Check, User, Globe } from 'lucide-react';
 import { useUserGallery, hydrateUserGallery, setUserId } from '@dashboard/painel-admin/Gallery_mediaStorageAdapter';
 import { authClient } from '@dashboard/login/authClient';
 
@@ -28,34 +28,32 @@ function getImageCategory(img) {
   ) {
     return 'imagen-png';
   }
-
   return null;
 }
 
 export default function ScenarioUserImageGalleryModal({ open, onClose, onSelect }) {
-  const [activeCategory, setActiveCategory] = useState('imagen-png');
+  const [activeMainTab, setActiveMainTab] = useState('personal'); // 'personal' | 'general'
+  const [activeCategory, setActiveCategory] = useState('imagen-png'); // 'imagen-png' | 'imagen-gif'
   const [loading, setLoading] = useState(false);
   const [directImages, setDirectImages] = useState([]);
+  const [generalImages, setGeneralImages] = useState([]);
   const adapterImages = useUserGallery();
 
   useEffect(() => {
     if (!open) return;
-
     let active = true;
     setLoading(true);
 
-    const loadUserData = async () => {
+    const loadGalleries = async () => {
       try {
         let user = authClient.getUser();
         if (!user || !user.id) {
           user = await authClient.me().catch(() => null);
         }
-
         const userId = user?.id || null;
         if (userId) {
           await setUserId(userId, user);
           await hydrateUserGallery();
-
           const token = authClient.getToken ? authClient.getToken() : null;
           const res = await fetch(`/api/admin/lab/user-gallery?userId=${encodeURIComponent(userId)}`, {
             headers: {
@@ -63,7 +61,6 @@ export default function ScenarioUserImageGalleryModal({ open, onClose, onSelect 
               ...(token ? { Authorization: `Bearer ${token}` } : {})
             }
           });
-
           if (res.ok) {
             const data = await res.json();
             if (active && Array.isArray(data.gallery)) {
@@ -73,14 +70,23 @@ export default function ScenarioUserImageGalleryModal({ open, onClose, onSelect 
         } else {
           await hydrateUserGallery();
         }
+
+        // Fetch general gallery
+        const genRes = await fetch('/api/gallery/general');
+        if (genRes.ok) {
+          const genData = await genRes.json();
+          if (active && Array.isArray(genData.gallery)) {
+            setGeneralImages(genData.gallery);
+          }
+        }
       } catch (err) {
-        console.warn('Erro ao carregar galeria do usuário:', err);
+        console.warn('Erro ao carregar galerias:', err);
       } finally {
         if (active) setLoading(false);
       }
     };
 
-    loadUserData();
+    loadGalleries();
 
     return () => {
       active = false;
@@ -96,14 +102,12 @@ export default function ScenarioUserImageGalleryModal({ open, onClose, onSelect 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
 
-  const combinedImages = useMemo(() => {
+  const personalCombinedImages = useMemo(() => {
     const map = new Map();
-
     (adapterImages || []).forEach(img => {
       const id = String(img.id || img.mediaId);
       map.set(id, img);
     });
-
     (directImages || []).forEach(img => {
       const id = String(img.id || img.mediaId);
       if (!map.has(id)) {
@@ -119,17 +123,36 @@ export default function ScenarioUserImageGalleryModal({ open, onClose, onSelect 
         });
       }
     });
-
     return Array.from(map.values());
   }, [adapterImages, directImages]);
 
+  const generalCombinedImages = useMemo(() => {
+    const map = new Map();
+    (generalImages || []).forEach(img => {
+      const id = String(img.id || img.mediaId);
+      map.set(id, {
+        mediaId: id,
+        id,
+        userId: null,
+        url: img.url,
+        title: img.title || img.name || img.filename || 'Imagem',
+        filename: img.filename || 'Imagem',
+        mimeType: img.mimeType,
+        createdAt: img.createdAt || img.uploadedAt
+      });
+    });
+    return Array.from(map.values());
+  }, [generalImages]);
+
+  const activeImageList = activeMainTab === 'personal' ? personalCombinedImages : generalCombinedImages;
+
   const pngImages = useMemo(() => {
-    return combinedImages.filter(img => getImageCategory(img) === 'imagen-png');
-  }, [combinedImages]);
+    return activeImageList.filter(img => getImageCategory(img) === 'imagen-png');
+  }, [activeImageList]);
 
   const gifImages = useMemo(() => {
-    return combinedImages.filter(img => getImageCategory(img) === 'imagen-gif');
-  }, [combinedImages]);
+    return activeImageList.filter(img => getImageCategory(img) === 'imagen-gif');
+  }, [activeImageList]);
 
   const visibleImages = activeCategory === 'imagen-gif' ? gifImages : pngImages;
 
@@ -143,7 +166,7 @@ export default function ScenarioUserImageGalleryModal({ open, onClose, onSelect 
       <section
         role="dialog"
         aria-modal="true"
-        aria-label="Galeria de Imagens do Usuário"
+        aria-label="Galeria de Imagens"
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-[88vh] min-h-0 w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c101c] shadow-2xl"
       >
@@ -155,7 +178,7 @@ export default function ScenarioUserImageGalleryModal({ open, onClose, onSelect 
             </div>
             <div>
               <h2 className="text-base font-bold text-white">Galeria de Imagens</h2>
-              <p className="text-xs text-slate-400">Imagens do usuário logado</p>
+              <p className="text-xs text-slate-400">Escolha entre Galeria Pessoal e Galeria Geral</p>
             </div>
           </div>
           <button
@@ -168,37 +191,78 @@ export default function ScenarioUserImageGalleryModal({ open, onClose, onSelect 
           </button>
         </header>
 
-        {/* Categorias: imagen-png e imagen-gif */}
-        <div className="flex items-center gap-2 border-b border-white/10 px-5 py-3 bg-black/20">
-          <button
-            type="button"
-            onClick={() => setActiveCategory('imagen-png')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
-              activeCategory === 'imagen-png'
-                ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
-                : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <span>imagen-png</span>
-            <span className="rounded-full bg-black/30 px-2 py-0.5 text-[10px] font-mono">
-              {pngImages.length}
-            </span>
-          </button>
+        {/* 2 Menus Principais no topo e Categorias (submenus) logo abaixo */}
+        <div className="flex flex-col border-b border-white/10 bg-[#080c14]">
+          {/* Menu Principal */}
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5">
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('personal')}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                activeMainTab === 'personal'
+                  ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
+                  : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <User className="h-3.5 w-3.5" />
+              <span>Galeria Pessoal</span>
+              <span className="rounded-full bg-black/30 px-2 py-0.5 text-[10px] font-mono">
+                {personalCombinedImages.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('general')}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                activeMainTab === 'general'
+                  ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
+                  : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Globe className="h-3.5 w-3.5" />
+              <span>Galeria Geral</span>
+              <span className="rounded-full bg-black/30 px-2 py-0.5 text-[10px] font-mono">
+                {generalCombinedImages.length}
+              </span>
+            </button>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => setActiveCategory('imagen-gif')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
-              activeCategory === 'imagen-gif'
-                ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
-                : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <span>imagen-gif</span>
-            <span className="rounded-full bg-black/30 px-2 py-0.5 text-[10px] font-mono">
-              {gifImages.length}
-            </span>
-          </button>
+          {/* Categorias / Submenus abaixo: imagen-png e imagen-gif */}
+          <div className="flex items-center gap-2 px-5 py-2.5 bg-black/20">
+            <span className="text-[11px] font-medium text-slate-400 mr-2">Categoria:</span>
+            <button
+              type="button"
+              onClick={() => setActiveCategory('imagen-png')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                activeCategory === 'imagen-png'
+                  ? 'bg-violet-600/80 text-white border border-violet-500/50 shadow-md'
+                  : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <span>imagen-png</span>
+              <span className="rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-mono">
+                {activeMainTab === 'personal'
+                  ? personalCombinedImages.filter(img => getImageCategory(img) === 'imagen-png').length
+                  : generalCombinedImages.filter(img => getImageCategory(img) === 'imagen-png').length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveCategory('imagen-gif')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                activeCategory === 'imagen-gif'
+                  ? 'bg-violet-600/80 text-white border border-violet-500/50 shadow-md'
+                  : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <span>imagen-gif</span>
+              <span className="rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-mono">
+                {activeMainTab === 'personal'
+                  ? personalCombinedImages.filter(img => getImageCategory(img) === 'imagen-gif').length
+                  : generalCombinedImages.filter(img => getImageCategory(img) === 'imagen-gif').length}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Conteúdo com imagens */}
@@ -206,16 +270,18 @@ export default function ScenarioUserImageGalleryModal({ open, onClose, onSelect 
           {loading && visibleImages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="h-7 w-7 animate-spin rounded-full border-2 border-violet-500 border-t-transparent mb-3" />
-              <p className="text-xs text-slate-400">Carregando galeria do usuário…</p>
+              <p className="text-xs text-slate-400">Carregando galeria…</p>
             </div>
           ) : visibleImages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <ImageIcon className="mb-2 h-10 w-10 text-slate-600" />
               <p className="text-sm font-semibold text-slate-300">
-                Nenhuma imagem encontrada na categoria {activeCategory}
+                Nenhuma imagem encontrada em {activeMainTab === 'personal' ? 'Galeria Pessoal' : 'Galeria Geral'} ({activeCategory})
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                Envie imagens {activeCategory === 'imagen-gif' ? '.gif' : '.png'} pelo Perfil ou Painel para usar no Cenário.
+                {activeMainTab === 'personal'
+                  ? `Envie imagens ${activeCategory === 'imagen-gif' ? '.gif' : '.png'} pelo Perfil ou Painel para usar no Cenário.`
+                  : `Nenhuma imagem ${activeCategory === 'imagen-gif' ? '.gif' : '.png'} na Galeria Geral.`}
               </p>
             </div>
           ) : (
@@ -254,8 +320,8 @@ export default function ScenarioUserImageGalleryModal({ open, onClose, onSelect 
                     >
                       {img.title || img.filename || 'Imagem'}
                     </span>
-                    <span className="mt-0.5 block text-[10px] text-slate-400">
-                      {activeCategory}
+                    <span className="mt-0.5 block text-[10px] text-slate-400 capitalize">
+                      {activeMainTab === 'personal' ? 'Pessoal' : 'Geral'} • {activeCategory}
                     </span>
                   </div>
                 </button>

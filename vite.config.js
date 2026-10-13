@@ -399,6 +399,12 @@ function documentaryDomainsPlugin() {
         return res.end(JSON.stringify({ ok: false, error: err.message || String(err) }));
       }
     }
+    if (pathname === '/api/gallery/general') {
+      const { galleryGeneralJohnson } = await import('./dashboard/conexao/ramal/cruds/Gallery_Johnson.js');
+      const gallery = await galleryGeneralJohnson.list();
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify({ ok: true, gallery }));
+    }
     if (pathname === '/api/admin/database-inspect') {
       const { handleDatabaseInspectRequest } = await import('./dashboard/painel-admin/db/databaseInspectHandler.js');
       return handleDatabaseInspectRequest(req, res);
