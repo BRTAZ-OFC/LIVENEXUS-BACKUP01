@@ -1,12 +1,22 @@
 import { useState } from 'react';
-import { FlaskConical, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
+import { FlaskConical, ChevronRight, ChevronLeft, Layers, Radio } from 'lucide-react';
 import { useAutoScroll } from '@dashboard/componentes/useAutoScroll';
+import AdminMetaConnectionTest from './lab/Admin_MetaConnectionTest';
 
-const LAB_TOOLS = [];
+const LAB_TOOLS = [
+  {
+    id: 'meta-connection-test',
+    name: 'Teste Conexão Meta',
+    category: 'Conectividade',
+    description: 'Investigação experimental de transmissão ao vivo e comentários no Facebook sem Graph API oficial.',
+    icon: Radio,
+    component: AdminMetaConnectionTest,
+  },
+];
 
 export default function AdminLabSection() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [activeToolId, setActiveToolId] = useState('');
+  const [activeToolId, setActiveToolId] = useState('meta-connection-test');
 
   // Auto-scroll padronizado do LiveNexus nas zonas de borda do drawer (desktop)
   const {
@@ -23,14 +33,14 @@ export default function AdminLabSection() {
   return (
     <div className="relative w-full h-full min-h-[calc(100vh-6rem)] overflow-x-hidden flex flex-col">
       {/* Barra superior de controle do Lab */}
-      <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10 shrink-0">
+      <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/15 px-6 pt-2 shrink-0 bg-[#070a12]">
         <div className="flex items-center gap-2.5">
           <div className="grid h-9 w-9 place-items-center rounded-xl border border-violet-500/30 bg-violet-500/10 text-violet-300">
             <FlaskConical size={18} />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white">Laboratório</h2>
-            <p className="text-xs text-slate-400">Contêiner administrativo para experimentação e testes isolados</p>
+            <p className="text-xs text-slate-400">Painel Admin → Laboratório → Ferramentas → Teste Conexão Meta</p>
           </div>
         </div>
 
@@ -50,17 +60,26 @@ export default function AdminLabSection() {
         </button>
       </div>
 
-      {/* Área Principal da Ferramenta Ativa (NÃO é comprimida pelo drawer) */}
-      <div className="flex-1 w-full min-w-0 flex items-center justify-center p-8">
-        <div className="text-center space-y-3 max-w-md bg-[#0e121d]/60 border border-white/10 rounded-2xl p-8 shadow-xl">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-violet-500/10 border border-violet-500/30 text-violet-300 mx-auto">
-            <FlaskConical size={24} />
-          </div>
-          <h3 className="text-base font-bold text-white">Laboratório Limpo</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            As ferramentas experimentais e protótipos anteriores (incluindo o Photoshop 3) foram removidos conforme solicitado. O ambiente está limpo e pronto para novos experimentos.
-          </p>
-        </div>
+      {/* Área Principal da Ferramenta Ativa */}
+      <div className="flex-1 w-full min-w-0 flex items-center justify-center">
+        {(() => {
+          const tool = LAB_TOOLS.find(t => t.id === activeToolId);
+          if (tool && tool.component) {
+            const ToolComp = tool.component;
+            return <ToolComp />;
+          }
+          return (
+            <div className="text-center space-y-3 max-w-md bg-[#0e121d]/60 border border-white/10 rounded-2xl p-8 shadow-xl">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-violet-500/10 border border-violet-500/30 text-violet-300 mx-auto">
+                <FlaskConical size={24} />
+              </div>
+              <h3 className="text-base font-bold text-white">Laboratório</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Selecione uma ferramenta no menu lateral para iniciar a experimentação.
+              </p>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Drawer deslizante de ferramentas (à direita) */}
@@ -84,12 +103,10 @@ export default function AdminLabSection() {
                 Fechar
               </button>
             </div>
-
             <div className="space-y-2.5">
               {LAB_TOOLS.map((tool) => {
                 const Icon = tool.icon;
                 const isActive = activeToolId === tool.id;
-
                 return (
                   <button
                     key={tool.id}
