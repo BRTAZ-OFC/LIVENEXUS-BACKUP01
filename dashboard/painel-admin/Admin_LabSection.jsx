@@ -1,22 +1,12 @@
 import { useState } from 'react';
 import { FlaskConical, ChevronRight, ChevronLeft, Layers, Radio } from 'lucide-react';
 import { useAutoScroll } from '@dashboard/componentes/useAutoScroll';
-import AdminMetaConnectionTest from './lab/Admin_MetaConnectionTest';
 
-const LAB_TOOLS = [
-  {
-    id: 'meta-connection-test',
-    name: 'Teste Conexão Meta',
-    category: 'Conectividade',
-    description: 'Investigação experimental de transmissão ao vivo e comentários no Facebook sem Graph API oficial.',
-    icon: Radio,
-    component: AdminMetaConnectionTest,
-  },
-];
+const LAB_TOOLS = [];
 
 export default function AdminLabSection() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [activeToolId, setActiveToolId] = useState('meta-connection-test');
+  const [activeToolId, setActiveToolId] = useState(null);
 
   // Auto-scroll padronizado do LiveNexus nas zonas de borda do drawer (desktop)
   const {
