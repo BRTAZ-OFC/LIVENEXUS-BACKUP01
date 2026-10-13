@@ -156,6 +156,13 @@ export default function ScenarioEditorWorkspace({ cenario, userId }) {
       };
 
       await scenarioBranch('PATCH', { id: cenarioId, payload: { changes: updatedCenarioData } });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('livenexus:scenario-saved', {
+            detail: { scenarioId: cenarioId, updated: updatedCenarioData }
+          })
+        );
+      }
     } catch (err) {
       console.error('Erro no salvamento silencioso:', err);
     }
@@ -321,6 +328,17 @@ export default function ScenarioEditorWorkspace({ cenario, userId }) {
   // Interactive Key Capture Slot State ('trigger' | 'key' | null)
   const [listeningSlot, setListeningSlot] = useState(null);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__livenexus_capturing_shortcut = Boolean(listeningSlot);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.__livenexus_capturing_shortcut = false;
+      }
+    };
+  }, [listeningSlot]);
+
   // 1. Listener de Teclas em Tempo Real para Troca de Subcenários no Canvas
   useEffect(() => {
     if (listeningSlot) return;
@@ -336,6 +354,8 @@ export default function ScenarioEditorWorkspace({ cenario, userId }) {
       )) {
         return;
       }
+
+      if (e.repeat) return;
 
       const formatted = formatKeyFromEvent(e);
       if (formatted) heldKeys.add(formatted.toUpperCase());

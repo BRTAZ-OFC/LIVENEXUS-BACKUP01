@@ -146,11 +146,12 @@ export function matchesSubscenarioShortcut(e, sub, heldKeys = new Set()) {
 export function broadcastScenarioChange(scenarioId, subscenarioId) {
   if (!scenarioId || typeof window === 'undefined') return;
   const sid = String(scenarioId);
+  const timestamp = Date.now();
   
   try {
     if ('BroadcastChannel' in window) {
       const channel = new BroadcastChannel(`scenario_channel_${sid}`);
-      channel.postMessage({ type: 'SWITCH_SUBSCENARIO', subscenarioId, timestamp: Date.now() });
+      channel.postMessage({ type: 'SWITCH_SUBSCENARIO', subscenarioId, timestamp });
       channel.close();
     }
   } catch (err) {
@@ -160,9 +161,60 @@ export function broadcastScenarioChange(scenarioId, subscenarioId) {
   try {
     window.localStorage.setItem(`scenario_active_sub_${sid}`, JSON.stringify({
       subscenarioId,
-      timestamp: Date.now()
+      timestamp
     }));
+    window.localStorage.setItem(`scenario_updated_${sid}`, String(timestamp));
   } catch (err) {
     // Ignore storage quota errors
   }
+
+  try {
+    window.dispatchEvent(
+      new CustomEvent('livenexus:scenario-sub-switched', {
+        detail: { scenarioId: sid, subscenarioId, timestamp }
+      })
+    );
+  } catch (err) {
+    // ignore
+  }
 }
+
+export function broadcastScenarioReload(scenarioId = null) {
+  if (typeof window === 'undefined') return;
+  const timestamp = Date.now();
+
+  try {
+    if ('BroadcastChannel' in window) {
+      if (scenarioId) {
+        const channel = new BroadcastChannel(`scenario_channel_${String(scenarioId)}`);
+        channel.postMessage({ type: 'SCENARIO_RELOAD', scenarioId: String(scenarioId), timestamp });
+        channel.close();
+      }
+      const syncChannel = new BroadcastChannel('livenexus_scenario_sync');
+      syncChannel.postMessage({ type: 'SCENARIO_RELOAD', scenarioId: scenarioId ? String(scenarioId) : null, timestamp });
+      syncChannel.close();
+    }
+  } catch (err) {
+    console.warn('BroadcastChannel reload error:', err);
+  }
+
+  try {
+    if (scenarioId) {
+      window.localStorage.setItem(`scenario_updated_${String(scenarioId)}`, String(timestamp));
+    }
+    window.localStorage.setItem('livenexus_scenario_updated_global', String(timestamp));
+  } catch (err) {
+    // ignore
+  }
+
+  try {
+    window.dispatchEvent(
+      new CustomEvent('livenexus:scenario-reload', {
+        detail: { scenarioId: scenarioId ? String(scenarioId) : null, timestamp }
+      })
+    );
+  } catch (err) {
+    // ignore
+  }
+}
+

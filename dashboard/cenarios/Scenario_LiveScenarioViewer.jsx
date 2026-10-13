@@ -160,22 +160,32 @@ export default function LiveScenarioViewer() {
   const fetchScenario = useCallback(() => {
     if (!sid) return;
 
+    const applyScenarioData = (sc) => {
+      if (!sc) return;
+      setCenario(sc);
+      setError(null);
+
+      // Preserva o subcenário ativo sem forçar troca indevida ou reset
+      let storedSubId = null;
+      try {
+        const stored = window.localStorage.getItem(`scenario_active_sub_${sid}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.subscenarioId) storedSubId = parsed.subscenarioId;
+        }
+      } catch {}
+
+      const hasCurrentSub = activeSubIdRef.current && sc.subcenarios?.some((s) => s.id === activeSubIdRef.current);
+      const targetSub = storedSubId || (hasCurrentSub ? activeSubIdRef.current : (sc.activeSubcenarioId || 'default'));
+      setActiveSubId(targetSub);
+    };
+
     const fetchPublicScenario = () => {
       fetch(`/api/cenarios?scenarioId=${encodeURIComponent(sid)}`)
         .then((res) => res.json())
         .then((data) => {
           if (data?.ok && data.cenario) {
-            setCenario(data.cenario);
-            setError(null);
-            if (Date.now() - lastLocalSwitchTimeRef.current > 3000) {
-              if (data.cenario.activeSubcenarioId) {
-                setActiveSubId(data.cenario.activeSubcenarioId);
-              } else if (!activeSubIdRef.current) {
-                setActiveSubId('default');
-              }
-            } else if (!activeSubIdRef.current) {
-              setActiveSubId(data.cenario.activeSubcenarioId || 'default');
-            }
+            applyScenarioData(data.cenario);
           } else {
             setError('Cenário não encontrado.');
           }
@@ -192,17 +202,7 @@ export default function LiveScenarioViewer() {
       scenarioBranch('GET', { id: sid })
         .then((scenario) => {
           if (scenario) {
-            setCenario(scenario);
-            setError(null);
-            if (Date.now() - lastLocalSwitchTimeRef.current > 3000) {
-              if (scenario.activeSubcenarioId) {
-                setActiveSubId(scenario.activeSubcenarioId);
-              } else if (!activeSubIdRef.current) {
-                setActiveSubId('default');
-              }
-            } else if (!activeSubIdRef.current) {
-              setActiveSubId(scenario.activeSubcenarioId || 'default');
-            }
+            applyScenarioData(scenario);
           } else {
             fetchPublicScenario();
           }
@@ -231,22 +231,63 @@ export default function LiveScenarioViewer() {
     }
   }, [rtcConsumer.isConnected, fetchScenario]);
 
-  // 2. Cross-tab, Cross-window, OBS Studio BroadcastChannel & storage synchronization
+  // 2. Sincronização automática para visualização LOCAL e Broadcast (BroadcastChannel, storage & window events)
   useEffect(() => {
     if (!sid || typeof window === 'undefined') return;
 
     let channel = null;
+    let syncChannel = null;
+    let rtcReloadChannel = null;
+    let deathChannel = null;
+
     try {
       if ('BroadcastChannel' in window) {
+        // Canal dedicado ao cenário específico
         channel = new BroadcastChannel(`scenario_channel_${sid}`);
         channel.onmessage = (event) => {
-          if (event.data?.type === 'SWITCH_SUBSCENARIO' && event.data.subscenarioId) {
+          const data = event.data;
+          if (data?.type === 'SWITCH_SUBSCENARIO' && data.subscenarioId) {
             lastLocalSwitchTimeRef.current = Date.now();
-            setActiveSubId(event.data.subscenarioId);
-            // Dispara atualização completa da página receptora
+            setActiveSubId(data.subscenarioId);
             fetchScenario();
-          } else if (event.data?.type === 'OVERLAY_UPDATE') {
+          } else if (
+            data?.type === 'OVERLAY_UPDATE' ||
+            data?.type === 'SCENARIO_RELOAD' ||
+            data?.type === 'SCENARIO_UPDATE'
+          ) {
             lastLocalSwitchTimeRef.current = Date.now();
+            fetchScenario();
+          }
+        };
+
+        // Canal global de sincronização entre cenários
+        syncChannel = new BroadcastChannel('livenexus_scenario_sync');
+        syncChannel.onmessage = (event) => {
+          const data = event.data;
+          if (!data?.scenarioId || String(data.scenarioId) === String(sid)) {
+            lastLocalSwitchTimeRef.current = Date.now();
+            fetchScenario();
+          }
+        };
+
+        // Canal de recarga e reconexão RTC (ReloadRTC.js)
+        rtcReloadChannel = new BroadcastChannel('livenexus_rtc_reload');
+        rtcReloadChannel.onmessage = (event) => {
+          const data = event.data;
+          if (data?.newValues?.scenarioId && String(data.newValues.scenarioId) !== String(sid)) {
+            return;
+          }
+          if (data?.newValues?.activeSubcenarioId) {
+            setActiveSubId(data.newValues.activeSubcenarioId);
+          }
+          fetchScenario();
+        };
+
+        // Canal de controle do contador de mortes
+        deathChannel = new BroadcastChannel('livenexus_death_counter_bus');
+        deathChannel.onmessage = (event) => {
+          if (event.data?.action) {
+            handleDeathAction({ detail: { action: event.data.action } });
             fetchScenario();
           }
         };
@@ -262,13 +303,17 @@ export default function LiveScenarioViewer() {
           if (parsed.subscenarioId) {
             lastLocalSwitchTimeRef.current = Date.now();
             setActiveSubId(parsed.subscenarioId);
-            // Dispara atualização completa da página receptora (equivalente a F5 disparado pelo atalho)
             fetchScenario();
           }
         } catch {
           // ignore
         }
-      } else if (e.key === `overlay_updated_${sid}`) {
+      } else if (
+        e.key === `overlay_updated_${sid}` ||
+        e.key === `scenario_updated_${sid}` ||
+        e.key === 'livenexus_scenario_updated_global' ||
+        e.key === 'livenexus_rtc_reload_trigger'
+      ) {
         lastLocalSwitchTimeRef.current = Date.now();
         fetchScenario();
       }
@@ -311,6 +356,47 @@ export default function LiveScenarioViewer() {
 
     window.addEventListener('livenexus:death-counter-action', handleDeathAction);
 
+    const handleScenarioReload = (e) => {
+      if (!e.detail?.scenarioId || String(e.detail.scenarioId) === String(sid)) {
+        fetchScenario();
+      }
+    };
+    window.addEventListener('livenexus:scenario-reload', handleScenarioReload);
+
+    const handleScenarioSubSwitched = (e) => {
+      if (String(e.detail?.scenarioId) === String(sid) && e.detail?.subscenarioId) {
+        setActiveSubId(e.detail.subscenarioId);
+        fetchScenario();
+      }
+    };
+    window.addEventListener('livenexus:scenario-sub-switched', handleScenarioSubSwitched);
+
+    const handleReloadPublisher = (e) => {
+      const detail = e.detail;
+      if (detail?.newValues?.scenarioId && String(detail.newValues.scenarioId) !== String(sid)) {
+        return;
+      }
+      if (detail?.newValues?.activeSubcenarioId) {
+        setActiveSubId(detail.newValues.activeSubcenarioId);
+      }
+      fetchScenario();
+    };
+    window.addEventListener('livenexus:reload-rtc-publisher', handleReloadPublisher);
+
+    const handleCenariosUpdated = (e) => {
+      if (Array.isArray(e.detail)) {
+        const matching = e.detail.find(c => String(c.id) === String(sid));
+        if (matching) {
+          setCenario(matching);
+          if (matching.activeSubcenarioId) {
+            setActiveSubId(matching.activeSubcenarioId);
+          }
+        }
+      }
+      fetchScenario();
+    };
+    window.addEventListener('livenexus:cenarios-updated', handleCenariosUpdated);
+
     const handleRtcScenarioUpdate = (e) => {
       const scData = e.detail;
       if (!scData) return;
@@ -328,8 +414,15 @@ export default function LiveScenarioViewer() {
 
     return () => {
       if (channel) channel.close();
+      if (syncChannel) syncChannel.close();
+      if (rtcReloadChannel) rtcReloadChannel.close();
+      if (deathChannel) deathChannel.close();
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('livenexus:death-counter-action', handleDeathAction);
+      window.removeEventListener('livenexus:scenario-reload', handleScenarioReload);
+      window.removeEventListener('livenexus:scenario-sub-switched', handleScenarioSubSwitched);
+      window.removeEventListener('livenexus:reload-rtc-publisher', handleReloadPublisher);
+      window.removeEventListener('livenexus:cenarios-updated', handleCenariosUpdated);
       window.removeEventListener('livenexus:rtc-scenario-update', handleRtcScenarioUpdate);
     };
   }, [sid, fetchScenario]);
@@ -346,6 +439,24 @@ export default function LiveScenarioViewer() {
           document.activeElement.tagName === 'INPUT' || 
           document.activeElement.tagName === 'TEXTAREA' || 
           document.activeElement.isContentEditable)) {
+        return;
+      }
+
+      // Evita execução duplicada por repetição
+      if (e.repeat) return;
+
+      // =========================================================================
+      // Numpad 0 — Reload manual exclusivo do cenário
+      // =========================================================================
+      if (e.code === 'Numpad0' && e.code !== 'Digit0') {
+        e.preventDefault();
+        e.stopPropagation();
+        fetchScenario();
+        triggerReloadRTC('numpad0-manual-reload', {
+          scenarioId: sid,
+          activeSubcenarioId: activeSubIdRef.current,
+          timestamp: Date.now()
+        });
         return;
       }
 
@@ -414,7 +525,7 @@ export default function LiveScenarioViewer() {
       document.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('keyup', handleKeyUp, true);
     };
-  }, [sid]);
+  }, [sid, fetchScenario]);
 
   if (loading) {
     return (

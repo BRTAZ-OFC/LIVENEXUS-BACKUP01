@@ -1,15 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNewUserDataCentral } from '@dashboard/configuracao/DataCentral_NewUserDataCentral';
 import { triggerReloadRTC } from '@dashboard/conexao/rtc/ReloadRTC';
 import {
   formatKeyFromEvent,
   matchesSubscenarioShortcut,
   broadcastScenarioChange,
+  broadcastScenarioReload,
 } from './Scenario_shortcutHelper';
 
 /**
- * Hook global para manter os atalhos de cenário e subcenário ativos em qualquer tela do LiveNexus.
- * Executa enquanto o LiveNexus estiver aberto e com foco, respeitando campos de digitação.
+ * Hook global para manter os atalhos de cenário, subcenário e contador de mortes
+ * ativos em qualquer tela do LiveNexus.
+ * Executa enquanto o LiveNexus estiver aberto e com foco, respeitando campos de digitação
+ * e preservando os atalhos do ActionEngine e recursos nativos.
  */
 export function useGlobalScenarioShortcuts() {
   const { userId, scenarioBranch, overlayBranch } = useNewUserDataCentral();
@@ -17,23 +20,46 @@ export function useGlobalScenarioShortcuts() {
   const cenariosRef = useRef(cenarios);
   cenariosRef.current = cenarios;
 
-  // 1. Carrega a lista inicial de cenários do usuário
-  useEffect(() => {
-    if (!userId) return;
+  // 1. Carrega e recarrega a lista de cenários do usuário
+  const loadCenarios = useCallback(() => {
+    if (!userId || !scenarioBranch) return;
     scenarioBranch('GET')
       .then((data) => {
         if (Array.isArray(data)) {
           setCenarios(data);
+          cenariosRef.current = data;
         }
       })
       .catch((err) => console.error('Erro ao carregar cenários globais:', err));
   }, [userId, scenarioBranch]);
 
-  // 2. Sincroniza quando os cenários forem alterados em qualquer parte da aplicação
+  useEffect(() => {
+    loadCenarios();
+  }, [loadCenarios]);
+
+  // 2. Sincroniza quando os cenários forem alterados em qualquer parte da aplicação ou abas
   useEffect(() => {
     const handleCenariosUpdated = (e) => {
       if (Array.isArray(e.detail)) {
         setCenarios(e.detail);
+        cenariosRef.current = e.detail;
+      } else {
+        loadCenarios();
+      }
+    };
+
+    const handleScenarioSaved = (e) => {
+      const { scenarioId, updated } = e.detail || {};
+      if (scenarioId && updated) {
+        setCenarios((prev) => {
+          const next = prev.map((c) =>
+            String(c.id) === String(scenarioId) ? { ...c, ...updated } : c
+          );
+          cenariosRef.current = next;
+          return next;
+        });
+      } else {
+        loadCenarios();
       }
     };
 
@@ -43,8 +69,8 @@ export function useGlobalScenarioShortcuts() {
           const scenarioId = e.key.replace('scenario_active_sub_', '');
           const parsed = JSON.parse(e.newValue);
           if (parsed.subscenarioId) {
-            setCenarios((prev) =>
-              prev.map((c) =>
+            setCenarios((prev) => {
+              const next = prev.map((c) =>
                 String(c.id) === String(scenarioId)
                   ? {
                       ...c,
@@ -59,23 +85,49 @@ export function useGlobalScenarioShortcuts() {
                         {},
                     }
                   : c
-              )
-            );
+              );
+              cenariosRef.current = next;
+              return next;
+            });
           }
         } catch {
           // ignore
         }
+      } else if (
+        e.key === 'livenexus_scenario_updated_global' ||
+        (e.key && e.key.startsWith('scenario_updated_'))
+      ) {
+        loadCenarios();
       }
     };
 
+    let syncChannel = null;
+    try {
+      if ('BroadcastChannel' in window) {
+        syncChannel = new BroadcastChannel('livenexus_scenario_sync');
+        syncChannel.onmessage = () => {
+          loadCenarios();
+        };
+      }
+    } catch {}
+
+    const handleFocus = () => {
+      loadCenarios();
+    };
+
     window.addEventListener('livenexus:cenarios-updated', handleCenariosUpdated);
+    window.addEventListener('livenexus:scenario-saved', handleScenarioSaved);
     window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', handleFocus);
 
     return () => {
+      if (syncChannel) syncChannel.close();
       window.removeEventListener('livenexus:cenarios-updated', handleCenariosUpdated);
+      window.removeEventListener('livenexus:scenario-saved', handleScenarioSaved);
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [loadCenarios]);
 
   // 3. Listener global de teclas ativo em todas as páginas do painel
   useEffect(() => {
@@ -90,6 +142,12 @@ export function useGlobalScenarioShortcuts() {
 
     const handleKeyDown = (e) => {
       syncModifiers(e);
+
+      // Evita execução duplicada pela mesma pressão da tecla
+      if (e.repeat) return;
+
+      // Não intercepta se o editor estiver no meio de captura de tecla para atalho
+      if (typeof window !== 'undefined' && window.__livenexus_capturing_shortcut) return;
 
       // Proteção rigorosa para campos de texto/digitação (não interceptar digitação)
       const activeEl = document.activeElement;
@@ -107,16 +165,49 @@ export function useGlobalScenarioShortcuts() {
         }
       }
 
+      // =========================================================================
+      // 0. NUMPAD 0 — RELOAD MANUAL EXCLUSIVO DO CENÁRIO
+      // Regras: Numpad0 (não confundir com Digit0), sem repetir, sem alterar
+      // conteúdo, sem trocar subcenário e sem zerar contadores.
+      // =========================================================================
+      if (e.code === 'Numpad0' && e.code !== 'Digit0') {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Recarrega lista de cenários no hook global
+        loadCenarios();
+
+        // Dispara sinal de reload para a visualização LOCAL do cenário e overlays
+        broadcastScenarioReload(null);
+
+        // Aciona o triggerReloadRTC() existente reutilizando a infraestrutura RTC
+        triggerReloadRTC('numpad0-global-reload', {
+          action: 'RELOAD',
+          timestamp: Date.now()
+        });
+
+        return;
+      }
+
       const formatted = formatKeyFromEvent(e);
       if (formatted) heldKeys.add(formatted.toUpperCase());
 
-      // Controles Globais do Contador de Mortes (Numpad +, Numpad -, Numpad Del)
+      // =========================================================================
+      // 1. CONTROLES GLOBAIS DO CONTADOR DE MORTES (Numpad +, Numpad -, Numpad Del)
+      // =========================================================================
       let deathAction = null;
       if (e.code === 'NumpadAdd' || (e.key === '+' && !e.ctrlKey && !e.altKey && !e.metaKey)) {
         deathAction = 'INCREMENT';
       } else if (e.code === 'NumpadSubtract' || (e.key === '-' && !e.ctrlKey && !e.altKey && !e.metaKey)) {
         deathAction = 'DECREMENT';
-      } else if (e.code === 'NumpadDecimal' || e.code === 'NumpadComma' || ((e.code === 'Delete' || e.key === 'Delete') && !e.ctrlKey && !e.altKey && !e.metaKey)) {
+      } else if (
+        e.code === 'NumpadDecimal' ||
+        e.code === 'NumpadComma' ||
+        ((e.code === 'Delete' || e.key === 'Delete') &&
+          !e.ctrlKey && !e.altKey && !e.metaKey &&
+          !document.querySelector('.canvas-selected') &&
+          !document.querySelector('[data-selected="true"]'))
+      ) {
         deathAction = 'RESET';
       }
 
@@ -162,6 +253,7 @@ export function useGlobalScenarioShortcuts() {
 
           if (anyUpdated) {
             setCenarios(updated);
+            cenariosRef.current = updated;
             scenarioBranch('POST', { payload: { cenarios: updated } }).catch((err) =>
               console.error('Erro ao persistir contador de mortes via atalho:', err)
             );
@@ -187,6 +279,15 @@ export function useGlobalScenarioShortcuts() {
           }).catch(() => {});
         }
 
+        // Notifica outras abas via BroadcastChannel dedicado ao contador
+        try {
+          if ('BroadcastChannel' in window) {
+            const ch = new BroadcastChannel('livenexus_death_counter_bus');
+            ch.postMessage({ action: deathAction, timestamp: Date.now() });
+            ch.close();
+          }
+        } catch {}
+
         // Emite evento global para editores de cenário e overlay ativos sincronizarem
         window.dispatchEvent(
           new CustomEvent('livenexus:death-counter-action', {
@@ -194,11 +295,17 @@ export function useGlobalScenarioShortcuts() {
           })
         );
 
-        // Dispara sincronização RTC via ponto único global
-        triggerReloadRTC('shortcut-death-counter');
+        // Dispara sincronização RTC via ponto único global com novos valores
+        triggerReloadRTC('shortcut-death-counter', {
+          action: deathAction,
+          timestamp: Date.now()
+        });
         return;
       }
 
+      // =========================================================================
+      // 2. ATALHOS DE SUBCENÁRIOS DOS CENÁRIOS CADASTRADOS
+      // =========================================================================
       const currentCenarios = cenariosRef.current;
       if (!Array.isArray(currentCenarios) || currentCenarios.length === 0) return;
 
@@ -227,6 +334,7 @@ export function useGlobalScenarioShortcuts() {
           });
 
           setCenarios(updated);
+          cenariosRef.current = updated;
 
           // Salva no backend
           scenarioBranch('POST', { payload: { cenarios: updated } }).catch((err) =>
@@ -236,8 +344,12 @@ export function useGlobalScenarioShortcuts() {
           // Notifica OBS e outras abas via BroadcastChannel e LocalStorage
           broadcastScenarioChange(scen.id, matchedSub.id);
 
-          // Ponto único de sincronização RTC: transmite snapshot instantâneo (0ms) ou reinicia se fechado
-          triggerReloadRTC('shortcut-execution');
+          // Ponto único de sincronização RTC: transmite snapshot com novos dados
+          triggerReloadRTC('shortcut-execution', {
+            scenarioId: scen.id,
+            activeSubcenarioId: matchedSub.id,
+            timestamp: Date.now()
+          });
 
           // Emite evento para componentes internos sincronizarem o estado
           window.dispatchEvent(
@@ -273,7 +385,8 @@ export function useGlobalScenarioShortcuts() {
       window.removeEventListener('blur', handleBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [scenarioBranch]);
+  }, [loadCenarios, scenarioBranch, overlayBranch]);
 
-  return { cenarios, setCenarios };
+  return { cenarios, setCenarios, reloadCenarios: loadCenarios };
 }
+
