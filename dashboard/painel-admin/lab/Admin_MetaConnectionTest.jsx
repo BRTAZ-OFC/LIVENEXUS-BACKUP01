@@ -361,7 +361,7 @@ export default function AdminMetaConnectionTest() {
           <Layers size={16} className="text-violet-400" /> Avaliação de Compatibilidade com o Contrato LiveNexus
         </h2>
         <p className="text-xs text-slate-300 leading-relaxed">
-          <strong>Avaliação da assinatura:</strong> <code className="bg-black/40 px-1.5 py-0.5 rounded text-violet-300 font-mono">connectFacebook(channel, onMessage, onStatus, onMeta) → {'{ disconnect }'}</code>
+          <strong>Avaliação da assinatura:</strong> <code className="bg-black/40 px-1.5 py-0.5 rounded text-violet-300 font-mono">connectFacebook(channel, onMessage, onStatus, onMeta) → {'{{ disconnect }}'}</code>
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-slate-300 pt-1">
           <div className="bg-black/40 p-3 rounded-xl border border-white/5">
