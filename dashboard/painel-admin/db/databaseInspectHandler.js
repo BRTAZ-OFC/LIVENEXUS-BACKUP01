@@ -130,5 +130,16 @@ export async function handleDatabaseInspectRequest(req, res) {
     }
   }
 
+  // 7. Métricas
+  try {
+    const dataPath = path.resolve(cwd, 'dashboard/conexao/ramal/cruds/json/metricas.json');
+    const rawData = await fs.readFile(dataPath, 'utf8').catch(() => '{}');
+    const data = JSON.parse(rawData || '{}');
+    const records = Object.entries(data).flatMap(([u, items]) => Array.isArray(items) ? items.map(i => ({ userId: u, ...i })) : []);
+    tables.metricas = { name: 'Métricas', records, error: null };
+  } catch (err) {
+    tables.metricas = { name: 'Métricas', records: [], error: err.message };
+  }
+
   return res.end(JSON.stringify({ ok: true, tables }));
 }

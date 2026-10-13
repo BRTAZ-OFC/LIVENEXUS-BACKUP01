@@ -6,7 +6,7 @@ import { User, Camera, Save, X, Loader2, Pencil, Trash2, KeyRound, Check, AlertC
 import { useAvatar, setAvatarUrl, removeAvatar } from '@dashboard/configuracao/avatar/Config_avatarStorageAdapter';
 import GalleryPicker from '@dashboard/componentes/GalleryPicker';
 import MetricasOverview from '../metricas/MetricasOverview';
-import { MetricasCrescimento, MetricasAudiencia, MetricasEngajamento } from '../metricas/MetricasSubmenus';
+import { MetricasCrescimento, MetricasAudiencia, MetricasEngajamento, MetricasMonetizacao } from '../metricas/MetricasSubmenus';
 
 
 export default function ProfileSection() {
@@ -276,9 +276,9 @@ export default function ProfileSection() {
         {['Visão Geral', 'Crescimento', 'Audiência', 'Engajamento', 'Monetização'].map((tab) => (
           <button
             key={tab}
-            onClick={() => { /* Navegação para tabs */ }}
+            onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 text-sm font-semibold transition ${
-              tab === 'Visão Geral'
+              activeTab === tab
                 ? 'text-violet-400 border-b-2 border-violet-500'
                 : 'text-slate-500 hover:text-slate-300'
             }`}
@@ -288,8 +288,14 @@ export default function ProfileSection() {
         ))}
       </div>
 
-      {/* Conteúdo Ativo (Visão Geral) */}
-      <MetricasOverview />
+      {/* Conteúdo Ativo */}
+      <div className="mt-6">
+        {activeTab === 'Visão Geral' && <MetricasOverview />}
+        {activeTab === 'Crescimento' && <MetricasCrescimento />}
+        {activeTab === 'Audiência' && <MetricasAudiencia />}
+        {activeTab === 'Engajamento' && <MetricasEngajamento />}
+        {activeTab === 'Monetização' && <MetricasMonetizacao />}
+      </div>
 
       {/* Modal de Alteração de Senha */}
       {showPasswordModal && (

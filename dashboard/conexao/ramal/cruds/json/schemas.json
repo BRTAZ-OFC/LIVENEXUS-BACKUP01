@@ -1,1 +1,12 @@
-{}
+{
+  "metricas": {
+    "id": "metricas",
+    "name": "Métricas",
+    "fields": [
+      { "name": "userId", "type": "texto" },
+      { "name": "type", "type": "texto" },
+      { "name": "data", "type": "objeto" },
+      { "name": "created_date", "type": "data" }
+    ]
+  }
+}
