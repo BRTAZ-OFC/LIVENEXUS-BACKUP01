@@ -64,9 +64,18 @@ export class RtcSignalingManager {
       if (this.isDestroyed || !this.runtimeId) return;
       try {
         const url = `/api/admin/lab/rtc/signal?runtimeId=${encodeURIComponent(this.runtimeId)}&role=${this.role}&since=${this.lastSignalTimestamp}`;
-        const res = await fetch(url);
-        if (!res.ok) return;
-        const data = await res.json();
+const res = await fetch(url);
+//troca de codigo
+if (!res.ok) {
+  document.body.insertAdjacentHTML('afterbegin', `
+    <div style="position:fixed;top:0;left:0;z-index:999999;background:#900;color:white;padding:15px;font-size:18px;font-family:monospace">
+      RTC SIGNALING HTTP ERROR: ${res.status} ${res.statusText}
+    </div>
+  `);
+  return;
+}
+//final 
+const data = await res.json();
         if (data.ok && Array.isArray(data.signals)) {
           for (const sig of data.signals) {
             if (this.processedSignalIds.has(sig.id)) continue;
@@ -78,9 +87,17 @@ export class RtcSignalingManager {
             await this.onSignal(sig);
           }
         }
-      } catch (err) {
-        this.log(`[Signaling Auto Poll] ${err.message}`, null, 'warn');
-      }
+        // troca de codigo 2
+     } catch (err) {
+  this.log(`[Signaling Auto Poll] ${err.message}`, null, 'warn');
+
+  document.body.insertAdjacentHTML('afterbegin', `
+    <div style="position:fixed;top:0;left:0;z-index:999999;background:#900;color:white;padding:15px;font-size:18px;font-family:monospace">
+      RTC SIGNALING FETCH ERROR: ${String(err)}
+    </div>
+  `);
+}
+      // fim 
     };
 
     poll();

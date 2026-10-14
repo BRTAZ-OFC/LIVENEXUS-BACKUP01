@@ -16,8 +16,13 @@
 //   - Cap global: 200 mensagens. Se excedido, descarta P4 antigas, depois P3.
 //   - Sem sort global. Sem timer por mensagem. Sem watchdog arbitrário.
 //   - Pause: dispatcher não despacha nova utterance enquanto pausado.
-
-
+//
+const getSpeechSynthesis = () => {
+  if (typeof window === 'undefined') return null;
+  if (!('speechSynthesis' in window)) return null;
+  return window.speechSynthesis;
+};
+// 
 // --- Constantes (defaults internos — FASE 2B) ---
 const FAIRNESS_INTERVAL = 5;
 const AGING_THRESHOLD_MS = 20 * 1000;       // P4 com 20s+ recebe boost (antes do TTL de 30s)
@@ -230,7 +235,15 @@ export function dispatch() {
   if (isPaused) return;
   if (activeUtterance !== null) return;
   if (pendingDispatchTimer !== null) return;
-  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.speaking) return;
+  //
+  const synth = getSpeechSynthesis();
+
+if (!synth) {
+  return;
+}
+
+if (synth.speaking) return;
+  //
   if (totalQueueSize() === 0) return;
 
   const delay = _getDelay ? Number(_getDelay()) || 0 : 0;
@@ -301,9 +314,14 @@ function speakNow(msg, gen) {
   try { onTtsStart(); } catch {}
   if (typeof u.speak === 'function') {
     u.speak();
-  } else if (typeof speechSynthesis !== 'undefined') {
-    speechSynthesis.speak(u);
+  //
+    } else {
+  const synth = getSpeechSynthesis();
+  if (synth) {
+    synth.speak(u);
   }
+}
+  //
 }
 
 // --- Finalização idempotente de utterance pulada (FASE 2A robustez) ---
@@ -362,9 +380,11 @@ export function skipCurrent() {
   if (typeof u._cancel === 'function') {
     try { u._cancel(); } catch {}
   }
-  if (typeof speechSynthesis !== 'undefined') {
-    try { speechSynthesis.cancel(); } catch {}
-  }
+  //modificacao
+  const synth = getSpeechSynthesis();
+if (synth) {
+  try { synth.cancel(); } catch {}
+}
   // Fallback assíncrono mínimo: se o browser não entregar onend/onerror, finaliza mesmo assim.
   setTimeout(() => finalizeSkipped(u), 0);
   return { ok: true };
@@ -406,9 +426,11 @@ export function restartCurrent() {
   if (typeof u._cancel === 'function') {
     try { u._cancel(); } catch {}
   }
-  if (typeof speechSynthesis !== 'undefined') {
-    try { speechSynthesis.cancel(); } catch {}
-  }
+  // modificacao
+  const synth = getSpeechSynthesis();
+if (synth) {
+  try { synth.cancel(); } catch {}
+}
   // Re-enfileira o texto restante na FRENTE da mesma fila de prioridade para
   // preservar a continuidade (falado a seguir, antes de mensagens aguardando).
   queues[tierToQueue(msg.tier || 'normal')].unshift({
@@ -436,9 +458,12 @@ export function pause() {
   if (activeUtterance && typeof activeUtterance._pause === 'function') {
     try { activeUtterance._pause(); } catch {}
   }
-  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.speaking) {
-    try { speechSynthesis.pause(); } catch {}
-  }
+  //modifocacao
+  const synth = getSpeechSynthesis();
+if (synth?.speaking) {
+  try { synth.pause(); } catch {}
+}
+  //Modifocacao
   try { onTtsEnd(); } catch {}
 }
 export function resume() {
@@ -446,10 +471,15 @@ export function resume() {
   if (activeUtterance && typeof activeUtterance._resume === 'function') {
     try { activeUtterance._resume(); } catch {}
     try { onTtsStart(); } catch {}
-  } else if (typeof speechSynthesis !== 'undefined' && speechSynthesis.paused) {
-    try { speechSynthesis.resume(); } catch {}
+    // Modificacao
+    } else {
+  const synth = getSpeechSynthesis();
+  if (synth?.paused) {
+    try { synth.resume(); } catch {}
     try { onTtsStart(); } catch {}
   }
+}
+   // Modificacao
   if (activeUtterance === null) dispatch();
 }
 export function isSchedulerPaused() { return isPaused; }
@@ -462,9 +492,12 @@ export function clear() {
   if (activeUtterance && typeof activeUtterance._cancel === 'function') {
     try { activeUtterance._cancel(); } catch {}
   }
-  if (typeof speechSynthesis !== 'undefined') {
-    try { speechSynthesis.cancel(); } catch {}
-  }
+  // modificacao
+  const synth = getSpeechSynthesis();
+if (synth) {
+  try { synth.cancel(); } catch {}
+}
+  // modificacao
   activeUtterance = null;
   try { onTtsEnd(); } catch {}
   queues.P1.length = 0;
