@@ -11,7 +11,6 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Loader2, 
-  ExternalLink, 
   FileImage,
   Eye,
   ArrowRight

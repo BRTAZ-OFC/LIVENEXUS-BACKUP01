@@ -1,6 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image as ImageIcon, RefreshCw, Trash2, Upload, ChevronLeft, ChevronRight, Edit2, Tag, FolderPlus } from 'lucide-react';
+import { Image as ImageIcon, RefreshCw, Trash2, Upload, ChevronLeft, ChevronRight, Edit2, Tag, FolderPlus, CheckCircle2, AlertCircle, Loader2, X } from 'lucide-react';
 import { useNewUserDataCentral } from '@dashboard/configuracao/DataCentral_NewUserDataCentral';
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+}
 
 const defaultCategories = ['all', 'alerts', 'webcam', 'chat', 'banners', 'tickers', 'events', 'badges', 'overlays', 'widgets', 'animations', 'other'];
 
@@ -141,13 +149,23 @@ export default function TemplateGallery() {
   const [editing, setEditing] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selected, setSelected] = useState(null);
-  const [file, setFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [uploadName, setUploadName] = useState('');
   const [uploadCategory, setUploadCategory] = useState('alerts');
   const [newCatInput, setNewCatInput] = useState('');
   const input = useRef(null);
   const owner = useRef(userId);
   owner.current = userId;
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   const refresh = useCallback(async () => {
     if (!isTemplateAdmin) return;
@@ -276,35 +294,126 @@ export default function TemplateGallery() {
     }
   };
 
-  const upload = async (event) => {
-    event.preventDefault();
-    if (busy || !file) return;
-    if (!/\.(png|gif)$/i.test(file.name) || file.size > 10_000_000) {
-      setError('este arquivo viola as regras da plataforma, use somente png ou gif!');
-      return;
+  // Validação e seleção de múltiplos arquivos para templates
+  const handleFileSelection = (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    setError('');
+    setSuccessMessage('');
+
+    const newFiles = [];
+    let hasInvalid = false;
+
+    for (let i = 0; i < fileList.length; i++) {
+      const f = fileList[i];
+      const ext = f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
+      const isPngOrGif = ext === '.png' || ext === '.gif' || f.type === 'image/png' || f.type === 'image/gif';
+
+      if (!isPngOrGif) {
+        hasInvalid = true;
+        continue;
+      }
+
+      newFiles.push({
+        file: f,
+        name: f.name,
+        size: f.size,
+        previewUrl: URL.createObjectURL(f)
+      });
     }
+
+    if (hasInvalid) {
+      setError('este arquivo viola as regras da plataforma, use somente png ou gif!');
+    }
+
+    if (newFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    handleFileSelection(e.target.files);
+    if (input.current) input.current.value = '';
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer?.files) {
+      handleFileSelection(e.dataTransfer.files);
+    }
+  };
+
+  const removeSelectedFile = (index) => {
+    setSelectedFiles(prev => {
+      const item = prev[index];
+      if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const clearSelectedFiles = () => {
+    selectedFiles.forEach(f => {
+      if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
+    });
+    setSelectedFiles([]);
+    if (input.current) input.current.value = '';
+  };
+
+  const upload = async (event) => {
+    if (event) event.preventDefault();
+    if (busy || selectedFiles.length === 0) return;
     setBusy(true);
     setError('');
-    try {
-      const fileData = await readImage(file);
-      await templateBranch('POST', {
-        payload: {
-          action: 'upload',
-          filename: file.name,
-          fileData,
-          name: uploadName || file.name.replace(/\.(png|gif)$/i, ''),
-          category: uploadCategory
-        }
-      });
-      setFile(null);
+    setSuccessMessage('');
+    setUploadProgress(`Preparando ${selectedFiles.length} template(s)...`);
+
+    const failed = [];
+    let uploadedCount = 0;
+
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const item = selectedFiles[i];
+      setUploadProgress(`Enviando template ${i + 1} de ${selectedFiles.length}: ${item.name}...`);
+      try {
+        const fileData = await readImage(item.file);
+        const templateName = (selectedFiles.length === 1 && uploadName.trim())
+          ? uploadName.trim()
+          : item.name.replace(/\.(png|gif)$/i, '');
+
+        await templateBranch('POST', {
+          payload: {
+            action: 'upload',
+            filename: item.name,
+            fileData,
+            name: templateName,
+            category: uploadCategory
+          }
+        });
+
+        uploadedCount++;
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      } catch (err) {
+        failed.push({ item, error: err.message || 'Falha no envio.' });
+      }
+    }
+
+    await refresh();
+
+    if (failed.length === 0) {
+      setSelectedFiles([]);
       setUploadName('');
       if (input.current) input.current.value = '';
-      await refresh();
-    } catch (failure) {
-      setError(failure.message);
-    } finally {
-      setBusy(false);
+      setSuccessMessage(`${uploadedCount} template(s) enviado(s) com sucesso para a pasta "${uploadCategory}"!`);
+    } else {
+      setSelectedFiles(failed.map(f => f.item));
+      const errMsg = failed.map(f => `${f.item.name}: ${f.error}`).join(' | ');
+      setError(errMsg);
+      if (uploadedCount > 0) {
+        setSuccessMessage(`${uploadedCount} template(s) enviado(s) com sucesso. ${failed.length} falharam.`);
+      }
     }
+
+    setBusy(false);
+    setUploadProgress('');
   };
 
   if (!isTemplateAdmin) return null;
@@ -334,8 +443,22 @@ export default function TemplateGallery() {
       </header>
 
       {error && (
-        <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
-          {error}
+        <div role="alert" className="p-3 rounded-xl bg-red-950/70 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
+          <AlertCircle size={16} className="text-red-400 shrink-0" />
+          <span>{error}</span>
+          <button type="button" onClick={() => setError('')} className="ml-auto text-red-400 hover:text-red-200 cursor-pointer">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {successMessage && (
+        <div role="status" className="p-3 rounded-xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-200 text-xs flex items-center gap-2">
+          <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+          <span>{successMessage}</span>
+          <button type="button" onClick={() => setSuccessMessage('')} className="ml-auto text-emerald-400 hover:text-emerald-200 cursor-pointer">
+            <X size={14} />
+          </button>
         </div>
       )}
 
@@ -571,11 +694,17 @@ export default function TemplateGallery() {
         </form>
 
         {/* 2. Upload com Seleção de Pasta / Categoria */}
-        <form onSubmit={upload} className="bg-black/30 border border-white/10 rounded-xl p-3.5 space-y-3" aria-label="Upload administrativo de template">
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <Upload size={15} className="text-fuchsia-400" />
-            Upload com Seleção de Pasta / Categoria
-          </h3>
+        <div className="bg-black/30 border border-white/10 rounded-xl p-3.5 space-y-3" aria-label="Upload administrativo de template">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <Upload size={15} className="text-fuchsia-400" />
+              Upload com Seleção de Pasta / Categoria
+            </h3>
+            <span className="text-[10px] text-slate-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded">
+              Destino: <strong className="text-fuchsia-300 capitalize">{uploadCategory}</strong>
+            </span>
+          </div>
+
           <div className="grid sm:grid-cols-2 gap-2">
             <label className="text-[11px] text-slate-300">
               Pasta / Categoria Destino
@@ -590,35 +719,127 @@ export default function TemplateGallery() {
               </select>
             </label>
             <label className="text-[11px] text-slate-300">
-              Nome do Template
+              Nome do Template {selectedFiles.length > 1 ? '(múltiplos usam nomes originais)' : ''}
               <input
                 value={uploadName}
                 onChange={event => setUploadName(event.target.value)}
                 maxLength={150}
-                placeholder="Ex: Twitch Overlay Flame"
-                className="block mt-1 bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 w-full text-white text-xs"
+                placeholder={selectedFiles.length > 1 ? 'Nomes individuais preservados' : 'Ex: Twitch Overlay Flame'}
+                disabled={selectedFiles.length > 1}
+                className="block mt-1 bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 w-full text-white text-xs disabled:opacity-50"
               />
             </label>
           </div>
-          <div>
+
+          {/* Zona de Drop & Seleção de Múltiplos Arquivos */}
+          <div
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => input.current?.click()}
+            className={`relative border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2 ${
+              isDragging 
+                ? 'border-fuchsia-400 bg-fuchsia-600/15' 
+                : 'border-white/15 bg-black/30 hover:border-fuchsia-500/50 hover:bg-fuchsia-600/5'
+            }`}
+          >
             <input
               ref={input}
-              aria-label="Arquivo PNG ou GIF"
               type="file"
+              multiple
               accept="image/png,image/gif,.png,.gif"
-              onChange={event => setFile(event.target.files?.[0] || null)}
-              className="text-xs text-slate-300 w-full block border border-white/10 rounded-lg p-1.5 bg-black/20"
-              required
+              onChange={handleInputChange}
+              className="hidden"
             />
+
+            <div className="w-10 h-10 rounded-xl bg-fuchsia-600/20 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-300">
+              <Upload size={20} />
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-white">
+                Clique para selecionar ou arraste templates aqui
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                Formatos obrigatórios: <strong className="text-fuchsia-300">.png</strong> e <strong className="text-fuchsia-300">.gif</strong> · Suporta seleção múltipla
+              </p>
+            </div>
           </div>
+
+          {/* Lista de Templates Selecionados / Fila de Upload */}
+          {selectedFiles.length > 0 && (
+            <div className="space-y-3 p-3 rounded-xl bg-black/40 border border-fuchsia-500/30 shadow-lg">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-300">
+                  Templates selecionados ({selectedFiles.length}):
+                </span>
+                <button
+                  type="button"
+                  onClick={clearSelectedFiles}
+                  disabled={busy}
+                  className="text-slate-400 hover:text-white transition disabled:opacity-50 cursor-pointer"
+                >
+                  Limpar seleção
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto p-1">
+                {selectedFiles.map((item, index) => (
+                  <div
+                    key={`${item.name}-${index}`}
+                    className="relative group p-2 rounded-xl bg-black/50 border border-white/10 flex flex-col items-center text-center"
+                  >
+                    <img
+                      src={item.previewUrl}
+                      alt={item.name}
+                      className="w-14 h-14 object-contain rounded bg-black/40 mb-1"
+                    />
+                    <p className="text-[11px] font-medium text-white truncate w-full" title={item.name}>
+                      {item.name}
+                    </p>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {formatBytes(item.size)}
+                    </span>
+
+                    {!busy && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); removeSelectedFile(index); }}
+                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center shadow opacity-80 group-hover:opacity-100 transition cursor-pointer"
+                        title="Remover da lista"
+                      >
+                        <X size={11} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button
-            type="submit"
-            disabled={busy || !file}
-            className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white text-xs font-bold px-4 py-2 rounded-xl disabled:opacity-50 transition"
+            type="button"
+            onClick={upload}
+            disabled={busy || selectedFiles.length === 0}
+            className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl disabled:opacity-50 transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
           >
-            Enviar Template para Pasta Selecionada
+            {busy ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>{uploadProgress || 'Enviando...'}</span>
+              </>
+            ) : (
+              <>
+                <Upload size={14} />
+                <span>
+                  {selectedFiles.length === 0 
+                    ? 'Selecione imagens para enviar' 
+                    : `Enviar ${selectedFiles.length} Template(s) para "${uploadCategory}"`}
+                </span>
+              </>
+            )}
           </button>
-        </form>
+        </div>
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FlaskConical, ChevronRight, ChevronLeft, Layers, Radio } from 'lucide-react';
+import { FlaskConical, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
 import { useAutoScroll } from '@dashboard/componentes/useAutoScroll';
 
 const LAB_TOOLS = [];
