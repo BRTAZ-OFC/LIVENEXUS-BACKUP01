@@ -219,13 +219,30 @@ export function StreamingProvider({ children }) {
   }, []);
 
   // Vozes + keep-alive do speechSynthesis (Chrome pausa após ~15s).
-  useEffect(() => {
-    diag.TTS.queueInstancesCreated++;
-    const load = () => setVoices(speechSynthesis.getVoices());
-    load(); speechSynthesis.onvoiceschanged = load;
-    const ka = setInterval(() => { if (speechSynthesis.speaking) speechSynthesis.resume(); }, 10000);
-    return () => { clearInterval(ka); };
-  }, []);
+useEffect(() => {
+  diag.TTS.queueInstancesCreated++;
+
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    return;
+  }
+
+  const synth = window.speechSynthesis;
+  const load = () => setVoices(synth.getVoices());
+
+  load();
+  synth.onvoiceschanged = load;
+
+  const ka = setInterval(() => {
+    if (synth.speaking) synth.resume();
+  }, 10000);
+
+  return () => {
+    clearInterval(ka);
+    if (synth.onvoiceschanged === load) {
+      synth.onvoiceschanged = null;
+    }
+  };
+}, []);
 
   // Visibility/online do documento para diagnóstico TTS (não afeta lógica).
   useEffect(() => {
@@ -415,6 +432,9 @@ export function StreamingProvider({ children }) {
     ttsScheduler.configureScheduler({
       createUtterance: (msg) => {
         const s = settingsRef.current;
+        if (typeof window === 'undefined' || !('SpeechSynthesisUtterance' in window)) {
+          return null;
+        }
         // O fluxo utiliza o Web Speech nativo.
         const u = new SpeechSynthesisUtterance(msg.text);
         u.rate = s.rate; u.volume = s.volume; u.pitch = s.pitch;
@@ -514,13 +534,23 @@ export function StreamingProvider({ children }) {
         } else if (result.queueLimit.policy === 'drop_oldest') {
           const d = utterances.current.length;
           if (labNoSpeak) { if (labCollector) recordDroppedInto(labCollector, d); }
-          else { speechSynthesis.cancel(); utterances.current = []; resetBacklogQueue(); if (!isLab) recordDropped(d); else if (labCollector) recordDroppedInto(labCollector, d); }
+          else {
+            if (typeof window !== 'undefined' && window.speechSynthesis) {
+              window.speechSynthesis.cancel();
+            }
+            utterances.current = []; resetBacklogQueue(); if (!isLab) recordDropped(d); else if (labCollector) recordDroppedInto(labCollector, d);
+          }
         } else if (result.queueLimit.policy === 'preserve_priority') {
           const minP = utterances.current.length ? Math.min(...utterances.current.map(u => u._priority || 0)) : 0;
           if (result.priority >= minP) {
             const d = utterances.current.length;
             if (labNoSpeak) { if (labCollector) recordDroppedInto(labCollector, d); }
-            else { speechSynthesis.cancel(); utterances.current = []; resetBacklogQueue(); if (!isLab) recordDropped(d); else if (labCollector) recordDroppedInto(labCollector, d); }
+            else {
+              if (typeof window !== 'undefined' && window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+              }
+              utterances.current = []; resetBacklogQueue(); if (!isLab) recordDropped(d); else if (labCollector) recordDroppedInto(labCollector, d);
+            }
           } else finalDecision = 'BLOCKED_QUEUE_LIMIT';
         }
       }
@@ -906,8 +936,13 @@ export function StreamingProvider({ children }) {
   // Pausar: speechSynthesis.pause() (pausa fala atual) + scheduler.pause() (impede novo dispatch).
   // Retomar: speechSynthesis.resume() (continua fala atual) + scheduler.resume() (permite dispatch se ocioso).
   const pauseReading = () => {
-    if (speaking) { speechSynthesis.pause(); ttsScheduler.pause(); }
-    else { speechSynthesis.resume(); ttsScheduler.resume(); }
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      setSpeaking(v => !v);
+      return;
+    }
+    const synth = window.speechSynthesis;
+    if (speaking) { synth.pause(); ttsScheduler.pause(); }
+    else { synth.resume(); ttsScheduler.resume(); }
     setSpeaking(v => !v);
   };
 
@@ -1036,7 +1071,7 @@ export function StreamingProvider({ children }) {
     setSettings(next);
     try { localStorage.setItem(TTS_SETTINGS_KEY, JSON.stringify(next)); } catch {}
     if ((k === 'rate' || k === 'volume' || k === 'pitch' || k === 'engine' || k === 'voice') &&
-        ((typeof speechSynthesis !== 'undefined' && speechSynthesis.speaking && !speechSynthesis.paused) || ttsScheduler.hasActiveUtterance())) {
+        ((typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.speaking && !window.speechSynthesis.paused) || ttsScheduler.hasActiveUtterance())) {
       if (restartDebounceRef.current) clearTimeout(restartDebounceRef.current);
       restartDebounceRef.current = setTimeout(() => {
         restartDebounceRef.current = null;

@@ -289,7 +289,7 @@ export default function WidgetElementRenderer({
       contentCSS += `opacity: ${config.effOpacity / 100} !important; `;
     }
 
-    const isTransparent = config.effBgActiveType === 'bg-transparent' || config.backgroundColor === 'transparent' || config.isTransparent === true || config.bgMode === 'transparent' || config.effBgType === 'transparent';
+    const isTransparent = (config.effBgActiveType === 'bg-transparent' || config.backgroundColor === 'transparent' || config.isTransparent === true || config.bgMode === 'transparent' || config.effBgType === 'transparent') && config.effBgActiveType !== 'bg-solid' && config.isTransparent !== false;
 
     // 1. FUNDOS BÁSICOS - container effect
     if (isReactWebcam) {
@@ -298,7 +298,10 @@ export default function WidgetElementRenderer({
       containerCSS += `background: transparent !important; background-image: none !important; box-shadow: none !important; `;
     } else if (config.effBgActiveType) {
       if (config.effBgActiveType === 'bg-solid') {
-        containerCSS += `background: ${config.effBgColor || config.backgroundColor || '#000000'} !important; `;
+        const solidColor = (config.effBgColor && config.effBgColor !== 'transparent')
+          ? config.effBgColor
+          : (config.backgroundColor && config.backgroundColor !== 'transparent' ? config.backgroundColor : '#111827');
+        containerCSS += `background: ${solidColor} !important; background-color: ${solidColor} !important; `;
       } else if (config.effBgActiveType === 'bg-semi-transparent') {
         const op = config.effBgOpacity !== undefined ? config.effBgOpacity : 50;
         containerCSS += `background: ${config.effBgColor || '#000000'} !important; opacity: ${op / 100} !important; `;

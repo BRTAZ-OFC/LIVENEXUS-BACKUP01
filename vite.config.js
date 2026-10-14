@@ -566,6 +566,8 @@ function authRoutesPlugin() {
 }
 
 // https://vite.dev/config/
+const serverPort = Number(process.env.SERVER_PORT || process.env.PORT || 3000);
+
 export default defineConfig({
   resolve: {
     alias: {
@@ -587,11 +589,12 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',
-    port: 3000,
+    port: serverPort,
     allowedHosts: true,
   },
   preview: {
     host: '0.0.0.0',
-    port: 3000,
+    port: serverPort,
+    allowedHosts: true,
   }
 });

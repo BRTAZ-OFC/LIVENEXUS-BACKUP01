@@ -2286,16 +2286,34 @@ export default function OverlayEditorSidebar({
                       <div className="grid grid-cols-2 gap-1.5">
                         <button
                           type="button"
-                          onClick={() => onUpdateInstance(selectedInst.id, {
-                            config: {
-                              ...selectedInst.config,
-                              effBgActiveType: 'bg-solid',
-                              effGlassActiveType: 'none',
-                              backgroundColor: selectedInst.config?.backgroundColor || '#111827'
-                            }
-                          })}
+                          onClick={() => {
+                            const prevBg = (selectedInst.config?._prevBgColor && selectedInst.config._prevBgColor !== 'transparent')
+                              ? selectedInst.config._prevBgColor
+                              : ((selectedInst.config?.effBgColor && selectedInst.config.effBgColor !== 'transparent')
+                                ? selectedInst.config.effBgColor
+                                : ((selectedInst.config?.backgroundColor && selectedInst.config.backgroundColor !== 'transparent')
+                                  ? selectedInst.config.backgroundColor
+                                  : '#111827'));
+                            onUpdateInstance(selectedInst.id, {
+                              config: {
+                                ...selectedInst.config,
+                                effBgActiveType: 'bg-solid',
+                                effBgType: 'flat',
+                                effGlassActiveType: 'none',
+                                isTransparent: false,
+                                bgMode: 'normal',
+                                backgroundColor: prevBg,
+                                effBgColor: prevBg,
+                              }
+                            });
+                          }}
                           className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all ${
-                            (!selectedInst.config?.effBgActiveType || selectedInst.config?.effBgActiveType === 'bg-solid') && selectedInst.config?.effGlassActiveType !== 'glass-blur' && selectedInst.config?.effGlassActiveType !== 'glass-translucent' && selectedInst.config?.effBgActiveType !== 'bg-transparent'
+                            (!selectedInst.config?.effBgActiveType || selectedInst.config?.effBgActiveType === 'bg-solid') &&
+                            selectedInst.config?.effGlassActiveType !== 'glass-blur' &&
+                            selectedInst.config?.effGlassActiveType !== 'glass-translucent' &&
+                            selectedInst.config?.effBgActiveType !== 'bg-transparent' &&
+                            selectedInst.config?.backgroundColor !== 'transparent' &&
+                            !selectedInst.config?.isTransparent
                               ? 'bg-purple-600 border-purple-400 text-white'
                               : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
                           }`}
@@ -2305,16 +2323,33 @@ export default function OverlayEditorSidebar({
 
                         <button
                           type="button"
-                          onClick={() => onUpdateInstance(selectedInst.id, {
-                            config: {
-                              ...selectedInst.config,
-                              effBgActiveType: 'bg-transparent',
-                              effGlassActiveType: 'none',
-                              backgroundColor: 'transparent'
-                            }
-                          })}
+                          onClick={() => {
+                            const curBg = (selectedInst.config?.backgroundColor && selectedInst.config.backgroundColor !== 'transparent')
+                              ? selectedInst.config.backgroundColor
+                              : (selectedInst.config?.effBgColor && selectedInst.config.effBgColor !== 'transparent'
+                                ? selectedInst.config.effBgColor
+                                : (selectedInst.config?._prevBgColor || '#111827'));
+                            onUpdateInstance(selectedInst.id, {
+                              config: {
+                                ...selectedInst.config,
+                                _prevBgColor: curBg,
+                                effBgActiveType: 'bg-transparent',
+                                effBgType: 'transparent',
+                                effGlassActiveType: 'none',
+                                isTransparent: true,
+                                bgMode: 'transparent',
+                                backgroundColor: 'transparent'
+                              }
+                            });
+                          }}
                           className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all ${
-                            selectedInst.config?.effBgActiveType === 'bg-transparent' || selectedInst.config?.backgroundColor === 'transparent'
+                            (selectedInst.config?.effBgActiveType === 'bg-transparent' ||
+                             selectedInst.config?.backgroundColor === 'transparent' ||
+                             selectedInst.config?.isTransparent === true ||
+                             selectedInst.config?.bgMode === 'transparent') &&
+                            selectedInst.config?.effBgActiveType !== 'bg-solid' &&
+                            selectedInst.config?.effGlassActiveType !== 'glass-blur' &&
+                            selectedInst.config?.effGlassActiveType !== 'glass-translucent'
                               ? 'bg-purple-600 border-purple-400 text-white'
                               : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
                           }`}
@@ -2324,13 +2359,23 @@ export default function OverlayEditorSidebar({
 
                         <button
                           type="button"
-                          onClick={() => onUpdateInstance(selectedInst.id, {
-                            config: {
-                              ...selectedInst.config,
-                              effGlassActiveType: 'glass-translucent',
-                              effBgActiveType: 'none'
-                            }
-                          })}
+                          onClick={() => {
+                            const prevBg = (selectedInst.config?._prevBgColor && selectedInst.config._prevBgColor !== 'transparent')
+                              ? selectedInst.config._prevBgColor
+                              : ((selectedInst.config?.backgroundColor && selectedInst.config.backgroundColor !== 'transparent')
+                                ? selectedInst.config.backgroundColor
+                                : '#111827');
+                            onUpdateInstance(selectedInst.id, {
+                              config: {
+                                ...selectedInst.config,
+                                effGlassActiveType: 'glass-translucent',
+                                effBgActiveType: 'none',
+                                isTransparent: false,
+                                bgMode: 'translucent',
+                                backgroundColor: selectedInst.config?.backgroundColor === 'transparent' ? prevBg : selectedInst.config?.backgroundColor
+                              }
+                            });
+                          }}
                           className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all ${
                             selectedInst.config?.effGlassActiveType === 'glass-translucent'
                               ? 'bg-purple-600 border-purple-400 text-white'
@@ -2342,13 +2387,23 @@ export default function OverlayEditorSidebar({
 
                         <button
                           type="button"
-                          onClick={() => onUpdateInstance(selectedInst.id, {
-                            config: {
-                              ...selectedInst.config,
-                              effGlassActiveType: 'glass-blur',
-                              effBgActiveType: 'none'
-                            }
-                          })}
+                          onClick={() => {
+                            const prevBg = (selectedInst.config?._prevBgColor && selectedInst.config._prevBgColor !== 'transparent')
+                              ? selectedInst.config._prevBgColor
+                              : ((selectedInst.config?.backgroundColor && selectedInst.config.backgroundColor !== 'transparent')
+                                ? selectedInst.config.backgroundColor
+                                : '#111827');
+                            onUpdateInstance(selectedInst.id, {
+                              config: {
+                                ...selectedInst.config,
+                                effGlassActiveType: 'glass-blur',
+                                effBgActiveType: 'none',
+                                isTransparent: false,
+                                bgMode: 'blur',
+                                backgroundColor: selectedInst.config?.backgroundColor === 'transparent' ? prevBg : selectedInst.config?.backgroundColor
+                              }
+                            });
+                          }}
                           className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all ${
                             selectedInst.config?.effGlassActiveType === 'glass-blur'
                               ? 'bg-purple-600 border-purple-400 text-white'
@@ -2389,18 +2444,38 @@ export default function OverlayEditorSidebar({
                       <div className="flex items-center gap-1.5 bg-black/40 border border-white/10 rounded-lg p-1">
                         <input
                           type="color"
-                          value={selectedInst.config?.backgroundColor || '#000000'}
+                          value={selectedInst.config?.backgroundColor && selectedInst.config.backgroundColor !== 'transparent' ? selectedInst.config.backgroundColor : '#000000'}
                           onChange={(e) => onUpdateInstance(selectedInst.id, {
-                            config: { ...selectedInst.config, backgroundColor: e.target.value }
+                            config: {
+                              ...selectedInst.config,
+                              backgroundColor: e.target.value,
+                              effBgColor: e.target.value,
+                              _prevBgColor: e.target.value,
+                              effBgActiveType: 'bg-solid',
+                              isTransparent: false,
+                              bgMode: 'normal'
+                            }
                           })}
                           className="h-6 w-8 rounded border border-white/10 bg-transparent cursor-pointer p-0"
                         />
                         <input
                           type="text"
                           value={selectedInst.config?.backgroundColor || '#000000'}
-                          onChange={(e) => onUpdateInstance(selectedInst.id, {
-                            config: { ...selectedInst.config, backgroundColor: e.target.value }
-                          })}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const isTrans = val.trim().toLowerCase() === 'transparent';
+                            onUpdateInstance(selectedInst.id, {
+                              config: {
+                                ...selectedInst.config,
+                                backgroundColor: val,
+                                effBgColor: isTrans ? selectedInst.config?.effBgColor : val,
+                                _prevBgColor: !isTrans ? val : selectedInst.config?._prevBgColor,
+                                effBgActiveType: isTrans ? 'bg-transparent' : 'bg-solid',
+                                isTransparent: isTrans,
+                                bgMode: isTrans ? 'transparent' : 'normal'
+                              }
+                            });
+                          }}
                           className="w-full bg-transparent border-0 text-[10px] font-mono text-white p-0 uppercase"
                         />
                       </div>
