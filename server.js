@@ -1,14 +1,25 @@
 import express from 'express';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 import { getCloudflareD1 } from './dashboard/api/auth/cloudflareD1.js';
 import { ensureImagePersistence } from './dashboard/conexao/imageUploadHandler.js';
 
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = process.env.PORT || 3000;
+
+// CORS e cabeçalhos universais para requisições à API
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
 
 // ============================================================================
 // 1. RESOLUÇÃO DE SESSÃO E IDENTIDADE DOCUMENTAL (/api/* e /dashboard/Imagem/*)
@@ -529,8 +540,26 @@ app.all(/^\/dashboard\/Imagem(\/.*)?$/, (req, res) => {
 // ============================================================================
 app.use(express.static(path.join(__dirname, 'dist')));
 
+const distIndexPath = path.join(__dirname, 'dist', 'index.html');
 app.get('/{*splat}', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  if (fs.existsSync(distIndexPath)) {
+    return res.sendFile(distIndexPath);
+  }
+  res.status(200).send(`
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="utf-8" />
+        <title>LiveNexus Server</title>
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0b0f19; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+        <div style="background: #111827; border: 1px solid #1f2937; padding: 2rem; border-radius: 12px; max-width: 480px; text-align: center;">
+          <h2 style="color: #6366f1; margin-top: 0;">LiveNexus Server Ativo</h2>
+          <p style="color: #9ca3af; font-size: 0.95rem;">O servidor Node.js está rodando perfeitamente. Para visualizar a interface completa do frontend, execute <code>npm run build</code>.</p>
+        </div>
+      </body>
+    </html>
+  `);
 });
 
 // ============================================================================

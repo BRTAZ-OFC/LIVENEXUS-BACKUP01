@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
-    "start": "vite --host 0.0.0.0",
+    "start": "node server.js",
+    "start:vite": "vite --host 0.0.0.0",
     "start:cloudrun": "node server.js",
     "build": "vite build",
     "lint": "eslint . --quiet",
