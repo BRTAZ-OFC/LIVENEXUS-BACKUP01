@@ -248,7 +248,7 @@ function youtubeTest1Plugin() {
             }
           }
 
-          const { resolveYouTubeLiveBootstrap } = await import('./dashboard/painel-admin/lab/Admin_youtubeTest1Bootstrap.js');
+          const { resolveYouTubeLiveBootstrap } = await import('./dashboard/conexao/Admin_youtubeTest1Bootstrap.js');
           const result = await resolveYouTubeLiveBootstrap(identifier);
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
@@ -282,7 +282,7 @@ function youtubeTest1Plugin() {
             }
           }
 
-          const { resolveYouTubeLiveBootstrap } = await import('./dashboard/painel-admin/lab/Admin_youtubeTest1Bootstrap.js');
+          const { resolveYouTubeLiveBootstrap } = await import('./dashboard/conexao/Admin_youtubeTest1Bootstrap.js');
           const result = await resolveYouTubeLiveBootstrap(identifier);
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');

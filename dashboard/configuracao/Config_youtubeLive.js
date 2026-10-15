@@ -45,16 +45,23 @@ function parseYouTubeRoles(item) {
   return roles.length > 0 ? [...new Set(roles)] : ['normal'];
 }
 
-// Processa ações individuais do InnerTube: mensagens comuns e eventos estruturais (Super Chat, Sticker, Membros, Enquetes)
-function processYouTubeChatAction(act, onMessage) {
+function processYouTubeChatAction(act, onMessage, seenIds = null) {
   if (!act || !onMessage) return;
 
   // 1. Mensagem de texto padrão (liveChatTextMessageRenderer)
   const textItem = act.addChatItemAction?.item?.liveChatTextMessageRenderer;
   if (textItem) {
-    const author = textItem.authorName?.simpleText || 'Anônimo';
-    const msgText = textItem.message?.runs?.map((r) => r.text).join('') || '';
     const msgId = textItem.id || crypto.randomUUID();
+    if (seenIds) {
+      if (seenIds.has(msgId)) return;
+      seenIds.add(msgId);
+      if (seenIds.size > 2000) {
+        const first = seenIds.values().next().value;
+        seenIds.delete(first);
+      }
+    }
+    const author = textItem.authorName?.simpleText || textItem.authorName?.runs?.map((r) => r.text).join('') || 'Anônimo';
+    const msgText = textItem.message?.runs?.map((r) => r.text || r.emoji?.shortcuts?.[0] || r.emoji?.image?.accessibility?.accessibilityData?.label || '').join('') || '';
     const timestamp = textItem.timestampUsec
       ? Math.floor(parseInt(textItem.timestampUsec, 10) / 1000)
       : Date.now();
@@ -321,6 +328,7 @@ export function connectYouTube(channel, onMessage, onStatus, onMeta) {
     }
 
     let consecutiveErrors = 0;
+    const seenMessageIds = new Set();
 
     while (!stopped) {
       chatAbortController = new AbortController();
@@ -363,12 +371,12 @@ export function connectYouTube(channel, onMessage, onStatus, onMeta) {
 
         // Entrega mensagens e eventos para o fluxo normal da plataforma (onMessage)
         for (const act of actions) {
-          processYouTubeChatAction(act, onMessage);
+          processYouTubeChatAction(act, onMessage, seenMessageIds);
         }
 
         // Extrai próxima continuação e timeout recomendado
         let nextToken = null;
-        let timeoutMs = 3000;
+        let timeoutMs = 2500;
         if (nextConts.length > 0) {
           const c0 = nextConts[0];
           nextToken =
@@ -390,8 +398,9 @@ export function connectYouTube(channel, onMessage, onStatus, onMeta) {
           currentContinuation = nextToken;
         }
 
-        // Aguarda o timeout especificado pelo YouTube antes do próximo poll
-        await new Promise((resolve) => setTimeout(resolve, Math.max(1000, timeoutMs)));
+        // Aguarda o timeout balanceado para tempo real (1.5s a 4s) antes do próximo poll
+        const waitMs = Math.max(1500, Math.min(timeoutMs, 4000));
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
       } catch (err) {
         if (stopped) break;
         consecutiveErrors++;
