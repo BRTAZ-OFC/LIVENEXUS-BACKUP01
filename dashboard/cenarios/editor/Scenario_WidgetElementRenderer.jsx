@@ -1101,7 +1101,7 @@ export default function WidgetElementRenderer({
     // If it's a Twitch sub-component (fragmented elements), render the specific sub-component!
     if (widgetId === 'twitch-status-label') {
       const isOnline = platformIsOnline(connections, config);
-      const viewersCount = platformViewers(connections, config, { aggregate: false });
+      const viewersCount = platformViewers(connections, config, { aggregate: true });
       const streamTitle = platformMeta(streamMeta, connections, config, 'title').title || (isOnline ? 'Aguardando título...' : 'Live offline');
       const streamGame = platformMeta(streamMeta, connections, config, 'game').game || (isOnline ? 'Geral' : '');
 

@@ -12,7 +12,7 @@ export default function TwitchStatusLabel({ config = {} }) {
   const { connections, streamMeta } = useStreaming();
 
   const isOnline = platformIsOnline(connections, config);
-  const viewersCount = platformViewers(connections, config, { aggregate: false });
+  const viewersCount = platformViewers(connections, config, { aggregate: true });
   const hasViewers = viewersCount !== null;
 
   // Stream Metadata
